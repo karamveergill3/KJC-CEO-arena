@@ -1,6 +1,5 @@
-import Head from 'next/head';
-
 import { useState, useRef, useEffect } from "react";
+import Head from "next/head";
 
 const DEFAULT_CODE = `using System;
 using System.Linq;
@@ -350,7 +349,7 @@ const CODEGEN_SYSTEM = `You are a senior cTrader C# developer. Apply ALL fixes a
 // ─── API call ─────────────────────────────────────────────────────────────────
 // ─── Anthropic API call ───────────────────────────────────────────────────────
 const callAPI = async (system, userContent, maxTokens = 280, _unused) => {
-  const res = await fetch("/api/chat", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -727,20 +726,26 @@ Select 1-3 characters whose specialties best match the task.`,
               const topTwo = (ch.specialties || []).slice(0, 2);
               return (
                 <div key={k} onClick={() => setActiveChars(prev => active && prev.length > 1 ? prev.filter(x => x !== k) : active ? prev : [...prev, k])}
-                  style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", borderRadius: 12, border: `1px solid ${active ? ch.color + "40" : "rgba(255,255,255,0.05)"}`, background: active ? ch.color + "08" : "rgba(255,255,255,0.01)", opacity: active ? 1 : 0.35, cursor: "pointer", transition: "all 0.25s", boxShadow: active ? `0 2px 20px ${ch.color}15` : "none" }}>
-                  {ch.hasPhoto
-                    ? <Avatar who={k} size={44} color={ch.color} active={active} />
-                    : <div style={{ width: 44, height: 44, borderRadius: "50%", background: ch.color + "22", border: `2px solid ${active ? ch.color : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: ch.color, flexShrink: 0 }}>{ch.name[0]}</div>}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: active ? "#fff" : "rgba(255,255,255,0.55)", marginBottom: 4 }}>{ch.name}</div>
-                    <div style={{ fontSize: 10, color: active ? ch.color : "rgba(255,255,255,0.45)", letterSpacing: 2, textTransform: "uppercase" }}>{ch.heading || ch.tag}</div>
+                  style={{ padding: "14px 16px", borderRadius: 12, border: `1px solid ${active ? ch.color + "40" : "rgba(255,255,255,0.05)"}`, background: active ? ch.color + "08" : "rgba(255,255,255,0.01)", opacity: active ? 1 : 0.4, cursor: "pointer", transition: "all 0.25s", boxShadow: active ? `0 2px 20px ${ch.color}15` : "none" }}>
+                  {/* Top row: avatar + name/heading + dot */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: topTwo.length ? 10 : 0 }}>
+                    {ch.hasPhoto
+                      ? <Avatar who={k} size={38} color={ch.color} active={active} />
+                      : <div style={{ width: 38, height: 38, borderRadius: "50%", background: ch.color + "22", border: `2px solid ${active ? ch.color : "rgba(255,255,255,0.1)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: ch.color, flexShrink: 0 }}>{ch.name[0]}</div>}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: active ? "#fff" : "rgba(255,255,255,0.55)", lineHeight: 1.3 }}>{ch.name}</div>
+                      <div style={{ fontSize: 10, color: active ? ch.color : "rgba(255,255,255,0.4)", letterSpacing: 1, textTransform: "uppercase", marginTop: 2, lineHeight: 1.3 }}>{ch.heading || ch.tag}</div>
+                    </div>
+                    <div style={{ width: 10, height: 10, borderRadius: "50%", background: active ? ch.color : "rgba(255,255,255,0.2)", flexShrink: 0, boxShadow: active ? `0 0 8px ${ch.color}` : "none", transition: "all 0.2s" }} />
                   </div>
-                  <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                    {topTwo.map(sp => (
-                      <span key={sp} style={{ fontSize: 11, padding: "4px 12px", borderRadius: 20, background: active ? ch.color + "15" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? ch.color + "40" : "rgba(255,255,255,0.06)"}`, color: active ? ch.textColor : "rgba(255,255,255,0.45)", whiteSpace: "nowrap", fontWeight: 500 }}>{sp}</span>
-                    ))}
-                  </div>
-                  <div style={{ width: 10, height: 10, borderRadius: "50%", background: active ? ch.color : "rgba(255,255,255,0.25)", flexShrink: 0, boxShadow: active ? `0 0 8px ${ch.color}` : "none", transition: "all 0.2s" }} />
+                  {/* Pills row — always below, wraps naturally */}
+                  {topTwo.length > 0 && (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", paddingLeft: 50 }}>
+                      {topTwo.map(sp => (
+                        <span key={sp} style={{ fontSize: 10, padding: "3px 10px", borderRadius: 20, background: active ? ch.color + "15" : "rgba(255,255,255,0.03)", border: `1px solid ${active ? ch.color + "40" : "rgba(255,255,255,0.06)"}`, color: active ? ch.textColor : "rgba(255,255,255,0.4)", fontWeight: 500, lineHeight: 1.6 }}>{sp}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -1102,11 +1107,11 @@ const s = {
   root: { minHeight: "100vh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", position: "relative", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" },
 
   // ── Setup ──
-  setupWrap: { position: "relative", zIndex: 1, maxWidth: 780, margin: "0 auto", padding: "64px 32px 80px", width: "100%" },
+  setupWrap: { position: "relative", zIndex: 1, maxWidth: 780, margin: "0 auto", padding: "64px 20px 80px", width: "100%" },
   logo: { marginBottom: 56, textAlign: "center" },
   logoLine: { display: "flex", gap: 14, justifyContent: "center", alignItems: "baseline", marginBottom: 10 },
-  logoText: { fontSize: 36, fontWeight: 800, letterSpacing: 6, color: "#fff" },
-  logoAccent: { fontSize: 36, fontWeight: 800, letterSpacing: 6, color: "#e8a020" },
+  logoText: { fontSize: "clamp(24px, 8vw, 36px)", fontWeight: 800, letterSpacing: 6, color: "#fff" },
+  logoAccent: { fontSize: "clamp(24px, 8vw, 36px)", fontWeight: 800, letterSpacing: 6, color: "#e8a020" },
   logoSub: { fontSize: 12, letterSpacing: 5, color: "rgba(255,255,255,0.55)", fontWeight: 400 },
 
   charCard: { flex: 1, maxWidth: 200, padding: "22px 16px", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, textAlign: "center", background: "rgba(255,255,255,0.02)" },
@@ -1122,13 +1127,13 @@ const s = {
   cta: { display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "18px 32px", background: "linear-gradient(135deg, #e8a020, #c07010)", border: "none", borderRadius: 10, cursor: "pointer", fontSize: 14, fontWeight: 700, letterSpacing: 3, color: "#000", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(232,160,32,0.25)" },
 
   // ── Review top bar ──
-  topBar: { position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 28px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.98)", backdropFilter: "blur(20px)", flexWrap: "wrap", gap: 10 },
+  topBar: { position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.98)", backdropFilter: "blur(20px)", flexWrap: "wrap", gap: 8 },
   topLeft: { display: "flex", alignItems: "center", gap: 18 },
   backBtn: { background: "none", border: "none", color: "rgba(255,255,255,0.65)", fontSize: 12, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit", padding: 0, fontWeight: 500 },
   topFile: { fontSize: 13, color: "rgba(255,255,255,0.65)", fontWeight: 400 },
 
-  charIndicators: { display: "flex", gap: 8 },
-  indicator: { display: "flex", alignItems: "center", gap: 8, padding: "6px 14px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, transition: "all 0.35s", background: "rgba(255,255,255,0.02)" },
+  charIndicators: { display: "flex", gap: 6, flexWrap: "wrap" },
+  indicator: { display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, transition: "all 0.35s", background: "rgba(255,255,255,0.02)" },
 
   controls: { display: "flex", gap: 8 },
   ctrlBtn: { padding: "7px 16px", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", fontSize: 11, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit", borderRadius: 8, transition: "all 0.2s", color: "#ccc", fontWeight: 500 },
@@ -1141,7 +1146,7 @@ const s = {
   codePre: { margin: 0, padding: "18px 28px", fontSize: 12, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "'Fira Code', 'Courier New', monospace" },
 
   // ── Feed ──
-  feed: { flex: 1, overflowY: "auto", padding: "32px 28px 0", position: "relative", zIndex: 1, maxWidth: "860px", width: "100%", margin: "0 auto", alignSelf: "center", boxSizing: "border-box" },
+  feed: { flex: 1, overflowY: "auto", padding: "20px 16px 0", position: "relative", zIndex: 1, maxWidth: "860px", width: "100%", margin: "0 auto", alignSelf: "center", boxSizing: "border-box" },
   emptyState: { textAlign: "center", padding: "80px 0" },
 
   msgRow: { display: "flex", gap: 18, marginBottom: 32, animation: "fadeUp 0.35s ease forwards" },
@@ -1163,6 +1168,9 @@ const s = {
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  @media (max-width: 600px) {
+    /* Task input stacks on mobile */
+  }
   @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
   @keyframes pulse  { 0%,100%{opacity:0.2;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
   * { box-sizing:border-box; }
@@ -1171,6 +1179,9 @@ const css = `
   ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:4px; }
   ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.14); }
   button:hover { opacity:0.8; }
+  @media (max-width: 600px) {
+    .kjc-logo { display: none; }
+  }
   input::placeholder { color:rgba(255,255,255,0.25) !important; }
   textarea::placeholder { color:rgba(255,255,255,0.25) !important; }
   select option { background:#0c0c14; }
@@ -1184,7 +1195,6 @@ export default function Home() {
         <title>KJC Capital — Code Review Arena</title>
         <meta name="description" content="AI-powered code review. Stark, Morra and Ishigami debate your code to 9/10." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬡</text></svg>" />
       </Head>
       <Arena />
     </>
