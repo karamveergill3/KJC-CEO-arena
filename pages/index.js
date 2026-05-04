@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/router";
 import Head from "next/head";
+import { supabase } from "../lib/supabase";
+
 
 const DEFAULT_CODE = `using System;
 using System.Linq;
@@ -371,7 +374,7 @@ const callAPI = async (system, userContent, maxTokens = 280, _unused) => {
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────
-function Arena() {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState(DEFAULT_CODE);
   const [fileName, setFileName]     = useState("SilverScalper_v8.cs");
@@ -1188,15 +1191,216 @@ const css = `
 `;
 
 
+// ─── Session Sidebar ──────────────────────────────────────────────────────────
+function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId }) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  const sideStyle = {
+    width: collapsed ? 48 : 280,
+    minWidth: collapsed ? 48 : 280,
+    height: "100vh",
+    background: "#08080e",
+    borderRight: "1px solid rgba(255,255,255,0.06)",
+    display: "flex",
+    flexDirection: "column",
+    transition: "width 0.25s, min-width 0.25s",
+    overflow: "hidden",
+    position: "relative",
+    zIndex: 10,
+    flexShrink: 0,
+  };
+
+  return (
+    <div style={sideStyle}>
+      {/* Header */}
+      <div style={{ padding: collapsed ? "14px 10px" : "16px 16px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+        {!collapsed && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 3, background: "linear-gradient(135deg, #e8a020, #f5c842)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>KJC</span>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 4, color: "#c8900a" }}>CAPITAL</span>
+          </div>
+        )}
+        <button onClick={() => setCollapsed(p => !p)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 16, padding: 4, lineHeight: 1 }}>
+          {collapsed ? "▶" : "◀"}
+        </button>
+      </div>
+
+      {!collapsed && (
+        <>
+          {/* New session */}
+          <div style={{ padding: "10px 12px", flexShrink: 0 }}>
+            <button onClick={onNew} style={{ width: "100%", padding: "9px 12px", background: "rgba(232,160,32,0.1)", border: "1px solid rgba(232,160,32,0.25)", borderRadius: 8, color: "#e8a020", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, textAlign: "left" }}>
+              + New Review
+            </button>
+          </div>
+
+          {/* Sessions list */}
+          <div style={{ flex: 1, overflowY: "auto", padding: "0 8px" }}>
+            {sessions.length === 0 ? (
+              <div style={{ padding: "20px 8px", fontSize: 12, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.7 }}>
+                No sessions yet.<br />Start a review to save it here.
+              </div>
+            ) : (
+              sessions.map(s => (
+                <div key={s.id} onClick={() => onLoad(s)}
+                  style={{ padding: "10px 10px", borderRadius: 8, marginBottom: 3, cursor: "pointer", background: currentSessionId === s.id ? "rgba(232,160,32,0.08)" : "transparent", border: `1px solid ${currentSessionId === s.id ? "rgba(232,160,32,0.2)" : "transparent"}`, display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}
+                  onMouseEnter={e => { if (currentSessionId !== s.id) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+                  onMouseLeave={e => { if (currentSessionId !== s.id) e.currentTarget.style.background = "transparent"; }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: currentSessionId === s.id ? "#e8a020" : "rgba(255,255,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {s.title || s.file_name || "Untitled"}
+                    </div>
+                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+                      {new Date(s.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    </div>
+                  </div>
+                  <button onClick={e => { e.stopPropagation(); onDelete(s.id); }}
+                    style={{ background: "none", border: "none", color: "rgba(255,255,255,0.2)", cursor: "pointer", fontSize: 14, padding: 2, lineHeight: 1, flexShrink: 0 }}
+                    onMouseEnter={e => e.currentTarget.style.color = "#f07070"}
+                    onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.2)"}>×</button>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* User profile */}
+          <div style={{ padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.05)", flexShrink: 0, display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(232,160,32,0.2)", border: "1px solid rgba(232,160,32,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#e8a020", flexShrink: 0 }}>
+              {profile?.first_name?.[0]?.toUpperCase() || "?"}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {profile?.first_name} {profile?.last_name}
+              </div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>@{profile?.username}</div>
+            </div>
+            <button onClick={onSignOut} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 11, padding: 4, fontFamily: "inherit" }}
+              onMouseEnter={e => e.currentTarget.style.color = "#f07070"}
+              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}>Sign out</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ─── Main app wrapper with auth ───────────────────────────────────────────────
 export default function Home() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [loadedSession, setLoadedSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { setAuthLoading(false); router.push("/auth"); return; }
+      setUser(session.user);
+      loadProfile(session.user.id, session.access_token);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") { router.push("/auth"); }
+      if (session) { setUser(session.user); loadProfile(session.user.id, session.access_token); }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loadProfile = async (userId, token) => {
+    const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
+    setProfile(data);
+    loadSessions(token);
+    setAuthLoading(false);
+  };
+
+  const loadSessions = async (token) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const t = token || session?.access_token;
+    if (!t) return;
+    const res = await fetch("/api/sessions", { headers: { Authorization: `Bearer ${t}` } });
+    if (res.ok) setSessions(await res.json());
+  };
+
+  const saveSession = async (sessionData) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    const res = await fetch("/api/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ ...sessionData, id: currentSessionId }),
+    });
+    if (res.ok) {
+      const saved = await res.json();
+      if (!currentSessionId) setCurrentSessionId(saved.id);
+      loadSessions();
+    }
+  };
+
+  const deleteSession = async (id) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+    await fetch(`/api/sessions?id=${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${session.access_token}` } });
+    setSessions(prev => prev.filter(s => s.id !== id));
+    if (currentSessionId === id) { setCurrentSessionId(null); setLoadedSession(null); }
+  };
+
+  const handleLoadSession = (s) => {
+    setCurrentSessionId(s.id);
+    setLoadedSession(s);
+  };
+
+  const handleNewSession = () => {
+    setCurrentSessionId(null);
+    setLoadedSession(null);
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  if (authLoading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", letterSpacing: 3, fontFamily: "monospace" }}>LOADING...</div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
   return (
     <>
       <Head>
         <title>KJC Capital — Code Review Arena</title>
-        <meta name="description" content="AI-powered code review. Stark, Morra and Ishigami debate your code to 9/10." />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
-      <Arena />
+      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f" }}>
+        <Sidebar
+          sessions={sessions}
+          onLoad={handleLoadSession}
+          onDelete={deleteSession}
+          onNew={handleNewSession}
+          profile={profile}
+          onSignOut={handleSignOut}
+          currentSessionId={currentSessionId}
+        />
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+          <Arena
+            user={user}
+            profile={profile}
+            onSessionSave={saveSession}
+            sessions={sessions}
+            onLoadSession={handleLoadSession}
+            onNewSession={handleNewSession}
+            onSignOut={handleSignOut}
+            loadedSession={loadedSession}
+            currentSessionId={currentSessionId}
+          />
+        </div>
+      </div>
     </>
   );
 }
