@@ -696,7 +696,7 @@ Select 1-3 characters whose specialties best match the task.`,
           <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 5, color: "#c8900a" }}>CAPITAL</span>
         </div>
         {/* Hamburger top-left — always visible */}
-        <button onClick={() => setIsSidebarCollapsed(p => !p)} style={{ position: "fixed", top: 14, left: 14, zIndex: 100, background: "rgba(10,10,15,0.95)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "9px 11px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, backdropFilter: "blur(10px)" }}>
+        <button onClick={() => onOpenSidebar?.()} style={{ position: "fixed", top: 14, left: 14, zIndex: 100, background: "rgba(10,10,15,0.95)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "9px 11px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, backdropFilter: "blur(10px)" }}>
           <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
           <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
           <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
@@ -908,10 +908,10 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>
 
         {/* KJC Capital logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 5, marginLeft: "auto", marginRight: 8 }}>
-          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "inherit" }}>KJC</span>
-          <span style={{ width: 1, height: 10, background: "rgba(232,160,32,0.4)" }} />
-          <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 3, color: "#c8900a" }}>CAPITAL</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto", marginRight: 6 }}>
+          <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "inherit" }}>KJC</span>
+          <span style={{ width: 1, height: 8, background: "rgba(232,160,32,0.4)" }} />
+          <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: 2, color: "#c8900a" }}>CAPITAL</span>
         </div>
 
         <div style={s.controls}>
