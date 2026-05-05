@@ -909,9 +909,9 @@ Select 1-3 characters whose specialties best match the task.`,
 
         {/* KJC Capital logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 5, marginLeft: "auto", marginRight: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "inherit" }}>KJC</span>
-          <span style={{ width: 1, height: 12, background: "rgba(232,160,32,0.4)" }} />
-          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: "#c8900a" }}>CAPITAL</span>
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "inherit" }}>KJC</span>
+          <span style={{ width: 1, height: 10, background: "rgba(232,160,32,0.4)" }} />
+          <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 3, color: "#c8900a" }}>CAPITAL</span>
         </div>
 
         <div style={s.controls}>
@@ -1370,11 +1370,13 @@ function ProfileModal({ profile, onClose, onSignOut }) {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange }) {
-  const [collapsed, setCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
-  const toggleCollapsed = (val) => {
-    const newVal = typeof val === 'function' ? val(collapsed) : val;
-    setCollapsed(newVal);
+function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange, collapsed, setCollapsed: setCollapsedExternal }) {
+  const [internalCollapsed, setInternalCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
+  const isCollapsed = collapsed !== undefined ? collapsed : internalCollapsed;
+  const toggleCollapsed = () => {
+    const newVal = !isCollapsed;
+    if (setCollapsedExternal) setCollapsedExternal(newVal);
+    else setInternalCollapsed(newVal);
     if (onCollapsedChange) onCollapsedChange(newVal);
   };
   const [showProfile, setShowProfile] = useState(false);
@@ -1462,7 +1464,7 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
           </button>
         </div>
 
-        {!collapsed && (
+        {!isCollapsed && (
           <>
             {/* Actions row */}
             <div style={{ padding: "10px 12px 6px", display: "flex", gap: 6, flexShrink: 0 }}>
@@ -1567,8 +1569,7 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [loadedSession, setLoadedSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1653,19 +1654,25 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
-      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f", position: "relative", maxWidth: "100vw", isolation: "isolate" }}>
+      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f", position: "relative" }}>
 
+        {/* Overlay backdrop on mobile when sidebar open */}
+        {!sidebarCollapsed && (
+          <div onClick={() => setSidebarCollapsed(true)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 99, display: typeof window !== "undefined" && window.innerWidth < 768 ? "block" : "none" }} />
+        )}
         <Sidebar
           sessions={sessions}
-          onLoad={handleLoadSession}
+          onLoad={(s) => { handleLoadSession(s); setSidebarCollapsed(true); }}
           onDelete={deleteSession}
-          onNew={handleNewSession}
+          onNew={() => { handleNewSession(); setSidebarCollapsed(true); }}
           profile={profile}
           onSignOut={handleSignOut}
           currentSessionId={currentSessionId}
-          onCollapsedChange={setIsSidebarCollapsed}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
         />
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: typeof window !== "undefined" && window.innerWidth >= 768 ? (sidebarCollapsed ? 48 : 280) : 0, transition: "margin-left 0.25s" }}>
           <Arena
             user={user}
             profile={profile}
@@ -1676,8 +1683,7 @@ export default function Home() {
             onSignOut={handleSignOut}
             loadedSession={loadedSession}
             currentSessionId={currentSessionId}
-            isSidebarCollapsed={isSidebarCollapsed}
-            onOpenSidebar={() => setIsSidebarCollapsed(p => !p)}
+            onOpenSidebar={() => setSidebarCollapsed(false)}
           />
         </div>
       </div>
