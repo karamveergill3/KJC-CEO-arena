@@ -695,11 +695,11 @@ Select 1-3 characters whose specialties best match the task.`,
           <span style={{ width: 1, height: 16, background: "rgba(232,160,32,0.4)" }} />
           <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 5, color: "#c8900a" }}>CAPITAL</span>
         </div>
-        {/* Hamburger top-left — always visible */}
-        <button onClick={() => onOpenSidebar?.()} style={{ position: "fixed", top: 14, left: 14, zIndex: 100, background: "rgba(10,10,15,0.95)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "9px 11px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, backdropFilter: "blur(10px)" }}>
-          <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
-          <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
-          <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+
+        <button onClick={() => onOpenSidebar?.()} style={{ position: "fixed", top: 12, left: 12, zIndex: 50, background: "rgba(10,10,15,0.9)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 10px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, backdropFilter: "blur(10px)" }}>
+          <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.65)", borderRadius: 2 }} />
+          <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.65)", borderRadius: 2 }} />
+          <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.65)", borderRadius: 2 }} />
         </button>
         <div style={s.setupWrap}>
           <div style={s.logo}>
@@ -871,7 +871,7 @@ Select 1-3 characters whose specialties best match the task.`,
       {/* Top bar */}
       <div style={s.topBar}>
         <div style={s.topLeft}>
-          <button onClick={onOpenSidebar} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 7, padding: "7px 9px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3, marginRight: 4 }}>
+          <button onClick={() => onOpenSidebar?.()} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 7, padding: "7px 9px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3, marginRight: 4 }}>
             <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
@@ -1468,8 +1468,8 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
           <>
             {/* Actions row */}
             <div style={{ padding: "10px 12px 6px", display: "flex", gap: 6, flexShrink: 0 }}>
-              <button onClick={onNew} style={{ flex: 1, padding: "8px 10px", background: "rgba(232,160,32,0.1)", border: "1px solid rgba(232,160,32,0.2)", borderRadius: 7, color: "#e8a020", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: 0.5 }}>
-                + New Review
+              <button onClick={onNew} style={{ flex: 1, padding: "9px 10px", background: "rgba(232,160,32,0.12)", border: "1px solid rgba(232,160,32,0.25)", borderRadius: 7, color: "#e8a020", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Bebas Neue', 'Impact', system-ui, sans-serif", letterSpacing: 2 }}>
+                + NEW REVIEW
               </button>
               <button onClick={() => setShowNewFolder(p => !p)} title="New Folder" style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "rgba(255,255,255,0.5)", fontSize: 14, cursor: "pointer", fontFamily: "inherit", lineHeight: 1 }}>
                 📁
@@ -1672,7 +1672,7 @@ export default function Home() {
           collapsed={sidebarCollapsed}
           setCollapsed={setSidebarCollapsed}
         />
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: typeof window !== "undefined" && window.innerWidth >= 768 ? (sidebarCollapsed ? 48 : 280) : 0, transition: "margin-left 0.25s" }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <Arena
             user={user}
             profile={profile}
