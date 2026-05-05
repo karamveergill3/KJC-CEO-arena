@@ -392,6 +392,8 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
   const [dragOver, setDragOver]     = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [showFixed, setShowFixed]   = useState(true);
+  const [dnaCard, setDnaCard]         = useState(null);
+  const [generatingDna, setGeneratingDna] = useState(false);
   const [copied, setCopied]         = useState(false);
 
   // Character management
@@ -469,12 +471,46 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
       setApprovals(emptyApprovals);
       approvalsRef.current = { ...emptyApprovals };
       setFixedCode(""); setPhase("idle"); setError(null);
-      setCopied(false);
+      setCopied(false); setDnaCard(null);
       debateHistoryRef.current = "";
       debateRatingsRef.current = {};
       debateAgreedRef.current = [];
       debateTurnRef.current = 0;
     }
+  };
+
+  const generateDNA = async (fixedCodeText, msgs) => {
+    setGeneratingDna(true);
+    try {
+      const DNA_SYSTEM = `You are a trading strategy analyst. Analyse the given strategy code and debate and return ONLY a JSON object with exactly these keys:
+{
+  "edge": "one sentence describing the core trading edge",
+  "best_conditions": "one sentence on ideal market conditions",
+  "worst_conditions": "one sentence on when this strategy struggles",
+  "risk_profile": "one of: Conservative / Moderate / Aggressive",
+  "personality": "a punchy 2-3 word archetype e.g. Sniper, Momentum Hunter, Range Trader, Breakout Artist",
+  "personality_desc": "one sentence describing the strategy personality",
+  "verdict": "one powerful sentence — the strategy's defining characteristic",
+  "strengths": ["strength 1", "strength 2", "strength 3"],
+  "weaknesses": ["weakness 1", "weakness 2"]
+}
+Return ONLY valid JSON. No markdown, no explanation.`;
+
+      const content = `Strategy code (summary):
+${fixedCodeText.slice(0, 2000)}
+
+Debate highlights:
+${msgs.map(m => m.text).join(" ").slice(0, 1500)}
+
+Generate the Strategy DNA JSON.`;
+      const result = await callAPI(DNA_SYSTEM, content, 600);
+      const clean = result.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+      setDnaCard(parsed);
+    } catch(e) {
+      console.error("DNA generation failed:", e);
+    }
+    setGeneratingDna(false);
   };
 
   const generateFixedCode = async (snapshot, msgs, chars) => {
@@ -1111,6 +1147,99 @@ Select 1-3 characters whose specialties best match the task.`,
             {showFixed && (
               <div style={s.fixedCodeBlock}>
                 <pre style={s.fixedCodePre}>{fixedCode}</pre>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Strategy DNA */}
+        {phase === "done" && fixedCode && (
+          <div style={{ margin: "0 0 32px" }}>
+            {!dnaCard && !generatingDna && (
+              <button onClick={() => generateDNA(fixedCode, msgsRef.current)}
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 22px", background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.25)", borderRadius: 10, cursor: "pointer", fontFamily: "inherit", width: "100%", justifyContent: "center", transition: "all 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(168,85,247,0.14)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(168,85,247,0.08)"}>
+                <span style={{ fontSize: 18 }}>🧬</span>
+                <div style={{ textAlign: "left" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#c084fc", letterSpacing: 1 }}>GENERATE STRATEGY DNA</div>
+                  <div style={{ fontSize: 11, color: "rgba(192,132,252,0.6)", marginTop: 1 }}>AI analyses your strategy and creates a complete personality profile</div>
+                </div>
+              </button>
+            )}
+
+            {generatingDna && (
+              <div style={{ padding: "16px 22px", background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.15)", borderRadius: 10, display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 16, animation: "pulse 1.5s infinite" }}>🧬</span>
+                <span style={{ fontSize: 12, color: "rgba(192,132,252,0.8)", letterSpacing: 2 }}>ANALYSING STRATEGY DNA...</span>
+              </div>
+            )}
+
+            {dnaCard && (
+              <div style={{ background: "rgba(168,85,247,0.05)", border: "1px solid rgba(168,85,247,0.2)", borderRadius: 12, overflow: "hidden" }}>
+                {/* DNA Header */}
+                <div style={{ padding: "18px 22px", borderBottom: "1px solid rgba(168,85,247,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 20 }}>🧬</span>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 800, color: "#c084fc", letterSpacing: 3 }}>STRATEGY DNA</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: "#fff", marginTop: 2, fontFamily: "'Bebas Neue', Impact, sans-serif", letterSpacing: 2 }}>{dnaCard.personality}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <span style={{ fontSize: 11, padding: "4px 12px", borderRadius: 20, background: dnaCard.risk_profile === "Aggressive" ? "rgba(240,80,80,0.15)" : dnaCard.risk_profile === "Conservative" ? "rgba(62,232,154,0.15)" : "rgba(232,160,32,0.15)", border: `1px solid ${dnaCard.risk_profile === "Aggressive" ? "rgba(240,80,80,0.3)" : dnaCard.risk_profile === "Conservative" ? "rgba(62,232,154,0.3)" : "rgba(232,160,32,0.3)"}`, color: dnaCard.risk_profile === "Aggressive" ? "#f07070" : dnaCard.risk_profile === "Conservative" ? "#3ee89a" : "#e8a020", fontWeight: 600 }}>{dnaCard.risk_profile}</span>
+                    <button onClick={() => setDnaCard(null)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 16, padding: 2 }}>×</button>
+                  </div>
+                </div>
+
+                {/* Verdict */}
+                <div style={{ padding: "16px 22px", borderBottom: "1px solid rgba(168,85,247,0.1)", background: "rgba(168,85,247,0.04)" }}>
+                  <div style={{ fontSize: 10, color: "rgba(192,132,252,0.6)", letterSpacing: 3, marginBottom: 6 }}>VERDICT</div>
+                  <div style={{ fontSize: 15, color: "#fff", fontStyle: "italic", lineHeight: 1.6 }}>"{dnaCard.verdict}"</div>
+                </div>
+
+                {/* Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "rgba(168,85,247,0.1)" }}>
+                  {[
+                    { label: "CORE EDGE", value: dnaCard.edge, icon: "⚡" },
+                    { label: "PERSONALITY", value: dnaCard.personality_desc, icon: "🎯" },
+                    { label: "BEST CONDITIONS", value: dnaCard.best_conditions, icon: "✅" },
+                    { label: "WORST CONDITIONS", value: dnaCard.worst_conditions, icon: "⚠️" },
+                  ].map(({ label, value, icon }) => (
+                    <div key={label} style={{ padding: "14px 18px", background: "rgba(10,10,15,0.9)" }}>
+                      <div style={{ fontSize: 9, color: "rgba(192,132,252,0.6)", letterSpacing: 2, marginBottom: 6 }}>{icon} {label}</div>
+                      <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", lineHeight: 1.5 }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Strengths & Weaknesses */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1, background: "rgba(168,85,247,0.1)" }}>
+                  <div style={{ padding: "14px 18px", background: "rgba(10,10,15,0.9)" }}>
+                    <div style={{ fontSize: 9, color: "rgba(62,232,154,0.7)", letterSpacing: 2, marginBottom: 8 }}>💪 STRENGTHS</div>
+                    {(dnaCard.strengths || []).map((s, i) => (
+                      <div key={i} style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 4, display: "flex", gap: 6 }}>
+                        <span style={{ color: "#3ee89a", flexShrink: 0 }}>+</span>{s}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ padding: "14px 18px", background: "rgba(10,10,15,0.9)" }}>
+                    <div style={{ fontSize: 9, color: "rgba(240,100,100,0.7)", letterSpacing: 2, marginBottom: 8 }}>⚡ WEAKNESSES</div>
+                    {(dnaCard.weaknesses || []).map((w, i) => (
+                      <div key={i} style={{ fontSize: 12, color: "rgba(255,255,255,0.75)", marginBottom: 4, display: "flex", gap: 6 }}>
+                        <span style={{ color: "#f07070", flexShrink: 0 }}>−</span>{w}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Regenerate */}
+                <div style={{ padding: "12px 22px", borderTop: "1px solid rgba(168,85,247,0.1)", display: "flex", justifyContent: "flex-end" }}>
+                  <button onClick={() => generateDNA(fixedCode, msgsRef.current)}
+                    style={{ fontSize: 10, color: "rgba(192,132,252,0.6)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", letterSpacing: 1 }}>
+                    ↻ Regenerate DNA
+                  </button>
+                </div>
               </div>
             )}
           </div>
