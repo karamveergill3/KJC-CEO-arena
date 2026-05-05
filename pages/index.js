@@ -696,11 +696,6 @@ Select 1-3 characters whose specialties best match the task.`,
           <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 5, color: "#c8900a" }}>CAPITAL</span>
         </div>
 
-        <button onClick={() => onOpenSidebar?.()} style={{ position: "fixed", top: 12, left: 12, zIndex: 50, background: "rgba(10,10,15,0.9)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, padding: "8px 10px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, backdropFilter: "blur(10px)" }}>
-          <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.65)", borderRadius: 2 }} />
-          <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.65)", borderRadius: 2 }} />
-          <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.65)", borderRadius: 2 }} />
-        </button>
         <div style={s.setupWrap}>
           <div style={s.logo}>
             <div style={s.logoLine}>
@@ -1454,17 +1449,19 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
   return (
     <>
       {showProfile && <ProfileModal profile={profile} onClose={() => setShowProfile(false)} onSignOut={onSignOut} />}
-      <div style={{ width: collapsed ? 0 : "min(280px, 80vw)", minWidth: collapsed ? 0 : "min(280px, 80vw)", height: "100vh", background: "#08080e", borderRight: collapsed ? "none" : "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", transition: "width 0.25s, min-width 0.25s", overflow: "hidden", position: "relative", zIndex: 10, flexShrink: 0 }}>
+      <div style={{ width: 280, minWidth: 280, height: "100vh", background: "#08080e", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", transition: "transform 0.28s cubic-bezier(0.4,0,0.2,1)", overflow: "hidden", position: "fixed", left: 0, top: 0, zIndex: 200, flexShrink: 0, transform: isCollapsed ? "translateX(-100%)" : "translateX(0)", boxShadow: isCollapsed ? "none" : "4px 0 24px rgba(0,0,0,0.5)" }}>
 
-        {/* Header */}
-        <div style={{ padding: "13px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", flexShrink: 0 }}>
-          {!collapsed && <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>REVIEWS</span>}
-          <button onClick={() => toggleCollapsed(p => !p)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, padding: 4, lineHeight: 1 }}>
-            {collapsed ? "▶" : "◀"}
+        {/* Header — hamburger is the only toggle */}
+        <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>REVIEWS</span>
+          <button onClick={toggleCollapsed} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 2px", display: "flex", flexDirection: "column", gap: 4, lineHeight: 1 }}>
+            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.5)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.5)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.5)", borderRadius: 2 }} />
           </button>
         </div>
 
-        {!isCollapsed && (
+        {true && (
           <>
             {/* Actions row */}
             <div style={{ padding: "10px 12px 6px", display: "flex", gap: 6, flexShrink: 0 }}>
