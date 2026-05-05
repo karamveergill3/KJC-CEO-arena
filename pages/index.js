@@ -1170,7 +1170,7 @@ const s = {
 };
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap');
   @media (max-width: 600px) {
     /* Task input stacks on mobile */
   }
@@ -1322,10 +1322,10 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
       onMouseLeave={e => { if (currentSessionId !== s.id) e.currentTarget.style.background = "transparent"; }}>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: currentSessionId === s.id ? "#e8a020" : "rgba(255,255,255,0.2)", flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: currentSessionId === s.id ? "#e8a020" : "#e8e8e8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Inter', system-ui, sans-serif" }}>
+        <div style={{ fontSize: 13.5, fontWeight: 600, color: currentSessionId === s.id ? "#e8a020" : "#f0f0f0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif", letterSpacing: 0.2 }}>
           {s.title || s.file_name || "Untitled"}
         </div>
-        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2, fontFamily: "'Inter', system-ui, sans-serif" }}>
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginTop: 2, fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: 0.3 }}>
           {new Date(s.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
         </div>
       </div>
@@ -1409,9 +1409,9 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
               {/* Unfoldered sessions */}
               {unfoldered.length === 0 && Object.keys(folders).length === 0 ? (
                 <div style={{ padding: "24px 8px", textAlign: "center", lineHeight: 1.9 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>No reviews yet.</div>
-                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 6 }}>Start a review to save it here.</div>
-                  <div style={{ fontSize: 13, color: "#e8a020", fontWeight: 600 }}>Don't slack g 👊</div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(255,255,255,0.85)", marginBottom: 4, fontFamily: "'Inter', system-ui, sans-serif" }}>No reviews yet.</div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginBottom: 6, fontFamily: "'Inter', system-ui, sans-serif" }}>Start a review to save it here.</div>
+                  <div style={{ fontSize: 15, color: "#e8a020", fontWeight: 700, letterSpacing: 1, fontFamily: "'Bebas Neue', 'Impact', 'Anton', system-ui, sans-serif" }}>DON'T SLACK G</div>
                 </div>
               ) : (
                 unfoldered.map(s => <SessionItem key={s.id} s={s} folderId={null} />)
