@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-
+ 
 const gold = '#e8a020';
 const goldDim = 'rgba(232,160,32,0.15)';
-
+ 
 const input = {
   width: '100%',
   padding: '13px 16px',
@@ -19,7 +19,7 @@ const input = {
   marginBottom: 14,
   boxSizing: 'border-box',
 };
-
+ 
 const btn = {
   width: '100%',
   padding: '14px',
@@ -34,7 +34,7 @@ const btn = {
   fontFamily: 'inherit',
   marginTop: 4,
 };
-
+ 
 const btnSecondary = {
   ...btn,
   background: 'transparent',
@@ -42,7 +42,7 @@ const btnSecondary = {
   color: '#ccc',
   marginTop: 10,
 };
-
+ 
 const err = {
   fontSize: 13,
   color: '#f07070',
@@ -52,7 +52,7 @@ const err = {
   borderRadius: 8,
   border: '1px solid rgba(220,50,50,0.2)',
 };
-
+ 
 const success = {
   fontSize: 13,
   color: '#3ee89a',
@@ -62,7 +62,7 @@ const success = {
   borderRadius: 8,
   border: '1px solid rgba(62,232,154,0.2)',
 };
-
+ 
 export default function Auth() {
   const router = useRouter();
   // Screens: 'login' | 'signup' | 'verify' | 'username'
@@ -70,7 +70,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
-
+ 
   // Signup fields
   const [signupData, setSignupData] = useState({ firstName: '', lastName: '', email: '', dob: '', password: '', confirmPassword: '' });
   // Verify
@@ -80,7 +80,7 @@ export default function Auth() {
   const [username, setUsername] = useState('');
   // Login
   const [loginData, setLoginData] = useState({ username: '', password: '' });
-
+ 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError(''); setMsg('');
@@ -91,7 +91,7 @@ export default function Auth() {
     // Validate age (must be 13+)
     const age = (new Date() - new Date(dob)) / (1000 * 60 * 60 * 24 * 365.25);
     if (age < 13) return setError('You must be at least 13 years old.');
-
+ 
     setLoading(true);
     const { data, error: signupErr } = await supabase.auth.signUp({
       email,
@@ -102,17 +102,17 @@ export default function Auth() {
       },
     });
     setLoading(false);
-
+ 
     if (signupErr) return setError(signupErr.message);
     setPendingEmail(email);
     setScreen('verify');
     setMsg(`A 6-digit code has been sent to ${email}`);
   };
-
+ 
   const handleVerify = async (e) => {
     e.preventDefault();
     setError(''); setMsg('');
-    if (verifyCode.length !== 6) return setError('Please enter the 6-digit code.');
+    if (verifyCode.length !== 8) return setError('Please enter the 8-digit code.');
     setLoading(true);
     const { error: verifyErr } = await supabase.auth.verifyOtp({
       email: pendingEmail,
@@ -124,30 +124,30 @@ export default function Auth() {
     setScreen('username');
     setMsg('Email verified! Now choose your username.');
   };
-
+ 
   const handleUsername = async (e) => {
     e.preventDefault();
     setError(''); setMsg('');
     if (!username || username.length < 3) return setError('Username must be at least 3 characters.');
     if (!/^[a-zA-Z0-9_]+$/.test(username)) return setError('Username can only contain letters, numbers and underscores.');
     setLoading(true);
-
+ 
     // Check uniqueness
     const { data: existing } = await supabase
       .from('profiles')
       .select('username')
       .eq('username', username.toLowerCase())
       .single();
-
+ 
     if (existing) {
       setLoading(false);
       return setError('That username is already taken.');
     }
-
+ 
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return setError('Session expired. Please sign up again.'); }
-
+ 
     // Save profile
     const { error: profileErr } = await supabase
       .from('profiles')
@@ -159,49 +159,49 @@ export default function Auth() {
         dob: user.user_metadata.dob,
         created_at: new Date().toISOString(),
       });
-
+ 
     setLoading(false);
     if (profileErr) return setError(profileErr.message);
     router.push('/');
   };
-
+ 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(''); setMsg('');
     if (!loginData.username || !loginData.password) return setError('Please enter your username and password.');
     setLoading(true);
-
+ 
     // Look up email from username
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
       .select('id')
       .eq('username', loginData.username.toLowerCase())
       .single();
-
+ 
     if (profileErr || !profile) {
       setLoading(false);
       return setError('Username not found.');
     }
-
+ 
     // Get email for this user id
     const { data: emailData, error: emailErr } = await supabase
       .rpc('get_email_by_id', { user_id: profile.id });
-
+ 
     if (emailErr || !emailData) {
       setLoading(false);
       return setError('Could not find account. Please contact support.');
     }
-
+ 
     const { error: loginErr } = await supabase.auth.signInWithPassword({
       email: emailData,
       password: loginData.password,
     });
-
+ 
     setLoading(false);
     if (loginErr) return setError('Incorrect password.');
     router.push('/');
   };
-
+ 
   const wrap = {
     minHeight: '100vh',
     background: '#0a0a0f',
@@ -211,7 +211,7 @@ export default function Auth() {
     padding: '20px 16px',
     fontFamily: "'Inter', system-ui, sans-serif",
   };
-
+ 
   const card = {
     width: '100%',
     maxWidth: 420,
@@ -220,7 +220,7 @@ export default function Auth() {
     borderRadius: 16,
     padding: '36px 32px',
   };
-
+ 
   return (
     <>
       <Head>
@@ -240,10 +240,10 @@ export default function Auth() {
             </div>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 }}>CODE REVIEW ARENA</div>
           </div>
-
+ 
           {error && <div style={err}>{error}</div>}
           {msg && <div style={success}>{msg}</div>}
-
+ 
           {/* LOGIN */}
           {screen === 'login' && (
             <>
@@ -264,7 +264,7 @@ export default function Auth() {
               </div>
             </>
           )}
-
+ 
           {/* SIGNUP */}
           {screen === 'signup' && (
             <>
@@ -303,19 +303,19 @@ export default function Auth() {
               </div>
             </>
           )}
-
+ 
           {/* VERIFY EMAIL */}
           {screen === 'verify' && (
             <>
               <h2 style={{ fontSize: 22, fontWeight: 700, color: '#fff', marginBottom: 8 }}>Check your email</h2>
               <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', marginBottom: 24, lineHeight: 1.6 }}>
-                We sent a 6-digit code to <strong style={{ color: '#fff' }}>{pendingEmail}</strong>. Enter it below to verify your account.
+                We sent an 8-digit code to <strong style={{ color: '#fff' }}>{pendingEmail}</strong>. Enter the 8-digit code below to verify your account.
               </p>
               <form onSubmit={handleVerify}>
                 <input style={{ ...input, fontSize: 28, letterSpacing: 12, textAlign: 'center', fontFamily: 'monospace' }}
-                  placeholder="000000" maxLength={6} value={verifyCode}
+                  placeholder="00000000" maxLength={8} value={verifyCode}
                   onChange={e => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))} />
-                <button type="submit" style={btn} disabled={loading || verifyCode.length !== 6}>
+                <button type="submit" style={btn} disabled={loading || verifyCode.length !== 8}>
                   {loading ? 'VERIFYING...' : 'VERIFY EMAIL'}
                 </button>
                 <button type="button" style={btnSecondary} onClick={async () => {
@@ -325,7 +325,7 @@ export default function Auth() {
               </form>
             </>
           )}
-
+ 
           {/* SET USERNAME */}
           {screen === 'username' && (
             <>
