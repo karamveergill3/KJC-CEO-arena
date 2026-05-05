@@ -1116,7 +1116,7 @@ const s = {
   root: { minHeight: "100vh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", position: "relative", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif", overflowY: "auto" },
 
   // ── Setup ──
-  setupWrap: { position: "relative", zIndex: 1, maxWidth: 780, margin: "0 auto", padding: "64px 20px 80px", width: "100%" },
+  setupWrap: { position: "relative", zIndex: 1, maxWidth: 780, margin: "0 auto", padding: "clamp(48px, 8vw, 64px) clamp(14px, 4vw, 20px) 80px", width: "100%", boxSizing: "border-box" },
   logo: { marginBottom: 56, textAlign: "center" },
   logoLine: { display: "flex", gap: 14, justifyContent: "center", alignItems: "baseline", marginBottom: 10 },
   logoText: { fontSize: "clamp(24px, 8vw, 36px)", fontWeight: 800, letterSpacing: 6, color: "#fff" },
@@ -1136,13 +1136,13 @@ const s = {
   cta: { display: "flex", alignItems: "center", justifyContent: "center", width: "100%", padding: "18px 32px", background: "linear-gradient(135deg, #e8a020, #c07010)", border: "none", borderRadius: 10, cursor: "pointer", fontSize: 14, fontWeight: 700, letterSpacing: 3, color: "#000", fontFamily: "inherit", boxShadow: "0 4px 24px rgba(232,160,32,0.25)" },
 
   // ── Review top bar ──
-  topBar: { position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.98)", backdropFilter: "blur(20px)", flexWrap: "wrap", gap: 8 },
+  topBar: { position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(10,10,15,0.98)", backdropFilter: "blur(20px)", flexWrap: "wrap", gap: 6, minHeight: 48 },
   topLeft: { display: "flex", alignItems: "center", gap: 18 },
   backBtn: { background: "none", border: "none", color: "rgba(255,255,255,0.65)", fontSize: 12, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit", padding: 0, fontWeight: 500 },
   topFile: { fontSize: 13, color: "rgba(255,255,255,0.65)", fontWeight: 400 },
 
   charIndicators: { display: "flex", gap: 6, flexWrap: "wrap" },
-  indicator: { display: "flex", alignItems: "center", gap: 6, padding: "5px 10px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, transition: "all 0.35s", background: "rgba(255,255,255,0.02)" },
+  indicator: { display: "flex", alignItems: "center", gap: 5, padding: "4px 8px", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 20, transition: "all 0.35s", background: "rgba(255,255,255,0.02)" },
 
   controls: { display: "flex", gap: 8 },
   ctrlBtn: { padding: "7px 16px", background: "transparent", border: "1px solid rgba(255,255,255,0.12)", fontSize: 11, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit", borderRadius: 8, transition: "all 0.2s", color: "#ccc", fontWeight: 500 },
@@ -1152,25 +1152,25 @@ const s = {
   codeToggleBtn: { background: "transparent", border: "none", color: "rgba(255,255,255,0.55)", fontSize: 11, letterSpacing: 1, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 },
 
   codePanel: { background: "#06060d", borderBottom: "1px solid rgba(255,255,255,0.04)", maxHeight: 220, overflowY: "auto", position: "relative", zIndex: 2 },
-  codePre: { margin: 0, padding: "18px 28px", fontSize: 12, color: "rgba(255,255,255,0.75)", lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "'Fira Code', 'Courier New', monospace" },
+  codePre: { margin: 0, padding: "12px 16px", fontSize: "clamp(10px, 2.5vw, 12px)", color: "rgba(255,255,255,0.75)", lineHeight: 1.7, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "'Fira Code', 'Courier New', monospace" },
 
   // ── Feed ──
-  feed: { flex: 1, overflowY: "auto", padding: "20px 16px 0", position: "relative", zIndex: 1, maxWidth: "860px", width: "100%", margin: "0 auto", alignSelf: "center", boxSizing: "border-box" },
+  feed: { flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "16px 12px 0", position: "relative", zIndex: 1, maxWidth: "860px", width: "100%", margin: "0 auto", alignSelf: "center", boxSizing: "border-box", minWidth: 0 },
   emptyState: { textAlign: "center", padding: "80px 0" },
 
-  msgRow: { display: "flex", gap: 18, marginBottom: 32, animation: "fadeUp 0.35s ease forwards" },
+  msgRow: { display: "flex", gap: 12, marginBottom: 24, animation: "fadeUp 0.35s ease forwards", minWidth: 0, overflow: "hidden" },
   msgGutter: { display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 44 },
   msgAvatar: { width: 44, height: 44, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: "rgba(255,255,255,0.02)", overflow: "hidden", transition: "all 0.4s" },
   msgLine: { width: 1, flex: 1, marginTop: 8, opacity: 0.1, minHeight: 20, background: "rgba(255,255,255,0.2)" },
-  msgContent: { flex: 1, paddingTop: 6 },
+  msgContent: { flex: 1, paddingTop: 6, minWidth: 0, overflow: "hidden" },
   msgMeta: { display: "flex", alignItems: "center", gap: 12, marginBottom: 10 },
   msgName: { fontSize: 14, fontWeight: 700, letterSpacing: 0.5, color: "#fff" },
   msgText: { fontSize: 15, lineHeight: 1.9, color: "rgba(255,255,255,0.92)", fontFamily: "'Georgia', 'Times New Roman', serif", whiteSpace: "pre-wrap" },
 
   // ── Fixed code ──
   fixedHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 22px", background: "rgba(62,232,154,0.06)", border: "1px solid rgba(62,232,154,0.18)", borderRadius: "12px 12px 0 0", flexWrap: "wrap", gap: 10 },
-  fixedCodeBlock: { border: "1px solid rgba(62,232,154,0.12)", borderTop: "none", borderRadius: "0 0 12px 12px", background: "#04080a", maxHeight: 900, overflowY: "auto" },
-  fixedCodePre: { margin: 0, padding: "22px 26px", fontSize: 12.5, color: "rgba(62,232,154,0.75)", lineHeight: 1.75, whiteSpace: "pre-wrap", wordBreak: "break-word", fontFamily: "'Fira Code', 'Courier New', monospace" },
+  fixedCodeBlock: { border: "1px solid rgba(62,232,154,0.12)", borderTop: "none", borderRadius: "0 0 12px 12px", background: "#04080a", maxHeight: "clamp(300px, 60vh, 900px)", overflowY: "auto", WebkitOverflowScrolling: "touch" },
+  fixedCodePre: { margin: 0, padding: "clamp(12px, 3vw, 22px) clamp(14px, 3vw, 26px)", fontSize: "clamp(10px, 2.5vw, 12.5px)", color: "rgba(62,232,154,0.75)", lineHeight: 1.75, whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "break-word", fontFamily: "'Fira Code', 'Courier New', monospace" },
 
   err: { padding: "12px 28px", background: "rgba(220,50,50,0.06)", borderBottom: "1px solid rgba(220,50,50,0.15)", fontSize: 13, color: "#f07070", position: "relative", zIndex: 2 },
 };
@@ -1194,6 +1194,57 @@ const css = `
   input::placeholder { color:rgba(255,255,255,0.25) !important; }
   textarea::placeholder { color:rgba(255,255,255,0.25) !important; }
   select option { background:#0c0c14; }
+  /* ── Mobile responsive (iPhone 15/16 = 390px) ── */
+  @media (max-width: 480px) {
+    html, body { overflow-x: hidden; }
+
+    /* Top bar wrapping */
+    [data-topbar] { padding: 8px 10px !important; gap: 6px !important; }
+
+    /* Avatar sizes in message feed */
+    [data-msggutter] { width: 32px !important; }
+    [data-msgavatar] { width: 32px !important; height: 32px !important; min-width: 32px !important; }
+
+    /* Message text */
+    [data-msgtext] { font-size: 13px !important; line-height: 1.7 !important; }
+
+    /* Setup padding */
+    [data-setupwrap] { padding: 48px 14px 60px !important; }
+
+    /* Prevent iOS input zoom */
+    input, textarea, select { font-size: 16px !important; }
+
+    /* Fixed code block scrollable */
+    [data-fixedcode] { max-height: 300px !important; font-size: 10px !important; }
+
+    /* KJC logo */
+    [data-kjclogo] { top: 10px !important; right: 10px !important; }
+    [data-kjclogo] [data-kjctext] { font-size: 12px !important; letter-spacing: 2px !important; }
+    [data-kjclogo] [data-capitaltext] { font-size: 9px !important; letter-spacing: 3px !important; }
+
+    /* Reviewer cards */
+    [data-reviewercard] { padding: 12px 12px !important; }
+    [data-specialtypills] { flex-wrap: wrap !important; }
+
+    /* Phase bar text smaller */
+    [data-phasebar] { padding: 5px 12px !important; font-size: 9px !important; }
+
+    /* Hide filename on mobile */
+    [data-topfile] { display: none !important; }
+
+    /* Banner buttons stack */
+    [data-bannerbtns] { flex-direction: column !important; }
+    [data-bannerbtns] button { width: 100% !important; }
+
+    /* Indicators smaller */
+    [data-indicator] { padding: 4px 7px !important; gap: 4px !important; }
+    [data-indicator] span { font-size: 9px !important; }
+  }
+
+  @media (max-width: 380px) {
+    [data-charIndicators] { display: none !important; }
+    [data-msgtext] { font-size: 12px !important; }
+  }
 `;
 
 
@@ -1345,7 +1396,7 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
   return (
     <>
       {showProfile && <ProfileModal profile={profile} onClose={() => setShowProfile(false)} onSignOut={onSignOut} />}
-      <div style={{ width: collapsed ? 48 : 280, minWidth: collapsed ? 48 : 280, height: "100vh", background: "#08080e", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", transition: "width 0.25s, min-width 0.25s", overflow: "hidden", position: "relative", zIndex: 10, flexShrink: 0 }}>
+      <div style={{ width: collapsed ? 0 : "min(280px, 80vw)", minWidth: collapsed ? 0 : "min(280px, 80vw)", height: "100vh", background: "#08080e", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", transition: "width 0.25s, min-width 0.25s", overflow: "hidden", position: "relative", zIndex: 10, flexShrink: 0 }}>
 
         {/* Header */}
         <div style={{ padding: "13px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", flexShrink: 0 }}>
@@ -1544,7 +1595,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
-      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f" }}>
+      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f", position: "relative" }}>
         <Sidebar
           sessions={sessions}
           onLoad={handleLoadSession}
