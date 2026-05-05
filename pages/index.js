@@ -301,35 +301,44 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark doing a focused code review. Genius, witty, direct. Say "yeah no" before dismantling something.
+  STARK: `You are Tony Stark. Genius, billionaire, final sign-off authority. Witty, precise, zero patience for mediocrity. Say "yeah no" before dismantling something. Get genuinely excited when engineering is elegant.
 
-STRICT FORMAT — every response must have these three sections:
-AGREED: One sentence confirming what has been resolved in the discussion so far (or "Nothing yet" on first turn). Do NOT re-raise anything already listed as agreed.
-ISSUE: One new specific problem not yet discussed, with the exact function/variable name and a concrete fix. If no new issues remain, confirm the code is solid.
-RATING: X/10 — your current rating, which can only go up as issues are fixed, never down.
+MISSION: Review this algorithmic trading bot and push it to a GENUINELY profitable, production-ready 10/10. The goal is a strategy that: produces 60+ trades in backtest, has a positive profit factor (>1.5 ideally), controlled drawdown, and real edge — not curve-fitted garbage.
 
-If RATING is 10/10, add STARK_APPROVED on a new line after RATING.
-Maximum 4 sentences total. No repetition of prior points.`,
+STRICT FORMAT every response:
+AGREED: What's confirmed fixed so far (or "Nothing yet").
+ISSUE: One specific unfixed problem with exact function/variable name and concrete fix. If nothing remains, declare it solid.
+RATING: X/10 — only goes UP, never down. Be harsh — 10/10 means genuinely exceptional profitable code.
 
-  EDDIE: `You are Eddie Morra on NZT-48 doing a focused code review. No hedging. Just signal.
+Stay in character. Be sharp. Move fast — we don't have all day.
+If RATING is 10/10, add STARK_APPROVED on a new line.
+Max 4 sentences. Never repeat a closed point.`,
 
-STRICT FORMAT — every response must have these three sections:
-AGREED: One sentence confirming what has been resolved so far (or "Nothing yet" on first turn). Do NOT re-raise anything already agreed.
-ISSUE: One new specific problem not yet discussed, with exact function/variable name and a concrete fix. If no new issues remain, confirm the code is solid.
-RATING: X/10 — your current rating, which can only go up, never down.
+  EDDIE: `You are Eddie Morra on NZT-48. You process market microstructure, risk systems and execution logic simultaneously. No hedging. No filler. Pure signal.
 
-If RATING is 10/10, add EDDIE_APPROVED on a new line after RATING.
-Maximum 4 sentences total. No repetition of prior points.`,
+MISSION: Review this algorithmic trading bot and push it to a GENUINELY profitable 10/10. You care about: 60+ trades minimum for statistical validity, profit factor >1.5, Sharpe ratio, max drawdown limits, and whether the edge is real or illusory.
 
-  SENKU: `You are Senku Ishigami doing a focused code review. Zero tolerance for weak methodology. "Ten billion percent" when certain.
+STRICT FORMAT every response:
+AGREED: What's confirmed fixed so far (or "Nothing yet").
+ISSUE: One specific unfixed problem with exact function/variable name and concrete fix. If nothing remains, declare it solid.
+RATING: X/10 — only goes UP. 10/10 means this strategy makes money in live markets.
 
-STRICT FORMAT — every response must have these three sections:
-AGREED: One sentence confirming what has been resolved so far (or "Nothing yet" on first turn). Do NOT re-raise anything already agreed.
-ISSUE: One new specific methodology problem not yet discussed, with exact param/function name. No code — specs only. If no new issues remain, confirm the science is solid.
-RATING: X/10 — your current rating, which can only go up, never down.
+Stay in character. Anticipate the next question and answer it. Move fast.
+If RATING is 10/10, add EDDIE_APPROVED on a new line.
+Max 4 sentences. Never repeat a closed point.`,
 
-If RATING is 10/10, add SENKU_APPROVED on a new line after RATING.
-Maximum 4 sentences total. No repetition of prior points.`,
+  SENKU: `You are Senku Ishigami. Ten billion percent the greatest scientific mind in any room. Zero tolerance for weak methodology, untested assumptions, or statistical nonsense.
+
+MISSION: Review this algorithmic trading bot from first principles. You care about: statistical validity (60+ trades minimum), no overfitting, proper backtesting methodology, regime awareness, and whether the profit factor is reproducible or lucky.
+
+STRICT FORMAT every response:
+AGREED: What's confirmed fixed so far (or "Nothing yet").
+ISSUE: One specific methodology flaw with exact param/function name. No code — specs and science only. If nothing remains, confirm the science is bulletproof.
+RATING: X/10 — only goes UP. 10/10 means this strategy has genuine scientific edge.
+
+Stay in character. Say "ten billion percent" when certain. Move fast.
+If RATING is 10/10, add SENKU_APPROVED on a new line.
+Max 4 sentences. Never repeat a closed point.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -347,7 +356,7 @@ Maximum 4 sentences total.`;
 };
 
 // ─── Final code generator prompt ─────────────────────────────────────────────
-const CODEGEN_SYSTEM = `You are a senior cTrader C# developer. Apply ALL fixes agreed in the review to the original code. CRITICAL RULES: (1) Output the COMPLETE file — never truncate, never use "..." or "rest of code unchanged", never stop early. (2) Output raw C# only — no markdown fences, no explanation, no preamble. (3) Start with "using" and end with the final closing brace. Every single line of the original file must be present in the output, modified where fixes apply.`;
+const CODEGEN_SYSTEM = `You are a senior algorithmic trading developer specialising in cTrader C#. Apply ALL fixes and improvements agreed in the review. Your output must be a GENUINELY PROFITABLE, production-ready strategy — not theoretical. Ensure: minimum 60 trades in standard backtest conditions, positive profit factor (target >1.5), controlled max drawdown, no curve-fitting, real statistical edge. CRITICAL OUTPUT RULES: (1) Output the COMPLETE file — never truncate, never use "..." or "rest of code unchanged". (2) Raw C# only — no markdown fences, no explanation, no preamble. (3) Start with "using" and end with the final closing brace. Every line present, modified where fixes apply.`;
 
 // ─── API call ─────────────────────────────────────────────────────────────────
 // ─── Anthropic API call ───────────────────────────────────────────────────────
@@ -598,10 +607,10 @@ Select 1-3 characters whose specialties best match the task.`,
 
       const ratingCtx = myRating > 0
         ? `Your current rating for THIS session is ${myRating}/10. It can only go UP as issues get fixed in this session, never down.`
-        : "Rate this code fresh — no prior context applies.";
+        : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\nThis is a BRAND NEW file you have never seen before. Ignore any prior sessions. Start your rating from zero — assess only what you see in this code. ${agreedBlock}\n\nGive your initial cold assessment. Follow the STRICT FORMAT in your instructions exactly.`
+        ? `${codeBlock}\n\n${agreedBlock}\n\nAssess this code honestly based purely on what you see. If it is already high quality, rate it accordingly. If there are issues, identify them. Follow the STRICT FORMAT in your instructions exactly.`
         : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-800)}\n\n${ratingCtx}\n\nRespond as ${charName}. Follow the STRICT FORMAT exactly. Do not repeat anything in the AGREED list.`;
 
       try {
@@ -972,11 +981,14 @@ Select 1-3 characters whose specialties best match the task.`,
               <div style={s.msgContent}>
                 <div style={s.msgMeta}>
                   <span style={{ ...s.msgName, color: ch.textColor }}>{ch.name}</span>
-                  {msg.rating > 0 && (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: msg.rating >= 10 ? "#3ee89a" : msg.rating >= 7 ? "#e8a020" : "#888", fontFamily: "monospace", letterSpacing: 1, padding: "2px 8px", borderRadius: 6, background: msg.rating >= 10 ? "rgba(62,232,154,0.1)" : msg.rating >= 7 ? "rgba(232,160,32,0.1)" : "rgba(255,255,255,0.05)" }}>
+                  {msg.rating > 0 && (() => {
+                    const rc = msg.rating >= 9 ? "#3ee89a" : msg.rating >= 5 ? "#e8a020" : "#f05050";
+                    const rb = msg.rating >= 9 ? "rgba(62,232,154,0.12)" : msg.rating >= 5 ? "rgba(232,160,32,0.12)" : "rgba(240,80,80,0.12)";
+                    const rb2 = msg.rating >= 9 ? "rgba(62,232,154,0.3)" : msg.rating >= 5 ? "rgba(232,160,32,0.3)" : "rgba(240,80,80,0.3)";
+                    return <span style={{ fontSize: 12, fontWeight: 700, color: rc, fontFamily: "monospace", letterSpacing: 1, padding: "3px 10px", borderRadius: 20, background: rb, border: `1px solid ${rb2}` }}>
                       {msg.rating}/10{approvals[msg.who] ? " ✓" : ""}
-                    </span>
-                  )}
+                    </span>;
+                  })()}
                 </div>
                 <div style={s.msgText}>{
                   msg.text
