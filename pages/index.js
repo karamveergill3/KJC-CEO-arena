@@ -821,9 +821,9 @@ Select 1-3 characters whose specialties best match the task.`,
           </div>
         </div>
 
-        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 24, padding: "0 clamp(14px, 4vw, 32px) 60px", width: "100%", maxWidth: 1300, margin: "0 auto", boxSizing: "border-box", alignItems: "flex-start" }}>
-        {/* Left column — existing setup content */}
-        <div style={{ flex: "0 0 min(520px, 100%)", minWidth: 0 }}>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: 20, padding: "0 clamp(14px, 4vw, 28px) 60px", width: "100%", maxWidth: 1200, margin: "0 auto", boxSizing: "border-box", alignItems: "flex-start" }}>
+        {/* Left column — setup content */}
+        <div style={{ flex: "1 1 420px", minWidth: 0, maxWidth: 600 }}>
           <div style={s.logo}>
             <div style={s.logoLine}>
               <span style={s.logoText}>REVIEW</span>
@@ -979,8 +979,8 @@ Select 1-3 characters whose specialties best match the task.`,
           {error && <div style={{ ...s.err, marginTop: 16 }}>⚠ {error}</div>}
         </div>{/* end left column */}
 
-        {/* Right column — DNA Library (desktop only) */}
-        <div className="dna-col" style={{ flex: 1, minWidth: 260, paddingTop: 8 }}>
+        {/* Right column — DNA Library */}
+        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 8 }}>
           <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
         </div>
 
