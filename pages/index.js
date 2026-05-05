@@ -361,7 +361,7 @@ const CODEGEN_SYSTEM = `You are a senior algorithmic trading developer specialis
 // ─── API call ─────────────────────────────────────────────────────────────────
 // ─── Anthropic API call ───────────────────────────────────────────────────────
 const callAPI = async (system, userContent, maxTokens = 280, _unused) => {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
