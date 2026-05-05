@@ -377,6 +377,87 @@ const callAPI = async (system, userContent, maxTokens = 280, _unused) => {
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────
+// ─── DNA Library Panel ───────────────────────────────────────────────────────
+function DnaLibrary({ sessions, onLoadSession }) {
+  const [expanded, setExpanded] = useState(null);
+
+  const dnaSessionss = (sessions || []).filter(s => {
+    try { return s.messages && JSON.parse(typeof s.messages === "string" ? s.messages : JSON.stringify(s.messages))?.dnaCard; }
+    catch { return false; }
+  });
+
+  const riskColor = (r) => r === "Aggressive" ? "#f07070" : r === "Conservative" ? "#3ee89a" : "#e8a020";
+  const riskBg = (r) => r === "Aggressive" ? "rgba(240,80,80,0.12)" : r === "Conservative" ? "rgba(62,232,154,0.12)" : "rgba(232,160,32,0.12)";
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", minHeight: 320 }}>
+      {/* Header */}
+      <div style={{ padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 18 }}>🧬</span>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#c084fc", letterSpacing: 3 }}>STRATEGY DNA LIBRARY</div>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Your reviewed strategy profiles</div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: "12px" }}>
+        {dnaSessionss.length === 0 ? (
+          <div style={{ padding: "40px 20px", textAlign: "center" }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>🧬</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>No DNA profiles yet.</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>Complete a review and generate<br/>Strategy DNA to build your library.</div>
+            <div style={{ fontSize: 13, color: "#c084fc", fontWeight: 700, marginTop: 12, fontFamily: "'Bebas Neue', Impact, sans-serif", letterSpacing: 2 }}>DON'T SLACK G</div>
+          </div>
+        ) : (
+          dnaSessionss.map(s => {
+            let dna = null;
+            try {
+              const msgs = typeof s.messages === "string" ? JSON.parse(s.messages) : s.messages;
+              dna = msgs?.dnaCard;
+            } catch {}
+            if (!dna) return null;
+            const isExp = expanded === s.id;
+            return (
+              <div key={s.id} style={{ marginBottom: 8, border: `1px solid ${isExp ? "rgba(192,132,252,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: 10, overflow: "hidden", transition: "all 0.2s" }}>
+                <div onClick={() => setExpanded(isExp ? null : s.id)}
+                  style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", background: isExp ? "rgba(168,85,247,0.08)" : "rgba(255,255,255,0.02)" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", fontFamily: "'Bebas Neue', Impact, sans-serif", letterSpacing: 2, marginBottom: 2 }}>{dna.personality}</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.file_name || s.title || "Untitled"}</div>
+                  </div>
+                  <span style={{ fontSize: 10, padding: "3px 10px", borderRadius: 20, background: riskBg(dna.risk_profile), color: riskColor(dna.risk_profile), fontWeight: 600, flexShrink: 0 }}>{dna.risk_profile}</span>
+                  <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>{isExp ? "▲" : "▼"}</span>
+                </div>
+                {isExp && (
+                  <div style={{ padding: "14px", background: "rgba(168,85,247,0.03)", borderTop: "1px solid rgba(168,85,247,0.1)" }}>
+                    <div style={{ fontSize: 13, color: "#fff", fontStyle: "italic", marginBottom: 12, lineHeight: 1.6 }}>"{dna.verdict}"</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                      {[
+                        { label: "⚡ EDGE", value: dna.edge },
+                        { label: "✅ BEST FOR", value: dna.best_conditions },
+                      ].map(({ label, value }) => (
+                        <div key={label} style={{ padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
+                          <div style={{ fontSize: 9, color: "rgba(192,132,252,0.6)", letterSpacing: 2, marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => onLoadSession(s)}
+                      style={{ width: "100%", padding: "9px", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 7, color: "#c084fc", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1 }}>
+                      OPEN SESSION →
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState(DEFAULT_CODE);
@@ -740,7 +821,9 @@ Select 1-3 characters whose specialties best match the task.`,
           </div>
         </div>
 
-        <div style={s.setupWrap}>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", gap: 24, padding: "0 clamp(14px, 4vw, 32px) 60px", width: "100%", maxWidth: 1300, margin: "0 auto", boxSizing: "border-box", alignItems: "flex-start" }}>
+        {/* Left column — existing setup content */}
+        <div style={{ flex: "0 0 min(520px, 100%)", minWidth: 0 }}>
           <div style={s.logo}>
             <div style={s.logoLine}>
               <span style={s.logoText}>REVIEW</span>
@@ -894,7 +977,14 @@ Select 1-3 characters whose specialties best match the task.`,
             BEGIN REVIEW ▶
           </button>
           {error && <div style={{ ...s.err, marginTop: 16 }}>⚠ {error}</div>}
+        </div>{/* end left column */}
+
+        {/* Right column — DNA Library (desktop only) */}
+        <div className="dna-col" style={{ flex: 1, minWidth: 260, paddingTop: 8 }}>
+          <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
         </div>
+
+        </div>{/* end two-col */}
         <style>{css}</style>
       </div>
     );
@@ -1267,7 +1357,7 @@ const s = {
   root: { minHeight: "100vh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", position: "relative", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif", overflowY: "auto", overflowX: "hidden", maxWidth: "100vw" },
 
   // ── Setup ──
-  setupWrap: { position: "relative", zIndex: 1, maxWidth: 780, margin: "0 auto", padding: "clamp(48px, 8vw, 64px) clamp(14px, 4vw, 20px) 80px", width: "100%", boxSizing: "border-box" },
+  setupWrap: { position: "relative", zIndex: 1, width: "100%", boxSizing: "border-box" },
   logo: { marginBottom: 56, textAlign: "center" },
   logoLine: { display: "flex", gap: 14, justifyContent: "center", alignItems: "baseline", marginBottom: 10 },
   logoText: { fontSize: "clamp(24px, 8vw, 36px)", fontWeight: 800, letterSpacing: 6, color: "#fff" },
