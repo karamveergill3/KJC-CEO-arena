@@ -687,11 +687,6 @@ Select 1-3 characters whose specialties best match the task.`,
     return (
       <div style={s.root}>
         <GridBg />
-        <div style={{ position: "absolute", top: 24, right: 32, zIndex: 2, display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 14, fontWeight: 800, letterSpacing: 3, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>KJC</span>
-          <span style={{ width: 1, height: 14, background: "rgba(232,160,32,0.4)" }} />
-          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 4, color: "#c8900a" }}>CAPITAL</span>
-        </div>
         <div style={s.setupWrap}>
           <div style={s.logo}>
             <div style={s.logoLine}>
@@ -1107,7 +1102,7 @@ function GridBg() {
 
 const s = {
   // ── Root ──
-  root: { minHeight: "100vh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", position: "relative", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif" },
+  root: { minHeight: "100vh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", position: "relative", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif", overflowY: "auto" },
 
   // ── Setup ──
   setupWrap: { position: "relative", zIndex: 1, maxWidth: 780, margin: "0 auto", padding: "64px 20px 80px", width: "100%" },
@@ -1192,95 +1187,228 @@ const css = `
 
 
 // ─── Session Sidebar ──────────────────────────────────────────────────────────
+// ─── Profile Modal ───────────────────────────────────────────────────────────
+function ProfileModal({ profile, onClose, onSignOut }) {
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
+      <div style={{ background: "#0e0e18", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "32px 28px", maxWidth: 380, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
+        {/* Avatar */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28 }}>
+          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(232,160,32,0.15)", border: "2px solid rgba(232,160,32,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#e8a020", marginBottom: 14 }}>
+            {profile?.first_name?.[0]?.toUpperCase() || "?"}
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{profile?.first_name} {profile?.last_name}</div>
+          <div style={{ fontSize: 13, color: "#e8a020", fontWeight: 500 }}>@{profile?.username}</div>
+        </div>
+        {/* Details */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
+          {[
+            { label: "FIRST NAME", value: profile?.first_name },
+            { label: "LAST NAME", value: profile?.last_name },
+            { label: "USERNAME", value: `@${profile?.username}` },
+            { label: "DATE OF BIRTH", value: profile?.dob ? new Date(profile.dob).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "—" },
+            { label: "MEMBER SINCE", value: profile?.created_at ? new Date(profile.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "—" },
+          ].map(({ label, value }) => (
+            <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 2, fontWeight: 600 }}>{label}</span>
+              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>{value}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "11px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#ccc", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>Close</button>
+          <button onClick={onSignOut} style={{ flex: 1, padding: "11px", background: "rgba(240,80,80,0.1)", border: "1px solid rgba(240,80,80,0.25)", borderRadius: 8, color: "#f07070", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>Sign Out</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
 function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [folders, setFolders] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("kjc_folders") || "{}"); } catch { return {}; }
+  });
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [openFolders, setOpenFolders] = useState({});
+  const [dragOver, setDragOver] = useState(null);
 
-  const sideStyle = {
-    width: collapsed ? 48 : 280,
-    minWidth: collapsed ? 48 : 280,
-    height: "100vh",
-    background: "#08080e",
-    borderRight: "1px solid rgba(255,255,255,0.06)",
-    display: "flex",
-    flexDirection: "column",
-    transition: "width 0.25s, min-width 0.25s",
-    overflow: "hidden",
-    position: "relative",
-    zIndex: 10,
-    flexShrink: 0,
+  const saveFolders = (f) => {
+    setFolders(f);
+    try { localStorage.setItem("kjc_folders", JSON.stringify(f)); } catch {}
   };
 
-  return (
-    <div style={sideStyle}>
-      {/* Header */}
-      <div style={{ padding: collapsed ? "14px 10px" : "16px 16px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-        {!collapsed && (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 3, background: "linear-gradient(135deg, #e8a020, #f5c842)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>KJC</span>
-            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 4, color: "#c8900a" }}>CAPITAL</span>
-          </div>
-        )}
-        <button onClick={() => setCollapsed(p => !p)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontSize: 16, padding: 4, lineHeight: 1 }}>
-          {collapsed ? "▶" : "◀"}
-        </button>
+  const createFolder = () => {
+    if (!newFolderName.trim()) return;
+    const id = Date.now().toString();
+    saveFolders({ ...folders, [id]: { name: newFolderName.trim(), sessions: [] } });
+    setNewFolderName("");
+    setShowNewFolder(false);
+    setOpenFolders(p => ({ ...p, [id]: true }));
+  };
+
+  const addToFolder = (folderId, sessionId) => {
+    const updated = { ...folders };
+    Object.keys(updated).forEach(fid => {
+      updated[fid].sessions = updated[fid].sessions.filter(s => s !== sessionId);
+    });
+    updated[folderId].sessions = [...(updated[folderId].sessions || []), sessionId];
+    saveFolders(updated);
+  };
+
+  const removeFromFolder = (folderId, sessionId) => {
+    const updated = { ...folders };
+    updated[folderId].sessions = updated[folderId].sessions.filter(s => s !== sessionId);
+    saveFolders(updated);
+  };
+
+  const deleteFolder = (folderId) => {
+    const updated = { ...folders };
+    delete updated[folderId];
+    saveFolders(updated);
+  };
+
+  // Sessions not in any folder
+  const folderedIds = new Set(Object.values(folders).flatMap(f => f.sessions || []));
+  const unfoldered = sessions.filter(s => !folderedIds.has(s.id));
+
+  const SessionItem = ({ s, folderId }) => (
+    <div
+      draggable
+      onDragStart={e => e.dataTransfer.setData("sessionId", s.id)}
+      onClick={() => onLoad(s)}
+      style={{ padding: "8px 10px", borderRadius: 7, marginBottom: 2, cursor: "pointer", background: currentSessionId === s.id ? "rgba(232,160,32,0.1)" : "transparent", border: `1px solid ${currentSessionId === s.id ? "rgba(232,160,32,0.25)" : "transparent"}`, display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}
+      onMouseEnter={e => { if (currentSessionId !== s.id) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+      onMouseLeave={e => { if (currentSessionId !== s.id) e.currentTarget.style.background = "transparent"; }}>
+      <div style={{ width: 6, height: 6, borderRadius: "50%", background: currentSessionId === s.id ? "#e8a020" : "rgba(255,255,255,0.2)", flexShrink: 0 }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12.5, fontWeight: 500, color: currentSessionId === s.id ? "#e8a020" : "rgba(255,255,255,0.82)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: 0.2 }}>
+          {s.title || s.file_name || "Untitled"}
+        </div>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
+          {new Date(s.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+        </div>
       </div>
-
-      {!collapsed && (
-        <>
-          {/* New session */}
-          <div style={{ padding: "10px 12px", flexShrink: 0 }}>
-            <button onClick={onNew} style={{ width: "100%", padding: "9px 12px", background: "rgba(232,160,32,0.1)", border: "1px solid rgba(232,160,32,0.25)", borderRadius: 8, color: "#e8a020", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, textAlign: "left" }}>
-              + New Review
-            </button>
-          </div>
-
-          {/* Sessions list */}
-          <div style={{ flex: 1, overflowY: "auto", padding: "0 8px" }}>
-            {sessions.length === 0 ? (
-              <div style={{ padding: "20px 8px", fontSize: 12, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.7 }}>
-                No sessions yet.<br />Start a review to save it here.
-              </div>
-            ) : (
-              sessions.map(s => (
-                <div key={s.id} onClick={() => onLoad(s)}
-                  style={{ padding: "10px 10px", borderRadius: 8, marginBottom: 3, cursor: "pointer", background: currentSessionId === s.id ? "rgba(232,160,32,0.08)" : "transparent", border: `1px solid ${currentSessionId === s.id ? "rgba(232,160,32,0.2)" : "transparent"}`, display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}
-                  onMouseEnter={e => { if (currentSessionId !== s.id) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
-                  onMouseLeave={e => { if (currentSessionId !== s.id) e.currentTarget.style.background = "transparent"; }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: currentSessionId === s.id ? "#e8a020" : "rgba(255,255,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {s.title || s.file_name || "Untitled"}
-                    </div>
-                    <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
-                      {new Date(s.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                    </div>
-                  </div>
-                  <button onClick={e => { e.stopPropagation(); onDelete(s.id); }}
-                    style={{ background: "none", border: "none", color: "rgba(255,255,255,0.2)", cursor: "pointer", fontSize: 14, padding: 2, lineHeight: 1, flexShrink: 0 }}
-                    onMouseEnter={e => e.currentTarget.style.color = "#f07070"}
-                    onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.2)"}>×</button>
-                </div>
-              ))
-            )}
-          </div>
-
-          {/* User profile */}
-          <div style={{ padding: "12px 14px", borderTop: "1px solid rgba(255,255,255,0.05)", flexShrink: 0, display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(232,160,32,0.2)", border: "1px solid rgba(232,160,32,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "#e8a020", flexShrink: 0 }}>
-              {profile?.first_name?.[0]?.toUpperCase() || "?"}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {profile?.first_name} {profile?.last_name}
-              </div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>@{profile?.username}</div>
-            </div>
-            <button onClick={onSignOut} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 11, padding: 4, fontFamily: "inherit" }}
-              onMouseEnter={e => e.currentTarget.style.color = "#f07070"}
-              onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.3)"}>Sign out</button>
-          </div>
-        </>
-      )}
+      <button onClick={e => { e.stopPropagation(); folderId ? removeFromFolder(folderId, s.id) : onDelete(s.id); }}
+        style={{ background: "none", border: "none", color: "rgba(255,255,255,0.15)", cursor: "pointer", fontSize: 14, padding: "2px 4px", lineHeight: 1, flexShrink: 0, borderRadius: 4 }}
+        onMouseEnter={e => e.currentTarget.style.color = "#f07070"}
+        onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.15)"}>×</button>
     </div>
+  );
+
+  return (
+    <>
+      {showProfile && <ProfileModal profile={profile} onClose={() => setShowProfile(false)} onSignOut={onSignOut} />}
+      <div style={{ width: collapsed ? 48 : 280, minWidth: collapsed ? 48 : 280, height: "100vh", background: "#08080e", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", transition: "width 0.25s, min-width 0.25s", overflow: "hidden", position: "relative", zIndex: 10, flexShrink: 0 }}>
+
+        {/* Header */}
+        <div style={{ padding: collapsed ? "14px 10px" : "14px 14px 10px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          {!collapsed && (
+            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, background: "linear-gradient(135deg, #e8a020, #f5c842)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>KJC</span>
+              <span style={{ width: 1, height: 12, background: "rgba(232,160,32,0.3)" }} />
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 4, color: "#c8900a" }}>CAPITAL</span>
+            </div>
+          )}
+          <button onClick={() => setCollapsed(p => !p)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", fontSize: 14, padding: 4, lineHeight: 1 }}>
+            {collapsed ? "▶" : "◀"}
+          </button>
+        </div>
+
+        {!collapsed && (
+          <>
+            {/* Actions row */}
+            <div style={{ padding: "10px 12px 6px", display: "flex", gap: 6, flexShrink: 0 }}>
+              <button onClick={onNew} style={{ flex: 1, padding: "8px 10px", background: "rgba(232,160,32,0.1)", border: "1px solid rgba(232,160,32,0.2)", borderRadius: 7, color: "#e8a020", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", letterSpacing: 0.5 }}>
+                + New Review
+              </button>
+              <button onClick={() => setShowNewFolder(p => !p)} title="New Folder" style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "rgba(255,255,255,0.5)", fontSize: 14, cursor: "pointer", fontFamily: "inherit", lineHeight: 1 }}>
+                📁
+              </button>
+            </div>
+
+            {/* New folder input */}
+            {showNewFolder && (
+              <div style={{ padding: "0 12px 8px", display: "flex", gap: 6, flexShrink: 0 }}>
+                <input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => e.key === "Enter" && createFolder()}
+                  placeholder="Folder name..." autoFocus
+                  style={{ flex: 1, padding: "7px 10px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 7, color: "#fff", fontSize: 12, outline: "none", fontFamily: "inherit" }} />
+                <button onClick={createFolder} style={{ padding: "7px 10px", background: "rgba(232,160,32,0.15)", border: "1px solid rgba(232,160,32,0.25)", borderRadius: 7, color: "#e8a020", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>✓</button>
+              </div>
+            )}
+
+            {/* Sessions + Folders list */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "4px 8px 8px" }}>
+
+              {/* Folders */}
+              {Object.entries(folders).map(([fid, folder]) => {
+                const folderSessions = (folder.sessions || []).map(sid => sessions.find(s => s.id === sid)).filter(Boolean);
+                const isOpen = openFolders[fid];
+                return (
+                  <div key={fid}
+                    onDragOver={e => { e.preventDefault(); setDragOver(fid); }}
+                    onDragLeave={() => setDragOver(null)}
+                    onDrop={e => { e.preventDefault(); setDragOver(null); addToFolder(fid, e.dataTransfer.getData("sessionId")); }}
+                    style={{ marginBottom: 4 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, padding: "7px 8px", borderRadius: 7, cursor: "pointer", background: dragOver === fid ? "rgba(232,160,32,0.08)" : "rgba(255,255,255,0.03)", border: `1px solid ${dragOver === fid ? "rgba(232,160,32,0.3)" : "rgba(255,255,255,0.06)"}`, transition: "all 0.15s" }}
+                      onClick={() => setOpenFolders(p => ({ ...p, [fid]: !p[fid] }))}>
+                      <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>{isOpen ? "▾" : "▸"}</span>
+                      <span style={{ fontSize: 11 }}>📁</span>
+                      <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.75)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{folder.name}</span>
+                      <span style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginRight: 2 }}>{folderSessions.length}</span>
+                      <button onClick={e => { e.stopPropagation(); deleteFolder(fid); }}
+                        style={{ background: "none", border: "none", color: "rgba(255,255,255,0.15)", cursor: "pointer", fontSize: 12, padding: "1px 3px", lineHeight: 1, borderRadius: 3 }}
+                        onMouseEnter={e => e.currentTarget.style.color = "#f07070"}
+                        onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.15)"}>×</button>
+                    </div>
+                    {isOpen && (
+                      <div style={{ marginLeft: 14, marginTop: 2 }}>
+                        {folderSessions.length === 0
+                          ? <div style={{ padding: "6px 10px", fontSize: 11, color: "rgba(255,255,255,0.2)", fontStyle: "italic" }}>Drop reviews here</div>
+                          : folderSessions.map(s => <SessionItem key={s.id} s={s} folderId={fid} />)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Unfoldered sessions */}
+              {unfoldered.length === 0 && Object.keys(folders).length === 0 ? (
+                <div style={{ padding: "24px 8px", fontSize: 12, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.8 }}>
+                  No reviews yet.<br />Start a review to save it here.
+                </div>
+              ) : (
+                unfoldered.map(s => <SessionItem key={s.id} s={s} folderId={null} />)
+              )}
+            </div>
+
+            {/* Profile footer */}
+            <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", flexShrink: 0, display: "flex", alignItems: "center", gap: 10 }}>
+              <div onClick={() => setShowProfile(true)} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(232,160,32,0.15)", border: "1.5px solid rgba(232,160,32,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#e8a020", flexShrink: 0, cursor: "pointer", transition: "all 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 10px rgba(232,160,32,0.3)"}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+                {profile?.first_name?.[0]?.toUpperCase() || "?"}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {profile?.first_name} {profile?.last_name}
+                </div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>@{profile?.username}</div>
+              </div>
+              <button onClick={onSignOut}
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.28)", cursor: "pointer", fontSize: 11, padding: "4px 6px", fontFamily: "inherit", borderRadius: 5, letterSpacing: 0.5 }}
+                onMouseEnter={e => { e.currentTarget.style.color = "#f07070"; e.currentTarget.style.background = "rgba(240,80,80,0.08)"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.28)"; e.currentTarget.style.background = "none"; }}>
+                Sign out
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 
