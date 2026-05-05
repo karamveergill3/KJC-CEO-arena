@@ -908,10 +908,10 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>
 
         {/* KJC Capital logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto", marginRight: 12 }}>
-          <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 3, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "inherit" }}>KJC</span>
-          <span style={{ width: 1, height: 14, background: "rgba(232,160,32,0.4)" }} />
-          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 4, color: "#c8900a" }}>CAPITAL</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, marginLeft: "auto", marginRight: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "inherit" }}>KJC</span>
+          <span style={{ width: 1, height: 12, background: "rgba(232,160,32,0.4)" }} />
+          <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 3, color: "#c8900a" }}>CAPITAL</span>
         </div>
 
         <div style={s.controls}>
@@ -1140,7 +1140,7 @@ const s = {
   logoLine: { display: "flex", gap: 14, justifyContent: "center", alignItems: "baseline", marginBottom: 10 },
   logoText: { fontSize: "clamp(24px, 8vw, 36px)", fontWeight: 800, letterSpacing: 6, color: "#fff" },
   logoAccent: { fontSize: "clamp(24px, 8vw, 36px)", fontWeight: 800, letterSpacing: 6, color: "#e8a020" },
-  logoSub: { fontSize: 12, letterSpacing: 5, color: "rgba(255,255,255,0.55)", fontWeight: 400 },
+  logoSub: { fontSize: "clamp(9px, 2vw, 12px)", letterSpacing: "clamp(2px, 1vw, 5px)", color: "rgba(255,255,255,0.55)", fontWeight: 400 },
 
   charCard: { flex: 1, maxWidth: 200, padding: "22px 16px", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, textAlign: "center", background: "rgba(255,255,255,0.02)" },
   charAvatar: { fontSize: 22, marginBottom: 10 },
@@ -1567,6 +1567,7 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [loadedSession, setLoadedSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   useEffect(() => {
