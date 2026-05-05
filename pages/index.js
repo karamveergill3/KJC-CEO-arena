@@ -377,7 +377,7 @@ const callAPI = async (system, userContent, maxTokens = 280, _unused) => {
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────
-function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut }) {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState(DEFAULT_CODE);
   const [fileName, setFileName]     = useState("SilverScalper_v8.cs");
@@ -706,15 +706,15 @@ Select 1-3 characters whose specialties best match the task.`,
 
           {/* Task routing */}
           <div style={s.sectionLabel}>TASK ROUTING — OPTIONAL</div>
-          <div style={{ display: "flex", gap: 8, marginBottom: routeReason ? 8 : 24, alignItems: "stretch" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: routeReason ? 8 : 24 }}>
             <input
               value={taskInput}
               onChange={e => setTaskInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && routeByTask()}
-              placeholder="Describe your task — e.g. 'review risk management and SL logic' — and we'll pick the best reviewers"
-              style={{ flex: 1, padding: "9px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, borderRadius: 8, outline: "none", fontFamily: "inherit" }}
+              placeholder="Describe your task — e.g. 'review risk management'"
+              style={{ width: "100%", padding: "11px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", fontSize: 13, borderRadius: 8, outline: "none", fontFamily: "inherit", boxSizing: "border-box" }}
             />
-            <button onClick={routeByTask} disabled={routing} style={{ padding: "11px 20px", background: routing ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: routing ? "#555" : "#ccc", fontSize: 11, letterSpacing: 2, cursor: routing ? "not-allowed" : "pointer", borderRadius: 10, fontFamily: "inherit", whiteSpace: "nowrap", fontWeight: 600 }}>
+            <button onClick={routeByTask} disabled={routing} style={{ width: "100%", padding: "11px 20px", background: routing ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: routing ? "#555" : "#ccc", fontSize: 12, letterSpacing: 2, cursor: routing ? "not-allowed" : "pointer", borderRadius: 10, fontFamily: "inherit", fontWeight: 600 }}>
               {routing ? "ROUTING..." : "AUTO-SELECT ▶"}
             </button>
           </div>
@@ -865,6 +865,9 @@ Select 1-3 characters whose specialties best match the task.`,
       {/* Top bar */}
       <div style={s.topBar}>
         <div style={s.topLeft}>
+          {isSidebarCollapsed && (
+            <button onClick={onOpenSidebar} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, color: "rgba(255,255,255,0.7)", cursor: "pointer", fontSize: 14, padding: "4px 8px", lineHeight: 1, marginRight: 4 }}>☰</button>
+          )}
           <button onClick={() => { reset(); setScreen("setup"); }} style={s.backBtn}>← SETUP</button>
           <span style={{ fontSize: 10, color: "rgba(255,165,0,0.7)", letterSpacing: 1 }}>⬡ HAIKU</span>
           <div style={s.topFile}>{fileName}</div>
@@ -952,6 +955,14 @@ Select 1-3 characters whose specialties best match the task.`,
 
       {error && <div style={s.err}>⚠ {error}</div>}
 
+      {/* Mobile sidebar toggle — floating button */}
+      {collapsed !== undefined && (
+        <button
+          onClick={() => setCollapsed && setCollapsed(p => !p)}
+          style={{ display: "none" }}
+          className="mobile-sidebar-toggle"
+        />
+      )}
       {/* Feed */}
       <div style={s.feed}>
         {messages.length === 0 && !thinking && (
@@ -1327,8 +1338,13 @@ function ProfileModal({ profile, onClose, onSignOut }) {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId }) {
+function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange }) {
   const [collapsed, setCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
+  const toggleCollapsed = (val) => {
+    const newVal = typeof val === 'function' ? val(collapsed) : val;
+    setCollapsed(newVal);
+    if (onCollapsedChange) onCollapsedChange(newVal);
+  };
   const [showProfile, setShowProfile] = useState(false);
   const [folders, setFolders] = useState(() => {
     try { return JSON.parse(localStorage.getItem("kjc_folders") || "{}"); } catch { return {}; }
@@ -1404,12 +1420,12 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
   return (
     <>
       {showProfile && <ProfileModal profile={profile} onClose={() => setShowProfile(false)} onSignOut={onSignOut} />}
-      <div style={{ width: collapsed ? 0 : "min(280px, 80vw)", minWidth: collapsed ? 0 : "min(280px, 80vw)", height: "100vh", background: "#08080e", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", transition: "width 0.25s, min-width 0.25s", overflow: "hidden", position: "relative", zIndex: 10, flexShrink: 0 }}>
+      <div style={{ width: collapsed ? 0 : "min(280px, 80vw)", minWidth: collapsed ? 0 : "min(280px, 80vw)", height: "100vh", background: "#08080e", borderRight: collapsed ? "none" : "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", transition: "width 0.25s, min-width 0.25s", overflow: "hidden", position: "relative", zIndex: 10, flexShrink: 0 }}>
 
         {/* Header */}
         <div style={{ padding: "13px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", flexShrink: 0 }}>
           {!collapsed && <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>REVIEWS</span>}
-          <button onClick={() => setCollapsed(p => !p)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, padding: 4, lineHeight: 1 }}>
+          <button onClick={() => toggleCollapsed(p => !p)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, padding: 4, lineHeight: 1 }}>
             {collapsed ? "▶" : "◀"}
           </button>
         </div>
@@ -1519,6 +1535,7 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [loadedSession, setLoadedSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1604,6 +1621,13 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
       <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f", position: "relative", maxWidth: "100vw", isolation: "isolate" }}>
+        {/* Floating sidebar open tab — always visible when sidebar is closed */}
+        {isSidebarCollapsed && (
+          <button onClick={() => setIsSidebarCollapsed(false)} style={{ position: "fixed", top: "50%", left: 0, transform: "translateY(-50%)", zIndex: 50, background: "#08080e", border: "1px solid rgba(255,255,255,0.12)", borderLeft: "none", borderRadius: "0 8px 8px 0", padding: "14px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+            <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, lineHeight: 1 }}>▶</span>
+            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 8, letterSpacing: 1, writingMode: "vertical-rl", textOrientation: "mixed" }}>REVIEWS</span>
+          </button>
+        )}
         <Sidebar
           sessions={sessions}
           onLoad={handleLoadSession}
@@ -1612,6 +1636,7 @@ export default function Home() {
           profile={profile}
           onSignOut={handleSignOut}
           currentSessionId={currentSessionId}
+          onCollapsedChange={setIsSidebarCollapsed}
         />
         <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <Arena
@@ -1624,6 +1649,8 @@ export default function Home() {
             onSignOut={handleSignOut}
             loadedSession={loadedSession}
             currentSessionId={currentSessionId}
+            isSidebarCollapsed={isSidebarCollapsed}
+            onOpenSidebar={() => setIsSidebarCollapsed(false)}
           />
         </div>
       </div>
