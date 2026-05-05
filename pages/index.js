@@ -690,10 +690,18 @@ Select 1-3 characters whose specialties best match the task.`,
     return (
       <div style={s.root}>
         <GridBg />
-        <div style={{ position: "absolute", top: 20, right: 20, zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: 4, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>KJC</span>
-          <span style={{ width: 1, height: 16, background: "rgba(232,160,32,0.4)" }} />
-          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 5, color: "#c8900a" }}>CAPITAL</span>
+        {/* Top bar with hamburger + logo */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", flexShrink: 0 }}>
+          <button onClick={() => onOpenSidebar?.()} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, cursor: "pointer", padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>KJC</span>
+            <span style={{ width: 1, height: 10, background: "rgba(232,160,32,0.4)" }} />
+            <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 3, color: "#c8900a" }}>CAPITAL</span>
+          </div>
         </div>
 
         <div style={s.setupWrap}>
@@ -866,10 +874,10 @@ Select 1-3 characters whose specialties best match the task.`,
       {/* Top bar */}
       <div style={s.topBar}>
         <div style={s.topLeft}>
-          <button onClick={() => onOpenSidebar?.()} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 7, padding: "7px 9px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3, marginRight: 4 }}>
-            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
-            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
-            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+          <button onClick={() => onOpenSidebar?.()} title="Open reviews" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "8px 11px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, marginRight: 6 }}>
+            <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
           </button>
           <button onClick={() => { reset(); setScreen("setup"); }} style={s.backBtn}>← SETUP</button>
           <span style={{ fontSize: 10, color: "rgba(255,165,0,0.7)", letterSpacing: 1 }}>⬡ HAIKU</span>
@@ -1566,7 +1574,7 @@ export default function Home() {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [loadedSession, setLoadedSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // always starts closed
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
