@@ -690,7 +690,7 @@ Select 1-3 characters whose specialties best match the task.`,
     return (
       <div style={s.root}>
         <GridBg />
-        <div style={{ position: "fixed", top: 20, right: 24, zIndex: 50, display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ position: "absolute", top: 20, right: 20, zIndex: 10, display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: 4, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>KJC</span>
           <span style={{ width: 1, height: 16, background: "rgba(232,160,32,0.4)" }} />
           <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 5, color: "#c8900a" }}>CAPITAL</span>
@@ -1113,7 +1113,7 @@ function GridBg() {
 
 const s = {
   // ── Root ──
-  root: { minHeight: "100vh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", position: "relative", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif", overflowY: "auto" },
+  root: { minHeight: "100vh", background: "#0a0a0f", color: "#fff", display: "flex", flexDirection: "column", position: "relative", fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif", overflowY: "auto", overflowX: "hidden", maxWidth: "100vw" },
 
   // ── Setup ──
   setupWrap: { position: "relative", zIndex: 1, maxWidth: 780, margin: "0 auto", padding: "clamp(48px, 8vw, 64px) clamp(14px, 4vw, 20px) 80px", width: "100%", boxSizing: "border-box" },
@@ -1177,73 +1177,81 @@ const s = {
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap');
-  @media (max-width: 600px) {
-    /* Task input stacks on mobile */
-  }
   @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
   @keyframes pulse  { 0%,100%{opacity:0.2;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
-  * { box-sizing:border-box; }
-  ::-webkit-scrollbar { width:5px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:4px; }
-  ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.14); }
-  button:hover { opacity:0.8; }
-  @media (max-width: 600px) {
-    .kjc-logo { display: none; }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html {
+    overflow-x: hidden;
+    max-width: 100%;
+    -webkit-text-size-adjust: 100%;
   }
-  input::placeholder { color:rgba(255,255,255,0.25) !important; }
-  textarea::placeholder { color:rgba(255,255,255,0.25) !important; }
-  select option { background:#0c0c14; }
-  /* ── Mobile responsive (iPhone 15/16 = 390px) ── */
+
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+  }
+
+  /* Prevent ANY element causing horizontal scroll */
+  #__next, #__next > * {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+  button:hover { opacity: 0.8; }
+
+  /* Prevent iOS zoom on input focus */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  input::placeholder { color: rgba(255,255,255,0.25) !important; }
+  textarea::placeholder { color: rgba(255,255,255,0.25) !important; }
+  select option { background: #0c0c14; }
+
+  /* ── Tablet (768px) ── */
+  @media (max-width: 768px) {
+    /* Shrink top bar */
+    .top-bar { padding: 8px 12px !important; }
+    /* Smaller indicators */
+    .indicator-tag { font-size: 9px !important; }
+    .indicator-rating { font-size: 9px !important; }
+  }
+
+  /* ── Mobile (480px — iPhone SE, 13 mini) ── */
   @media (max-width: 480px) {
-    html, body { overflow-x: hidden; }
-
-    /* Top bar wrapping */
-    [data-topbar] { padding: 8px 10px !important; gap: 6px !important; }
-
-    /* Avatar sizes in message feed */
-    [data-msggutter] { width: 32px !important; }
-    [data-msgavatar] { width: 32px !important; height: 32px !important; min-width: 32px !important; }
-
-    /* Message text */
-    [data-msgtext] { font-size: 13px !important; line-height: 1.7 !important; }
-
-    /* Setup padding */
-    [data-setupwrap] { padding: 48px 14px 60px !important; }
-
-    /* Prevent iOS input zoom */
-    input, textarea, select { font-size: 16px !important; }
-
-    /* Fixed code block scrollable */
-    [data-fixedcode] { max-height: 300px !important; font-size: 10px !important; }
-
-    /* KJC logo */
-    [data-kjclogo] { top: 10px !important; right: 10px !important; }
-    [data-kjclogo] [data-kjctext] { font-size: 12px !important; letter-spacing: 2px !important; }
-    [data-kjclogo] [data-capitaltext] { font-size: 9px !important; letter-spacing: 3px !important; }
-
-    /* Reviewer cards */
-    [data-reviewercard] { padding: 12px 12px !important; }
-    [data-specialtypills] { flex-wrap: wrap !important; }
-
-    /* Phase bar text smaller */
-    [data-phasebar] { padding: 5px 12px !important; font-size: 9px !important; }
-
-    /* Hide filename on mobile */
-    [data-topfile] { display: none !important; }
-
-    /* Banner buttons stack */
-    [data-bannerbtns] { flex-direction: column !important; }
-    [data-bannerbtns] button { width: 100% !important; }
-
-    /* Indicators smaller */
-    [data-indicator] { padding: 4px 7px !important; gap: 4px !important; }
-    [data-indicator] span { font-size: 9px !important; }
+    /* Hide filename — no room */
+    .top-filename { display: none !important; }
+    /* Smaller control buttons */
+    .ctrl-btn { padding: 5px 10px !important; font-size: 10px !important; letter-spacing: 0 !important; }
+    /* Phase bar */
+    .phase-bar { padding: 5px 12px !important; font-size: 9px !important; }
+    /* Feed */
+    .msg-name { font-size: 12px !important; }
+    /* Setup screen */
+    .logo-text, .logo-accent { font-size: 28px !important; letter-spacing: 4px !important; }
+    .section-label { font-size: 9px !important; letter-spacing: 2px !important; }
+    /* Reviewer cards — ensure no overflow */
+    .reviewer-row { flex-wrap: wrap !important; }
+    .specialty-pill { font-size: 10px !important; }
+    /* Banner buttons */
+    .banner-actions { flex-direction: column !important; }
+    .banner-actions button { width: 100% !important; }
+    /* Fixed code */
+    .fixed-code-pre { font-size: 10px !important; padding: 12px !important; }
+    /* Code panel */
+    .code-pre { font-size: 10px !important; padding: 12px !important; }
   }
 
+  /* ── Small phones (375px — iPhone SE 2nd gen) ── */
   @media (max-width: 380px) {
-    [data-charIndicators] { display: none !important; }
-    [data-msgtext] { font-size: 12px !important; }
+    .char-indicators { display: none !important; }
+    .ctrl-btn { padding: 5px 8px !important; font-size: 9px !important; }
   }
 `;
 
@@ -1320,7 +1328,7 @@ function ProfileModal({ profile, onClose, onSignOut }) {
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
 function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   const [showProfile, setShowProfile] = useState(false);
   const [folders, setFolders] = useState(() => {
     try { return JSON.parse(localStorage.getItem("kjc_folders") || "{}"); } catch { return {}; }
@@ -1595,7 +1603,7 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
-      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f", position: "relative" }}>
+      <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f", position: "relative", maxWidth: "100vw", isolation: "isolate" }}>
         <Sidebar
           sessions={sessions}
           onLoad={handleLoadSession}
