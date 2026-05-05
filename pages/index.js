@@ -308,7 +308,7 @@ AGREED: One sentence confirming what has been resolved in the discussion so far 
 ISSUE: One new specific problem not yet discussed, with the exact function/variable name and a concrete fix. If no new issues remain, confirm the code is solid.
 RATING: X/10 — your current rating, which can only go up as issues are fixed, never down.
 
-If RATING is 9 or 10, add STARK_APPROVED on a new line after RATING.
+If RATING is 10/10, add STARK_APPROVED on a new line after RATING.
 Maximum 4 sentences total. No repetition of prior points.`,
 
   EDDIE: `You are Eddie Morra on NZT-48 doing a focused code review. No hedging. Just signal.
@@ -318,7 +318,7 @@ AGREED: One sentence confirming what has been resolved so far (or "Nothing yet" 
 ISSUE: One new specific problem not yet discussed, with exact function/variable name and a concrete fix. If no new issues remain, confirm the code is solid.
 RATING: X/10 — your current rating, which can only go up, never down.
 
-If RATING is 9 or 10, add EDDIE_APPROVED on a new line after RATING.
+If RATING is 10/10, add EDDIE_APPROVED on a new line after RATING.
 Maximum 4 sentences total. No repetition of prior points.`,
 
   SENKU: `You are Senku Ishigami doing a focused code review. Zero tolerance for weak methodology. "Ten billion percent" when certain.
@@ -328,7 +328,7 @@ AGREED: One sentence confirming what has been resolved so far (or "Nothing yet" 
 ISSUE: One new specific methodology problem not yet discussed, with exact param/function name. No code — specs only. If no new issues remain, confirm the science is solid.
 RATING: X/10 — your current rating, which can only go up, never down.
 
-If RATING is 9 or 10, add SENKU_APPROVED on a new line after RATING.
+If RATING is 10/10, add SENKU_APPROVED on a new line after RATING.
 Maximum 4 sentences total. No repetition of prior points.`,
 };
 
@@ -342,7 +342,7 @@ AGREED: One sentence confirming what has been resolved so far (or "Nothing yet" 
 ISSUE: One new specific problem not yet discussed. If no new issues remain, confirm the code is solid.
 RATING: X/10 — your current rating, which can only go up, never down.
 
-If RATING is 9 or 10, add ${key}_APPROVED on a new line after RATING.
+If RATING is 10/10, add ${key}_APPROVED on a new line after RATING.
 Maximum 4 sentences total.`;
 };
 
@@ -626,7 +626,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
         // Only approve on token + genuine 9+
         const newApprovals = { ...approvalsRef.current };
-        if (text.includes(`${who}_APPROVED`) && highestRatings[who] >= 9) newApprovals[who] = true;
+        if (text.includes(`${who}_APPROVED`) && highestRatings[who] >= 10) newApprovals[who] = true;
         approvalsRef.current = newApprovals;
         setApprovals({ ...newApprovals });
 
@@ -687,13 +687,18 @@ Select 1-3 characters whose specialties best match the task.`,
     return (
       <div style={s.root}>
         <GridBg />
+        <div style={{ position: "fixed", top: 20, right: 24, zIndex: 50, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 16, fontWeight: 800, letterSpacing: 4, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>KJC</span>
+          <span style={{ width: 1, height: 16, background: "rgba(232,160,32,0.4)" }} />
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 5, color: "#c8900a" }}>CAPITAL</span>
+        </div>
         <div style={s.setupWrap}>
           <div style={s.logo}>
             <div style={s.logoLine}>
               <span style={s.logoText}>REVIEW</span>
               <span style={s.logoAccent}>ARENA</span>
             </div>
-            <div style={s.logoSub}>{activeChars.map(k => ({...ALL_CHARS,...customChars})[k]?.tag||k).join(" · ")} — DEBATE UNTIL 9/10</div>
+            <div style={s.logoSub}>{activeChars.map(k => ({...ALL_CHARS,...customChars})[k]?.tag||k).join(" · ")} — DEBATE UNTIL 10/10</div>
           </div>
 
           {/* Task routing */}
@@ -833,7 +838,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
           <div style={{ marginBottom: 24, padding: "18px 22px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10 }}>
             <div style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.8 }}>
-              Use <span style={{ color: "#a855f7" }}>AUTO-SELECT</span> to route by task, or manually toggle reviewers. They debate until each rates it <span style={{ color: "#e8a020" }}>9/10</span>. Fixed code is always generated — on completion or when you hit <span style={{ color: "#e8a020" }}>STOP + EXPORT</span>.
+              Use <span style={{ color: "#a855f7" }}>AUTO-SELECT</span> to route by task, or manually toggle reviewers. They debate until each rates it <span style={{ color: "#e8a020" }}>10/10</span>. Fixed code is always generated — on completion or when you hit <span style={{ color: "#e8a020" }}>STOP + EXPORT</span>.
             </div>
           </div>
 
@@ -927,7 +932,7 @@ Select 1-3 characters whose specialties best match the task.`,
           {phase === "idle" && "READY"}
           {phase === "debating" && (running ? `DEBATING — ${messages.length} EXCHANGES` : "PAUSED")}
           {phase === "generating" && "✦ GENERATING FIXED CODE..."}
-          {phase === "done" && (allApproved ? "✦ CONSENSUS REACHED — 9/10 ACHIEVED" : "✦ FIXED CODE EXPORTED")}
+          {phase === "done" && (allApproved ? "✦ CONSENSUS REACHED — 10/10 ACHIEVED" : "✦ FIXED CODE EXPORTED")}
           {phase === "capped" && "⚠ CAP REACHED — CONSENSUS NOT YET MET"}
           {phase === "stopped" && "■ DEBATE STOPPED"}
         </span>
@@ -968,7 +973,7 @@ Select 1-3 characters whose specialties best match the task.`,
                 <div style={s.msgMeta}>
                   <span style={{ ...s.msgName, color: ch.textColor }}>{ch.name}</span>
                   {msg.rating > 0 && (
-                    <span style={{ fontSize: 12, fontWeight: 700, color: msg.rating >= 9 ? "#3ee89a" : msg.rating >= 7 ? "#e8a020" : "#888", fontFamily: "monospace", letterSpacing: 1, padding: "2px 8px", borderRadius: 6, background: msg.rating >= 9 ? "rgba(62,232,154,0.1)" : msg.rating >= 7 ? "rgba(232,160,32,0.1)" : "rgba(255,255,255,0.05)" }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: msg.rating >= 10 ? "#3ee89a" : msg.rating >= 7 ? "#e8a020" : "#888", fontFamily: "monospace", letterSpacing: 1, padding: "2px 8px", borderRadius: 6, background: msg.rating >= 10 ? "rgba(62,232,154,0.1)" : msg.rating >= 7 ? "rgba(232,160,32,0.1)" : "rgba(255,255,255,0.05)" }}>
                       {msg.rating}/10{approvals[msg.who] ? " ✓" : ""}
                     </span>
                   )}
@@ -1189,19 +1194,51 @@ const css = `
 // ─── Session Sidebar ──────────────────────────────────────────────────────────
 // ─── Profile Modal ───────────────────────────────────────────────────────────
 function ProfileModal({ profile, onClose, onSignOut }) {
+  const [photo, setPhoto] = useState(() => {
+    try { return localStorage.getItem("kjc_profile_photo") || null; } catch { return null; }
+  });
+
+  const handlePhoto = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      setPhoto(ev.target.result);
+      try { localStorage.setItem("kjc_profile_photo", ev.target.result); } catch {}
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const removePhoto = () => {
+    setPhoto(null);
+    try { localStorage.removeItem("kjc_profile_photo"); } catch {}
+  };
+
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div style={{ background: "#0e0e18", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "32px 28px", maxWidth: 380, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
-        {/* Avatar */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 28 }}>
-          <div style={{ width: 72, height: 72, borderRadius: "50%", background: "rgba(232,160,32,0.15)", border: "2px solid rgba(232,160,32,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#e8a020", marginBottom: 14 }}>
-            {profile?.first_name?.[0]?.toUpperCase() || "?"}
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
+      <div style={{ background: "#0e0e18", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "32px 28px", maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
+        {/* Avatar + photo upload */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
+          <div style={{ position: "relative", marginBottom: 12 }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(232,160,32,0.4)", background: "rgba(232,160,32,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, fontWeight: 800, color: "#e8a020" }}>
+              {photo
+                ? <img src={photo} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : profile?.first_name?.[0]?.toUpperCase() || "?"}
+            </div>
+            <label htmlFor="profile-photo-input" style={{ position: "absolute", bottom: 0, right: 0, width: 26, height: 26, borderRadius: "50%", background: "#e8a020", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
+              📷
+            </label>
+            <input id="profile-photo-input" type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
           </div>
+          {photo && (
+            <button onClick={removePhoto} style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", marginBottom: 4 }}>Remove photo</button>
+          )}
           <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{profile?.first_name} {profile?.last_name}</div>
           <div style={{ fontSize: 13, color: "#e8a020", fontWeight: 500 }}>@{profile?.username}</div>
         </div>
         {/* Details */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
           {[
             { label: "FIRST NAME", value: profile?.first_name },
             { label: "LAST NAME", value: profile?.last_name },
@@ -1371,8 +1408,10 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
 
               {/* Unfoldered sessions */}
               {unfoldered.length === 0 && Object.keys(folders).length === 0 ? (
-                <div style={{ padding: "24px 8px", fontSize: 12, color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.8 }}>
-                  No reviews yet.<br />Start a review to save it here.
+                <div style={{ padding: "24px 8px", textAlign: "center", lineHeight: 1.9 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>No reviews yet.</div>
+                  <div style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", marginBottom: 6 }}>Start a review to save it here.</div>
+                  <div style={{ fontSize: 13, color: "#e8a020", fontWeight: 600 }}>Don't slack g 👊</div>
                 </div>
               ) : (
                 unfoldered.map(s => <SessionItem key={s.id} s={s} folderId={null} />)
@@ -1381,10 +1420,10 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
 
             {/* Profile footer */}
             <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", flexShrink: 0, display: "flex", alignItems: "center", gap: 10 }}>
-              <div onClick={() => setShowProfile(true)} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(232,160,32,0.15)", border: "1.5px solid rgba(232,160,32,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#e8a020", flexShrink: 0, cursor: "pointer", transition: "all 0.2s" }}
+              <div onClick={() => setShowProfile(true)} style={{ width: 34, height: 34, borderRadius: "50%", overflow: "hidden", border: "1.5px solid rgba(232,160,32,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#e8a020", flexShrink: 0, cursor: "pointer", transition: "all 0.2s", background: "rgba(232,160,32,0.15)" }}
                 onMouseEnter={e => e.currentTarget.style.boxShadow = "0 0 10px rgba(232,160,32,0.3)"}
                 onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
-                {profile?.first_name?.[0]?.toUpperCase() || "?"}
+                {(() => { try { const p = localStorage.getItem("kjc_profile_photo"); return p ? <img src={p} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : profile?.first_name?.[0]?.toUpperCase() || "?"; } catch { return profile?.first_name?.[0]?.toUpperCase() || "?"; } })()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Inter', system-ui, sans-serif" }}>
