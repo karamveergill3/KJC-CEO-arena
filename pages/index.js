@@ -695,6 +695,12 @@ Select 1-3 characters whose specialties best match the task.`,
           <span style={{ width: 1, height: 16, background: "rgba(232,160,32,0.4)" }} />
           <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: 5, color: "#c8900a" }}>CAPITAL</span>
         </div>
+        {/* Hamburger top-left — always visible */}
+        <button onClick={() => setIsSidebarCollapsed(p => !p)} style={{ position: "fixed", top: 14, left: 14, zIndex: 100, background: "rgba(10,10,15,0.95)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "9px 11px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, backdropFilter: "blur(10px)" }}>
+          <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+          <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+          <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+        </button>
         <div style={s.setupWrap}>
           <div style={s.logo}>
             <div style={s.logoLine}>
@@ -865,9 +871,11 @@ Select 1-3 characters whose specialties best match the task.`,
       {/* Top bar */}
       <div style={s.topBar}>
         <div style={s.topLeft}>
-          {isSidebarCollapsed && (
-            <button onClick={onOpenSidebar} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, color: "rgba(255,255,255,0.7)", cursor: "pointer", fontSize: 14, padding: "4px 8px", lineHeight: 1, marginRight: 4 }}>☰</button>
-          )}
+          <button onClick={onOpenSidebar} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 7, padding: "7px 9px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 3, marginRight: 4 }}>
+            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+            <span style={{ display: "block", width: 16, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
+          </button>
           <button onClick={() => { reset(); setScreen("setup"); }} style={s.backBtn}>← SETUP</button>
           <span style={{ fontSize: 10, color: "rgba(255,165,0,0.7)", letterSpacing: 1 }}>⬡ HAIKU</span>
           <div style={s.topFile}>{fileName}</div>
@@ -1291,46 +1299,70 @@ function ProfileModal({ profile, onClose, onSignOut }) {
     try { localStorage.removeItem("kjc_profile_photo"); } catch {}
   };
 
+  const ff = "'Inter', 'SF Pro Display', system-ui, sans-serif";
+  const ffTitle = "'Bebas Neue', 'Impact', system-ui, sans-serif";
+
+  const fields = [
+    { label: "FIRST NAME", value: profile?.first_name },
+    { label: "LAST NAME", value: profile?.last_name },
+    { label: "USERNAME", value: `@${profile?.username}` },
+    { label: "DATE OF BIRTH", value: profile?.dob ? new Date(profile.dob).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "—" },
+    { label: "MEMBER SINCE", value: profile?.created_at ? new Date(profile.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "—" },
+  ];
+
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={onClose}>
-      <div style={{ background: "#0e0e18", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "32px 28px", maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
-        {/* Avatar + photo upload */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 24 }}>
-          <div style={{ position: "relative", marginBottom: 12 }}>
-            <div style={{ width: 80, height: 80, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(232,160,32,0.4)", background: "rgba(232,160,32,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 30, fontWeight: 800, color: "#e8a020" }}>
-              {photo
-                ? <img src={photo} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : profile?.first_name?.[0]?.toUpperCase() || "?"}
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px", backdropFilter: "blur(6px)" }} onClick={onClose}>
+      <div style={{ background: "linear-gradient(160deg, #0e0e1c 0%, #08080f 100%)", border: "1px solid rgba(232,160,32,0.2)", borderRadius: 20, padding: "0", maxWidth: 420, width: "100%", boxShadow: "0 30px 80px rgba(0,0,0,0.7), 0 0 60px rgba(232,160,32,0.05)", overflow: "hidden", fontFamily: ff }} onClick={e => e.stopPropagation()}>
+
+        {/* Gold header bar */}
+        <div style={{ height: 3, background: "linear-gradient(90deg, #e8a020, #f5c842, #c07010)" }} />
+
+        {/* Header */}
+        <div style={{ padding: "28px 28px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 18 }}>
+          {/* Avatar */}
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", overflow: "hidden", border: "2px solid rgba(232,160,32,0.5)", background: "rgba(232,160,32,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 800, color: "#e8a020", fontFamily: ffTitle, letterSpacing: 1 }}>
+              {photo ? <img src={photo} alt="profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : profile?.first_name?.[0]?.toUpperCase() || "?"}
             </div>
-            <label htmlFor="profile-photo-input" style={{ position: "absolute", bottom: 0, right: 0, width: 26, height: 26, borderRadius: "50%", background: "#e8a020", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 13, boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }}>
-              📷
-            </label>
+            <label htmlFor="profile-photo-input" style={{ position: "absolute", bottom: -2, right: -2, width: 24, height: 24, borderRadius: "50%", background: "#e8a020", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: 11, boxShadow: "0 2px 8px rgba(0,0,0,0.5)", border: "2px solid #0e0e1c" }}>📷</label>
             <input id="profile-photo-input" type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
           </div>
-          {photo && (
-            <button onClick={removePhoto} style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", marginBottom: 4 }}>Remove photo</button>
-          )}
-          <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginBottom: 4 }}>{profile?.first_name} {profile?.last_name}</div>
-          <div style={{ fontSize: 13, color: "#e8a020", fontWeight: 500 }}>@{profile?.username}</div>
-        </div>
-        {/* Details */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
-          {[
-            { label: "FIRST NAME", value: profile?.first_name },
-            { label: "LAST NAME", value: profile?.last_name },
-            { label: "USERNAME", value: `@${profile?.username}` },
-            { label: "DATE OF BIRTH", value: profile?.dob ? new Date(profile.dob).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "—" },
-            { label: "MEMBER SINCE", value: profile?.created_at ? new Date(profile.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "—" },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
-              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 2, fontWeight: 600 }}>{label}</span>
-              <span style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>{value}</span>
+
+          {/* Name block */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: "#fff", letterSpacing: 0.5, fontFamily: ff, lineHeight: 1.2, marginBottom: 4 }}>
+              {profile?.first_name} {profile?.last_name}
             </div>
-          ))}
+            <div style={{ fontSize: 13, color: "#e8a020", fontWeight: 600, letterSpacing: 1 }}>@{profile?.username}</div>
+            {photo && (
+              <button onClick={removePhoto} style={{ marginTop: 6, fontSize: 11, color: "rgba(255,255,255,0.3)", background: "none", border: "none", cursor: "pointer", fontFamily: ff, padding: 0, letterSpacing: 0.5 }}>Remove photo</button>
+            )}
+          </div>
+
+          {/* KJC badge */}
+          <div style={{ flexShrink: 0, textAlign: "right" }}>
+            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, background: "linear-gradient(135deg, #e8a020, #f5c842)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontFamily: ffTitle }}>KJC</div>
+            <div style={{ fontSize: 8, letterSpacing: 3, color: "#c8900a", fontWeight: 700 }}>CAPITAL</div>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "11px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "#ccc", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>Close</button>
-          <button onClick={onSignOut} style={{ flex: 1, padding: "11px", background: "rgba(240,80,80,0.1)", border: "1px solid rgba(240,80,80,0.25)", borderRadius: 8, color: "#f07070", fontSize: 13, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 }}>Sign Out</button>
+
+        {/* Detail rows */}
+        <div style={{ padding: "16px 28px 20px" }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(232,160,32,0.6)", letterSpacing: 4, marginBottom: 12, fontFamily: ffTitle }}>PROFILE DETAILS</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {fields.map(({ label, value }) => (
+              <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "rgba(255,255,255,0.03)", borderRadius: 10, border: "1px solid rgba(255,255,255,0.05)" }}>
+                <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", letterSpacing: 2, fontWeight: 700, fontFamily: ffTitle }}>{label}</span>
+                <span style={{ fontSize: 15, color: "#fff", fontWeight: 600, fontFamily: ff, letterSpacing: 0.3 }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ padding: "0 28px 28px", display: "flex", gap: 10 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "13px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10, color: "#fff", fontSize: 12, cursor: "pointer", fontFamily: ff, fontWeight: 700, letterSpacing: 2 }}>CLOSE</button>
+          <button onClick={onSignOut} style={{ flex: 1, padding: "13px", background: "rgba(240,80,80,0.08)", border: "1px solid rgba(240,80,80,0.25)", borderRadius: 10, color: "#f07070", fontSize: 12, cursor: "pointer", fontFamily: ff, fontWeight: 700, letterSpacing: 2 }}>SIGN OUT</button>
         </div>
       </div>
     </div>
@@ -1621,13 +1653,7 @@ export default function Home() {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
       <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "#0a0a0f", position: "relative", maxWidth: "100vw", isolation: "isolate" }}>
-        {/* Floating sidebar open tab — always visible when sidebar is closed */}
-        {isSidebarCollapsed && (
-          <button onClick={() => setIsSidebarCollapsed(false)} style={{ position: "fixed", top: "50%", left: 0, transform: "translateY(-50%)", zIndex: 50, background: "#08080e", border: "1px solid rgba(255,255,255,0.12)", borderLeft: "none", borderRadius: "0 8px 8px 0", padding: "14px 8px", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-            <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, lineHeight: 1 }}>▶</span>
-            <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 8, letterSpacing: 1, writingMode: "vertical-rl", textOrientation: "mixed" }}>REVIEWS</span>
-          </button>
-        )}
+
         <Sidebar
           sessions={sessions}
           onLoad={handleLoadSession}
@@ -1650,7 +1676,7 @@ export default function Home() {
             loadedSession={loadedSession}
             currentSessionId={currentSessionId}
             isSidebarCollapsed={isSidebarCollapsed}
-            onOpenSidebar={() => setIsSidebarCollapsed(false)}
+            onOpenSidebar={() => setIsSidebarCollapsed(p => !p)}
           />
         </div>
       </div>
