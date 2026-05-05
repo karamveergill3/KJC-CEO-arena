@@ -1285,11 +1285,11 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
       onMouseLeave={e => { if (currentSessionId !== s.id) e.currentTarget.style.background = "transparent"; }}>
       <div style={{ width: 6, height: 6, borderRadius: "50%", background: currentSessionId === s.id ? "#e8a020" : "rgba(255,255,255,0.2)", flexShrink: 0 }} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12.5, fontWeight: 500, color: currentSessionId === s.id ? "#e8a020" : "rgba(255,255,255,0.82)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", letterSpacing: 0.2 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: currentSessionId === s.id ? "#e8a020" : "#e8e8e8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Inter', system-ui, sans-serif" }}>
           {s.title || s.file_name || "Untitled"}
         </div>
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 1 }}>
-          {new Date(s.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2, fontFamily: "'Inter', system-ui, sans-serif" }}>
+          {new Date(s.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
         </div>
       </div>
       <button onClick={e => { e.stopPropagation(); folderId ? removeFromFolder(folderId, s.id) : onDelete(s.id); }}
@@ -1305,15 +1305,9 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
       <div style={{ width: collapsed ? 48 : 280, minWidth: collapsed ? 48 : 280, height: "100vh", background: "#08080e", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", transition: "width 0.25s, min-width 0.25s", overflow: "hidden", position: "relative", zIndex: 10, flexShrink: 0 }}>
 
         {/* Header */}
-        <div style={{ padding: collapsed ? "14px 10px" : "14px 14px 10px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-          {!collapsed && (
-            <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, background: "linear-gradient(135deg, #e8a020, #f5c842)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>KJC</span>
-              <span style={{ width: 1, height: 12, background: "rgba(232,160,32,0.3)" }} />
-              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 4, color: "#c8900a" }}>CAPITAL</span>
-            </div>
-          )}
-          <button onClick={() => setCollapsed(p => !p)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", cursor: "pointer", fontSize: 14, padding: 4, lineHeight: 1 }}>
+        <div style={{ padding: "13px 12px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", flexShrink: 0 }}>
+          {!collapsed && <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.45)", letterSpacing: 3, fontFamily: "'Inter', system-ui, sans-serif" }}>REVIEWS</span>}
+          <button onClick={() => setCollapsed(p => !p)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 14, padding: 4, lineHeight: 1 }}>
             {collapsed ? "▶" : "◀"}
           </button>
         </div>
@@ -1393,10 +1387,10 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
                 {profile?.first_name?.[0]?.toUpperCase() || "?"}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.85)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "'Inter', system-ui, sans-serif" }}>
                   {profile?.first_name} {profile?.last_name}
                 </div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>@{profile?.username}</div>
+                <div style={{ fontSize: 11, color: "#e8a020", marginTop: 2, fontWeight: 500, fontFamily: "'Inter', system-ui, sans-serif" }}>@{profile?.username}</div>
               </div>
               <button onClick={onSignOut}
                 style={{ background: "none", border: "none", color: "rgba(255,255,255,0.28)", cursor: "pointer", fontSize: 11, padding: "4px 6px", fontFamily: "inherit", borderRadius: 5, letterSpacing: 0.5 }}
