@@ -311,7 +311,7 @@ export default function Auth() {
               <form onSubmit={handleVerify}>
                 <input style={{ ...input, fontSize: 28, letterSpacing: 12, textAlign: 'center', fontFamily: 'monospace' }}
                   placeholder="00000000" maxLength={8} value={verifyCode}
-                  onChange={e => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                  onChange={e => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 8))} />
                 <button type="submit" style={btn} disabled={loading || verifyCode.length !== 8}>
                   {loading ? 'VERIFYING...' : 'VERIFY EMAIL'}
                 </button>
