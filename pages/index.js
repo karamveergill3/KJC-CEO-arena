@@ -377,6 +377,117 @@ const callAPI = async (system, userContent, maxTokens = 280, _unused) => {
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────
+
+// ─── Live Activity Tracker ────────────────────────────────────────────────────
+function LiveTracker({ profile }) {
+  const [activity, setActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchActivity = async () => {
+    try {
+      const res = await fetch("/api/activity");
+      if (res.ok) {
+        const data = await res.json();
+        setActivity(data);
+      }
+    } catch(e) {}
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchActivity();
+    const interval = setInterval(fetchActivity, 10000); // poll every 10s
+    return () => clearInterval(interval);
+  }, []);
+
+  const statusColor = (s) => s === "reviewing" ? "#38b8f0" : s === "completed" ? "#3ee89a" : "#e8a020";
+  const statusBg = (s) => s === "reviewing" ? "rgba(56,184,240,0.1)" : s === "completed" ? "rgba(62,232,154,0.1)" : "rgba(232,160,32,0.1)";
+  const statusLabel = (s) => s === "reviewing" ? "REVIEWING" : s === "completed" ? "COMPLETED" : "EXPORTED";
+
+  const timeAgo = (ts) => {
+    const diff = Math.floor((Date.now() - new Date(ts)) / 1000);
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+    return `${Math.floor(diff/86400)}d ago`;
+  };
+
+  const reviewing = activity.filter(a => a.status === "reviewing");
+  const recent = activity.filter(a => a.status !== "reviewing").slice(0, 8);
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", marginTop: 12 }}>
+      {/* Header */}
+      <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 8, width: 8, height: 8, borderRadius: "50%", background: "#3ee89a", display: "inline-block", boxShadow: "0 0 6px #3ee89a", animation: "pulse 2s infinite" }} />
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#3ee89a", letterSpacing: 3 }}>LIVE ACTIVITY</div>
+        </div>
+        <button onClick={fetchActivity} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 12, padding: 2, fontFamily: "inherit" }}>↻</button>
+      </div>
+
+      <div style={{ padding: "10px 12px" }}>
+        {loading ? (
+          <div style={{ padding: "20px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Loading...</div>
+        ) : (
+          <>
+            {/* Currently reviewing */}
+            {reviewing.length > 0 && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: 3, marginBottom: 6 }}>NOW REVIEWING</div>
+                {reviewing.map((a, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, background: "rgba(56,184,240,0.06)", border: "1px solid rgba(56,184,240,0.15)", marginBottom: 4 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(56,184,240,0.15)", border: "1px solid rgba(56,184,240,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#38b8f0", flexShrink: 0 }}>
+                      {a.username?.[0]?.toUpperCase() || "?"}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@{a.username}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.file_name || "Unknown file"}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {[0,1,2].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "#38b8f0", animation: `pulse 1.2s ${i*0.2}s ease-in-out infinite` }} />)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Recent completions */}
+            {recent.length > 0 && (
+              <div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: 3, marginBottom: 6 }}>RECENT</div>
+                {recent.map((a, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, marginBottom: 3, background: "rgba(255,255,255,0.02)" }}>
+                    <div style={{ width: 24, height: 24, borderRadius: "50%", background: statusBg(a.status), border: `1px solid ${statusColor(a.status)}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: statusColor(a.status), flexShrink: 0 }}>
+                      {a.username?.[0]?.toUpperCase() || "?"}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@{a.username}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.file_name || "Unknown"}</div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, flexShrink: 0 }}>
+                      <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 10, background: statusBg(a.status), color: statusColor(a.status), fontWeight: 700, letterSpacing: 1 }}>{statusLabel(a.status)}</span>
+                      <span style={{ fontSize: 9, color: "rgba(255,255,255,0.25)" }}>{timeAgo(a.updated_at)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {reviewing.length === 0 && recent.length === 0 && (
+              <div style={{ padding: "24px 16px", textAlign: "center" }}>
+                <div style={{ fontSize: 24, marginBottom: 8, opacity: 0.2 }}>◈</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>No activity yet.</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 4 }}>Be the first to start a review.</div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── DNA Library Panel ───────────────────────────────────────────────────────
 function DnaLibrary({ sessions, onLoadSession }) {
   const [expanded, setExpanded] = useState(null);
@@ -626,6 +737,18 @@ Output the complete fixed code.`;
     }
     setPhase("done");
     setRunning(false);
+
+    // Log activity — review completed
+    try {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        fetch("/api/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ status: "completed", file_name: fileName }),
+        }).catch(() => {});
+      });
+    } catch(e) {}
   };
 
   const addCustomChar = async () => {
@@ -696,6 +819,18 @@ Select 1-3 characters whose specialties best match the task.`,
     setRunning(true); runRef.current = true;
     setPhase("debating");
     setScreen("review");
+
+    // Log activity — user started reviewing
+    try {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        fetch("/api/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ status: "reviewing", file_name: fileName }),
+        }).catch(() => {});
+      });
+    } catch(e) {}
 
     // If continuing, restore state; otherwise start fresh
     let history = continueDebate ? debateHistoryRef.current : "";
@@ -991,9 +1126,10 @@ Select 1-3 characters whose specialties best match the task.`,
           {error && <div style={{ ...s.err, marginTop: 16 }}>⚠ {error}</div>}
         </div>{/* end left column */}
 
-        {/* Right column — DNA Library */}
+        {/* Right column — DNA Library + Live Tracker */}
         <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 170, display: "flex", flexDirection: "column", alignSelf: "stretch" }}>
           <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
+          <LiveTracker profile={profile} />
         </div>
 
         </div>{/* end two-col */}
