@@ -381,10 +381,17 @@ const callAPI = async (system, userContent, maxTokens = 280, _unused) => {
 function DnaLibrary({ sessions, onLoadSession }) {
   const [expanded, setExpanded] = useState(null);
 
-  const dnaSessionss = (sessions || []).filter(s => {
-    try { return s.messages && JSON.parse(typeof s.messages === "string" ? s.messages : JSON.stringify(s.messages))?.dnaCard; }
-    catch { return false; }
-  });
+  const dnaSessionss = [];
+  // safely filter sessions that have DNA cards
+  try {
+    (sessions || []).forEach(s => {
+      try {
+        if (!s || !s.messages) return;
+        const msgs = typeof s.messages === "string" ? JSON.parse(s.messages) : s.messages;
+        if (msgs && msgs.dnaCard) dnaSessionss.push(s);
+      } catch {}
+    });
+  } catch {}
 
   const riskColor = (r) => r === "Aggressive" ? "#f07070" : r === "Conservative" ? "#3ee89a" : "#e8a020";
   const riskBg = (r) => r === "Aggressive" ? "rgba(240,80,80,0.12)" : r === "Conservative" ? "rgba(62,232,154,0.12)" : "rgba(232,160,32,0.12)";
@@ -416,8 +423,8 @@ function DnaLibrary({ sessions, onLoadSession }) {
             let dna = null;
             try {
               const msgs = typeof s.messages === "string" ? JSON.parse(s.messages) : s.messages;
-              dna = msgs?.dnaCard;
-            } catch {}
+              dna = (msgs && msgs.dnaCard) ? msgs.dnaCard : null;
+            } catch { return null; }
             if (!dna) return null;
             const isExp = expanded === s.id;
             return (
@@ -588,7 +595,10 @@ ${msgs.map(m => m.text).join(" ").slice(0, 1500)}
 Generate the Strategy DNA JSON.`;
       const result = await callAPI(DNA_SYSTEM, content, 600);
       const clean = result.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
+      // Extract JSON object from response
+      const jsonMatch = clean.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error("No JSON in response");
+      const parsed = JSON.parse(jsonMatch[0]);
       setDnaCard(parsed);
     } catch(e) {
       console.error("DNA generation failed:", e);
