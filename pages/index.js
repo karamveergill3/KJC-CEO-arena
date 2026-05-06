@@ -992,7 +992,7 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library */}
-        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 152, display: "flex", flexDirection: "column", alignSelf: "flex-start" }}>
+        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 0, display: "flex", flexDirection: "column", alignSelf: "flex-start" }}>
           <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
         </div>
 
@@ -1499,6 +1499,11 @@ const css = `
     .fixed-code-pre { font-size: 10px !important; padding: 12px !important; }
     /* Code panel */
     .code-pre { font-size: 10px !important; padding: 12px !important; }
+  }
+
+  /* ── DNA Library — full width on mobile ── */
+  @media (max-width: 860px) {
+    .dna-col { flex: 0 0 100% !important; width: 100% !important; padding-top: 0 !important; }
   }
 
   /* ── Small phones (375px — iPhone SE 2nd gen) ── */
