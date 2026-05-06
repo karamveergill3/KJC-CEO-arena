@@ -390,13 +390,15 @@ function DnaLibrary({ sessions, onLoadSession }) {
   const riskBg = (r) => r === "Aggressive" ? "rgba(240,80,80,0.12)" : r === "Conservative" ? "rgba(62,232,154,0.12)" : "rgba(232,160,32,0.12)";
 
   return (
-    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", flex: 1, display: "flex", flexDirection: "column" }}>
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column" }}>
       {/* Header */}
-      <div style={{ padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontSize: 18 }}>🧬</span>
-        <div>
-          <div style={{ fontSize: 12, fontWeight: 800, color: "#c084fc", letterSpacing: 3 }}>STRATEGY DNA LIBRARY</div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>Your reviewed strategy profiles</div>
+      <div style={{ padding: "16px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 16 }}>🧬</span>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#c084fc", letterSpacing: 3 }}>STRATEGY DNA LIBRARY</div>
+        </div>
+        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
+          After each 10/10 review, generate a DNA profile for your strategy. It analyses your code and produces a complete personality card — edge, conditions, risk profile, strengths and weaknesses. Build your library over time to compare strategies at a glance.
         </div>
       </div>
 
@@ -980,7 +982,7 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library */}
-        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 152, display: "flex", flexDirection: "column", alignSelf: "stretch" }}>
+        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 152, display: "flex", flexDirection: "column", alignSelf: "flex-start" }}>
           <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
         </div>
 
