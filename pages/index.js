@@ -992,7 +992,7 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library */}
-        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 0, display: "flex", flexDirection: "column", alignSelf: "flex-start" }}>
+        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 170, display: "flex", flexDirection: "column", alignSelf: "stretch" }}>
           <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
         </div>
 
