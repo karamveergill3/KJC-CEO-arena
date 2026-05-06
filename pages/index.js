@@ -1104,14 +1104,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
       {error && <div style={s.err}>⚠ {error}</div>}
 
-      {/* Mobile sidebar toggle — floating button */}
-      {collapsed !== undefined && (
-        <button
-          onClick={() => setCollapsed && setCollapsed(p => !p)}
-          style={{ display: "none" }}
-          className="mobile-sidebar-toggle"
-        />
-      )}
+
       {/* Feed */}
       <div style={s.feed}>
         {messages.length === 0 && !thinking && (
