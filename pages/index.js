@@ -1265,7 +1265,7 @@ Select 1-3 characters whose specialties best match the task.`,
               <div style={s.msgContent}>
                 <div style={s.msgMeta}>
                   <span style={{ ...s.msgName, color: ch.textColor }}>{ch.name}</span>
-                  {msg.rating > 0 && (() => {
+                  {msg.rating >= 0 && (() => {
                     const rc = msg.rating >= 9 ? "#3ee89a" : msg.rating >= 5 ? "#e8a020" : "#f05050";
                     const rb = msg.rating >= 9 ? "rgba(62,232,154,0.12)" : msg.rating >= 5 ? "rgba(232,160,32,0.12)" : "rgba(240,80,80,0.12)";
                     const rb2 = msg.rating >= 9 ? "rgba(62,232,154,0.3)" : msg.rating >= 5 ? "rgba(232,160,32,0.3)" : "rgba(240,80,80,0.3)";
