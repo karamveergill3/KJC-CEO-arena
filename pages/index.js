@@ -579,7 +579,7 @@ function DnaLibrary({ sessions, onLoadSession }) {
   );
 }
 
-function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar }) {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState(DEFAULT_CODE);
   const [fileName, setFileName]     = useState("SilverScalper_v8.cs");
@@ -2055,6 +2055,7 @@ export default function Home() {
             loadedSession={loadedSession}
             currentSessionId={currentSessionId}
             onOpenSidebar={() => setSidebarCollapsed(false)}
+            sidebarOpen={!sidebarCollapsed}
           />
         </div>
       </div>
