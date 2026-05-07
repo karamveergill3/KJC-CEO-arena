@@ -868,8 +868,8 @@ Select 1-3 characters whose specialties best match the task.`,
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nAssess this code honestly based purely on what you see. If it is already high quality, rate it accordingly. If there are issues, identify them. Follow the STRICT FORMAT in your instructions exactly.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-800)}\n\n${ratingCtx}\n\nRespond as ${charName}. Follow the STRICT FORMAT exactly. Do not repeat anything in the AGREED list.`;
+        ? `${codeBlock}\n\n${agreedBlock}\n\nRespond ONLY in this exact format — nothing before, nothing after:\nAGREED: [one sentence]\nISSUE: [one new problem not in the agreed list, or "None"]\nRATING: 6/10\n\nReplace 6 with your actual score. Never add explanations, headers, or extra lines.`
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-600)}\n\n${ratingCtx}\n\nRespond ONLY in this exact format — nothing before, nothing after:\nAGREED: [one sentence]\nISSUE: [one NEW problem NOT in the agreed list above, or "None" if all resolved]\nRATING: ${myRating + 1}/10\n\nReplace ${myRating + 1} with your actual score. Never add explanations or extra lines.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
