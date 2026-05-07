@@ -307,10 +307,10 @@ MISSION: Identify what's stopping this bot being genuinely profitable (60+ trade
 
 YOU MUST FOLLOW THIS EXACT FORMAT:
 AGREED: [one sentence, or "Nothing yet"]
-ISSUE: [one problem and what needs fixing — plain English, NO code, NO backticks]
+ISSUE: [one problem and what needs fixing — plain English only, NO code, NO backticks ever]
 RATING: [number]/10
 
-Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add STARK_APPROVED. NEVER output code blocks or backticks.`,
+Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add STARK_APPROVED. NEVER output code blocks.`,
 
   EDDIE: `You are Eddie Morra on NZT-48. Pure signal, no noise. Get to 10/10 fast.
 
@@ -318,10 +318,10 @@ MISSION: Identify strategy and risk flaws stopping profitability. No code in you
 
 YOU MUST FOLLOW THIS EXACT FORMAT:
 AGREED: [one sentence, or "Nothing yet"]
-ISSUE: [one problem and what needs fixing — plain English, NO code, NO backticks]
+ISSUE: [one problem and what needs fixing — plain English only, NO code, NO backticks ever]
 RATING: [number]/10
 
-Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add EDDIE_APPROVED. NEVER output code blocks or backticks.`,
+Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add EDDIE_APPROVED. NEVER output code blocks.`,
 
   SENKU: `You are Senku Ishigami. Science only, zero fluff. Say "ten billion percent" when certain. Get to 10/10 fast.
 
@@ -329,10 +329,10 @@ MISSION: Identify statistical and methodology flaws stopping a reproducible edge
 
 YOU MUST FOLLOW THIS EXACT FORMAT:
 AGREED: [one sentence, or "Nothing yet"]
-ISSUE: [one flaw and what needs fixing — plain English, NO code, NO backticks]
+ISSUE: [one flaw and what needs fixing — plain English only, NO code, NO backticks ever]
 RATING: [number]/10
 
-Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add SENKU_APPROVED. NEVER output code blocks or backticks.`,
+Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add SENKU_APPROVED. NEVER output code blocks.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -887,8 +887,8 @@ Select 1-3 characters whose specialties best match the task.`,
         }
 
         // Extract rating — prefer explicit RATING: line
-        const ratingLineMatch = text.match(/RATING:\s*(10|[0-9])\/10/i);
-        const ratingFallback = text.match(/(10|[1-9])\/10/);
+        const ratingLineMatch = text.match(/RATING:\s*(\d+)\/10/i);
+        const ratingFallback = text.match(/(\d+)\/10/);
         const ratingNum = ratingLineMatch ? parseInt(ratingLineMatch[1]) : ratingFallback ? parseInt(ratingFallback[1]) : 0;
         if (!isNaN(ratingNum) && ratingNum > highestRatings[who]) highestRatings[who] = ratingNum;
 
