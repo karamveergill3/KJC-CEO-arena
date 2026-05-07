@@ -301,38 +301,38 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark. Genius, brutal, final sign-off. Say "yeah no" before dismantling. Get to 10/10 fast.
+  STARK: `You are Tony Stark. Genius, direct, final sign-off authority. Say "yeah no" before dismantling. You DO NOT ask for more code — you WRITE the fixes yourself.
 
-MISSION: Identify what's stopping this bot being genuinely profitable (60+ trades, PF >1.5). No code in your response — fixes go in the final output.
+MISSION: Take this trading bot and MAKE IT genuinely profitable. You and the team write all improvements directly. Target: 60+ trades, profit factor >1.5, controlled drawdown, real edge. You write the actual C# code fixes inline when needed.
 
-YOU MUST FOLLOW THIS EXACT FORMAT:
-AGREED: [one sentence, or "Nothing yet"]
-ISSUE: [one problem and what needs fixing — plain English only, NO code, NO backticks ever]
+YOU MUST FOLLOW THIS EXACT FORMAT — no exceptions:
+AGREED: [one sentence on what's confirmed fixed so far, or "Nothing yet"]
+ISSUE: [identify one problem AND write the exact C# fix for it. Show the corrected code snippet. If everything is solid say "No issues — architecture is sound."]
 RATING: [number]/10
 
-Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add STARK_APPROVED. NEVER output code blocks.`,
+Rules: RATING only goes UP. Always include all 3 sections. If RATING is 10/10 add STARK_APPROVED after. Max 5 sentences. NEVER ask the user to add or paste code.`,
 
-  EDDIE: `You are Eddie Morra on NZT-48. Pure signal, no noise. Get to 10/10 fast.
+  EDDIE: `You are Eddie Morra on NZT-48. No hedging. Pure signal. You DO NOT ask for more code — you WRITE the fixes yourself.
 
-MISSION: Identify strategy and risk flaws stopping profitability. No code in your response — fixes go in the final output.
+MISSION: Take this trading bot and MAKE IT genuinely profitable. You write all improvements directly in C#. Target: 60+ trades, profit factor >1.5, real statistical edge. You produce the actual code.
 
-YOU MUST FOLLOW THIS EXACT FORMAT:
-AGREED: [one sentence, or "Nothing yet"]
-ISSUE: [one problem and what needs fixing — plain English only, NO code, NO backticks ever]
+YOU MUST FOLLOW THIS EXACT FORMAT — no exceptions:
+AGREED: [one sentence on what's confirmed fixed so far, or "Nothing yet"]
+ISSUE: [identify one problem AND write the exact C# fix. Show the corrected code snippet. If everything is solid say "No issues — strategy is executable."]
 RATING: [number]/10
 
-Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add EDDIE_APPROVED. NEVER output code blocks.`,
+Rules: RATING only goes UP. Always include all 3 sections. If RATING is 10/10 add EDDIE_APPROVED after. Max 5 sentences. NEVER ask the user to add or paste code.`,
 
-  SENKU: `You are Senku Ishigami. Science only, zero fluff. Say "ten billion percent" when certain. Get to 10/10 fast.
+  SENKU: `You are Senku Ishigami. Zero tolerance for weak methodology. Say "ten billion percent" when certain. You DO NOT ask for more code — you WRITE the scientific fixes yourself.
 
-MISSION: Identify statistical and methodology flaws stopping a reproducible edge. No code in your response — fixes go in the final output.
+MISSION: Take this trading bot and make it scientifically bulletproof AND profitable. You write methodology fixes and parameter improvements directly. Target: 60+ trades, reproducible profit factor >1.5, zero overfitting.
 
-YOU MUST FOLLOW THIS EXACT FORMAT:
-AGREED: [one sentence, or "Nothing yet"]
-ISSUE: [one flaw and what needs fixing — plain English only, NO code, NO backticks ever]
+YOU MUST FOLLOW THIS EXACT FORMAT — no exceptions:
+AGREED: [one sentence on what's confirmed fixed so far, or "Nothing yet"]
+ISSUE: [identify one scientific/methodology flaw AND write the exact fix — parameter values, logic corrections, or C# code snippet. If everything is solid say "Ten billion percent — science is bulletproof."]
 RATING: [number]/10
 
-Rules: RATING only goes UP. Max 2 sentences per section. 10/10 = add SENKU_APPROVED. NEVER output code blocks.`,
+Rules: RATING only goes UP. Always include all 3 sections. If RATING is 10/10 add SENKU_APPROVED after. Max 5 sentences. NEVER ask the user to add or paste code.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -412,8 +412,7 @@ function LiveTracker({ profile }) {
     return `${Math.floor(diff/86400)}d ago`;
   };
 
-  const thirtyMinsAgo = Date.now() - 30 * 60 * 1000;
-  const reviewing = activity.filter(a => a.status === "reviewing" && new Date(a.updated_at).getTime() > thirtyMinsAgo);
+  const reviewing = activity.filter(a => a.status === "reviewing");
   const recent = activity.filter(a => a.status !== "reviewing").slice(0, 8);
 
   return (
@@ -579,7 +578,7 @@ function DnaLibrary({ sessions, onLoadSession }) {
   );
 }
 
-function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen }) {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState(DEFAULT_CODE);
   const [fileName, setFileName]     = useState("SilverScalper_v8.cs");
@@ -957,7 +956,7 @@ Select 1-3 characters whose specialties best match the task.`,
         <GridBg />
         {/* Top bar with hamburger + logo */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", flexShrink: 0 }}>
-          <button onClick={() => onOpenSidebar?.()} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, cursor: "pointer", padding: "8px 10px", display: sidebarOpen ? "none" : "flex", flexDirection: "column", gap: 4 }}>
+          <button onClick={() => onOpenSidebar?.()} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 8, cursor: "pointer", padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
@@ -1149,7 +1148,7 @@ Select 1-3 characters whose specialties best match the task.`,
       {/* Top bar */}
       <div style={s.topBar}>
         <div style={s.topLeft}>
-          <button onClick={() => onOpenSidebar?.()} title="Open reviews" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "8px 11px", cursor: "pointer", display: sidebarOpen ? "none" : "flex", flexDirection: "column", gap: 4, marginRight: 6 }}>
+          <button onClick={() => onOpenSidebar?.()} title="Open reviews" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "8px 11px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, marginRight: 6 }}>
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
@@ -1265,20 +1264,18 @@ Select 1-3 characters whose specialties best match the task.`,
               <div style={s.msgContent}>
                 <div style={s.msgMeta}>
                   <span style={{ ...s.msgName, color: ch.textColor }}>{ch.name}</span>
-                  {msg.rating >= 0 && (() => {
-                    const rc = msg.rating >= 9 ? "#3ee89a" : msg.rating >= 5 ? "#e8a020" : "#f05050";
-                    const rb = msg.rating >= 9 ? "rgba(62,232,154,0.12)" : msg.rating >= 5 ? "rgba(232,160,32,0.12)" : "rgba(240,80,80,0.12)";
-                    const rb2 = msg.rating >= 9 ? "rgba(62,232,154,0.3)" : msg.rating >= 5 ? "rgba(232,160,32,0.3)" : "rgba(240,80,80,0.3)";
-                    return <span style={{ fontSize: 12, fontWeight: 700, color: rc, fontFamily: "monospace", letterSpacing: 1, padding: "3px 10px", borderRadius: 20, background: rb, border: `1px solid ${rb2}` }}>
-                      {msg.rating}/10{approvals[msg.who] ? " ✓" : ""}
-                    </span>;
-                  })()}
+                  <span style={{
+                    fontSize: 12, fontWeight: 700, fontFamily: "monospace", letterSpacing: 1,
+                    padding: "2px 9px", borderRadius: 20, marginLeft: 2,
+                    color: msg.rating >= 9 ? "#3ee89a" : msg.rating >= 5 ? "#e8a020" : "#f05050",
+                    background: msg.rating >= 9 ? "rgba(62,232,154,0.12)" : msg.rating >= 5 ? "rgba(232,160,32,0.12)" : "rgba(240,80,80,0.12)",
+                    border: "1px solid " + (msg.rating >= 9 ? "rgba(62,232,154,0.35)" : msg.rating >= 5 ? "rgba(232,160,32,0.35)" : "rgba(240,80,80,0.35)"),
+                  }}>{msg.rating}/10</span>
                 </div>
                 <div style={s.msgText}>{
                   msg.text
                     .replace(/^AGREED:/im, "AGREED:")
                     .replace(/\nRATING:\s*\d+\/10[^\n]*/im, "")
-                    .replace(/```[\s\S]*?```/g, "")
                     .trim()
                 }</div>
               </div>
@@ -2044,7 +2041,7 @@ export default function Home() {
           collapsed={sidebarCollapsed}
           setCollapsed={setSidebarCollapsed}
         />
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: sidebarCollapsed ? 0 : 280, transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <Arena
             user={user}
             profile={profile}
@@ -2056,7 +2053,6 @@ export default function Home() {
             loadedSession={loadedSession}
             currentSessionId={currentSessionId}
             onOpenSidebar={() => setSidebarCollapsed(false)}
-            sidebarOpen={!sidebarCollapsed}
           />
         </div>
       </div>
