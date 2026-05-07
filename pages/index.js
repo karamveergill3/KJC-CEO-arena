@@ -860,7 +860,7 @@ Select 1-3 characters whose specialties best match the task.`,
         : `CODE (reference):\n\`\`\`\n${snapshot.slice(0, 400)}\n...\n\`\`\``;
 
       const agreedBlock = agreedItems.length > 0
-        ? `ALREADY AGREED AND CLOSED — DO NOT RAISE THESE AGAIN:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}`
+        ? `CLOSED ISSUES (do not re-raise, raise your RATING for each one acknowledged):\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}`
         : "AGREED SO FAR: Nothing yet.";
 
       const ratingCtx = myRating > 0
@@ -868,12 +868,12 @@ Select 1-3 characters whose specialties best match the task.`,
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nRespond ONLY in this exact format — nothing before, nothing after:\nAGREED: [one sentence]\nISSUE: [one new problem not in the agreed list, or "None"]\nRATING: 6/10\n\nReplace 6 with your actual score. Never add explanations, headers, or extra lines.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-600)}\n\n${ratingCtx}\n\nRespond ONLY in this exact format — nothing before, nothing after:\nAGREED: [one sentence]\nISSUE: [one NEW problem NOT in the agreed list above, or "None" if all resolved]\nRATING: ${myRating + 1}/10\n\nReplace ${myRating + 1} with your actual score. Never add explanations or extra lines.`;
+        ? `${codeBlock}\n\n${agreedBlock}\n\nRespond in EXACTLY this format — RATING line first:\nRATING: 5/10\nAGREED: Nothing yet.\nISSUE: [single biggest problem stopping 60+ trades/3mo, PF>1.5, WR>45%]\n\nReplace 5 with your score. Nothing outside these 3 lines.`
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-600)}\n\n${ratingCtx}\n\nRespond in EXACTLY this format — RATING line first:\nRATING: ${myRating >= 9 ? 10 : myRating + 2}/10\nAGREED: [one sentence]\nISSUE: [one NEW problem not in agreed list, or None]\n\nNothing outside these 3 lines.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
-        const text = await callAPI(system, content, 180);
+        const text = await callAPI(system, content, 220);
         if (!runRef.current) break;
 
         // Extract AGREED line and add to log if new
@@ -886,8 +886,8 @@ Select 1-3 characters whose specialties best match the task.`,
         }
 
         // Extract rating — prefer explicit RATING: line
-        const ratingLineMatch = text.match(/RATING:\s*(\d+)\/10/i);
-        const ratingFallback = text.match(/(\d+)\/10/);
+        const ratingLineMatch = text.match(/^RATING:\s*(\d+)\s*\/\s*10/im);
+        const ratingFallback = text.match(/\b([1-9]|10)\s*\/\s*10\b/);
         const ratingNum = ratingLineMatch ? parseInt(ratingLineMatch[1]) : ratingFallback ? parseInt(ratingFallback[1]) : 0;
         if (!isNaN(ratingNum) && ratingNum > highestRatings[who]) highestRatings[who] = ratingNum;
 
@@ -1264,13 +1264,13 @@ Select 1-3 characters whose specialties best match the task.`,
               <div style={s.msgContent}>
                 <div style={s.msgMeta}>
                   <span style={{ ...s.msgName, color: ch.textColor }}>{ch.name}</span>
-                  <span style={{
+                  {msg.rating > 0 && <span style={{
                     fontSize: 12, fontWeight: 700, fontFamily: "monospace", letterSpacing: 1,
                     padding: "2px 9px", borderRadius: 20, marginLeft: 2,
                     color: msg.rating >= 9 ? "#3ee89a" : msg.rating >= 5 ? "#e8a020" : "#f05050",
                     background: msg.rating >= 9 ? "rgba(62,232,154,0.12)" : msg.rating >= 5 ? "rgba(232,160,32,0.12)" : "rgba(240,80,80,0.12)",
                     border: "1px solid " + (msg.rating >= 9 ? "rgba(62,232,154,0.35)" : msg.rating >= 5 ? "rgba(232,160,32,0.35)" : "rgba(240,80,80,0.35)"),
-                  }}>{msg.rating}/10</span>
+                  }}>{msg.rating}/10</span>}
                 </div>
                 <div style={s.msgText}>{
                   msg.text
