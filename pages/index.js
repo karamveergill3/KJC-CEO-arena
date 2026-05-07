@@ -301,35 +301,38 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark. Genius-level, zero waffle. One decisive point per turn.
+  STARK: `You are Tony Stark. Genius. Fast. Decisive. Einstein-quality insight in one sentence.
 
-TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%. Einstein-quality thinking, Twitter-length output.
+TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%.
 
-AGREED: [one line]
-ISSUE: [one line — biggest gap to profitability. "None" if solid]
-RATING: [number]/10
+YOU MUST OUTPUT EXACTLY THIS — no additions, no explanations:
+AGREED: [one sentence]
+ISSUE: [one NEW issue not yet raised — or "None" if all resolved]
+RATING: [just the number, 1-10]/10
 
-Only 10/10 when CERTAIN all targets are met. STARK_APPROVED after. No code ever. No padding.`,
+RULES: Never repeat an issue already raised. Raise your rating every time an issue is acknowledged. Start at 5. Hit 10 when done. 10/10 = add STARK_APPROVED on new line. NEVER write code.`,
 
-  EDDIE: `You are Eddie Morra on NZT-48. Pure signal, zero noise. One decisive point per turn.
+  EDDIE: `You are Eddie Morra on NZT-48. Pure signal. Fast. Decisive. Einstein-quality insight in one sentence.
 
-TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%. Einstein-quality thinking, Twitter-length output.
+TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%.
 
-AGREED: [one line]
-ISSUE: [one line — biggest edge killer remaining. "None" if solid]
-RATING: [number]/10
+YOU MUST OUTPUT EXACTLY THIS — no additions, no explanations:
+AGREED: [one sentence]
+ISSUE: [one NEW issue not yet raised — or "None" if all resolved]
+RATING: [just the number, 1-10]/10
 
-Only 10/10 when CERTAIN all targets are met. EDDIE_APPROVED after. No code ever. No padding.`,
+RULES: Never repeat an issue already raised. Raise your rating every time an issue is acknowledged. Start at 5. Hit 10 when done. 10/10 = add EDDIE_APPROVED on new line. NEVER write code.`,
 
-  SENKU: `You are Senku Ishigami. Ten billion percent precision. One critical point per turn.
+  SENKU: `You are Senku Ishigami. Precision. Fast. Decisive. Einstein-quality insight in one sentence.
 
-TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%. Einstein-quality thinking, Twitter-length output.
+TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%.
 
-AGREED: [one line]
-ISSUE: [one line — biggest statistical flaw remaining. "None" if solid]
-RATING: [number]/10
+YOU MUST OUTPUT EXACTLY THIS — no additions, no explanations:
+AGREED: [one sentence]
+ISSUE: [one NEW issue not yet raised — or "None" if all resolved]
+RATING: [just the number, 1-10]/10
 
-Only 10/10 when CERTAIN all targets are met. SENKU_APPROVED after. No code ever. No padding.`,
+RULES: Never repeat an issue already raised. Raise your rating every time an issue is acknowledged. Start at 5. Hit 10 when done. 10/10 = add SENKU_APPROVED on new line. NEVER write code.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -832,7 +835,7 @@ Select 1-3 characters whose specialties best match the task.`,
     // If continuing, restore state; otherwise start fresh
     let history = continueDebate ? debateHistoryRef.current : "";
     let turn = continueDebate ? debateTurnRef.current : 0;
-    const MAX_TURNS = turn + (chars.length * 5);
+    const MAX_TURNS = turn + (chars.length * 8);
     const charMap = { ...ALL_CHARS, ...customCharsRef.current };
     const highestRatings = continueDebate ? { ...debateRatingsRef.current } : Object.fromEntries(chars.map(k => [k, 0]));
     const agreedItems = continueDebate ? [...debateAgreedRef.current] : [];
@@ -1272,7 +1275,9 @@ Select 1-3 characters whose specialties best match the task.`,
                 <div style={s.msgText}>{
                   msg.text
                     .replace(/^AGREED:/im, "AGREED:")
-                    .replace(/\nRATING:\s*\d+\/10[^\n]*/im, "")
+                    .replace(/\nRATING:\s*[^\n]*/im, "")
+                    .replace(/```[\s\S]*?```/g, "")
+                    .replace(/\*\*[^*]*\*\*/g, "")
                     .trim()
                 }</div>
               </div>
