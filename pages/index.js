@@ -413,7 +413,7 @@ function LiveTracker({ profile }) {
   };
 
   const reviewing = activity.filter(a => a.status === "reviewing");
-  const recent = activity.filter(a => a.status !== "reviewing").slice(0, 8);
+  const recent = activity.filter(a => a.status !== "reviewing" && a.status !== "idle" && a.status !== "stopped").slice(0, 8);
 
   return (
     <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", marginTop: 12, flex: 1 }}>
@@ -677,6 +677,11 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
       debateRatingsRef.current = {};
       debateAgreedRef.current = [];
       debateTurnRef.current = 0;
+      // Clear activity status
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        fetch("/api/activity", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ status: "idle", file_name: "" }) }).catch(() => {});
+      });
     }
   };
 
@@ -1148,7 +1153,7 @@ Select 1-3 characters whose specialties best match the task.`,
       {/* Top bar */}
       <div style={s.topBar}>
         <div style={s.topLeft}>
-          <button onClick={() => onOpenSidebar?.()} title="Open reviews" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "8px 11px", cursor: "pointer", display: sidebarOpen ? "none" : "flex", flexDirection: "column", gap: 4, marginRight: 6 }}>
+          <button onClick={() => onOpenSidebar?.()} title="Open reviews" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "8px 11px", cursor: "pointer", display: "flex", flexDirection: "column", gap: 4, marginRight: 6 }}>
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
@@ -1199,6 +1204,10 @@ Select 1-3 characters whose specialties best match the task.`,
               </button>
               <button onClick={() => {
                 runRef.current = false; setRunning(false); setThinking(null); setPaused(false); setPhase("stopped");
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                  if (!session) return;
+                  fetch("/api/activity", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` }, body: JSON.stringify({ status: "stopped", file_name: fileName }) }).catch(() => {});
+                });
               }} style={{ ...s.ctrlBtn, color: "#bbb", borderColor: "rgba(255,255,255,0.2)" }}>■ STOP</button>
             </>
           ) : (
@@ -2042,7 +2051,7 @@ export default function Home() {
           collapsed={sidebarCollapsed}
           setCollapsed={setSidebarCollapsed}
         />
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: sidebarCollapsed ? 0 : 280, transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
           <Arena
             user={user}
             profile={profile}
