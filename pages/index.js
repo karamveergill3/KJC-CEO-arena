@@ -578,7 +578,7 @@ function DnaLibrary({ sessions, onLoadSession }) {
   );
 }
 
-function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen }) {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState(DEFAULT_CODE);
   const [fileName, setFileName]     = useState("SilverScalper_v8.cs");
@@ -968,7 +968,7 @@ Select 1-3 characters whose specialties best match the task.`,
           </div>
         </div>
 
-        <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: 24, padding: "0 clamp(14px, 4vw, 40px) 60px", width: "100%", maxWidth: 1100, marginLeft: sidebarOpen ? "0" : "auto", marginRight: "auto", boxSizing: "border-box", alignItems: "stretch", justifyContent: "center" }}>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: 24, padding: "0 clamp(14px, 4vw, 40px) 60px", width: "100%", maxWidth: 1100, margin: "0 auto", boxSizing: "border-box", alignItems: "stretch", justifyContent: "center" }}>
         {/* Left column — setup content */}
         <div style={{ flex: "1 1 420px", minWidth: 0, maxWidth: 600, alignSelf: "flex-start" }}>
           <div style={s.logo}>
@@ -1242,7 +1242,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
 
       {/* Feed */}
-      <div style={{ ...s.feed, marginLeft: sidebarOpen ? "0" : "auto", marginRight: "auto" }}>
+      <div style={s.feed}>
         {messages.length === 0 && !thinking && (
           <div style={s.emptyState}>
             <div style={{ fontSize: 24, marginBottom: 12, opacity: 0.12 }}>◈</div>
@@ -2042,7 +2042,7 @@ export default function Home() {
           collapsed={sidebarCollapsed}
           setCollapsed={setSidebarCollapsed}
         />
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", transition: "all 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
           <Arena
             user={user}
             profile={profile}
@@ -2054,7 +2054,6 @@ export default function Home() {
             loadedSession={loadedSession}
             currentSessionId={currentSessionId}
             onOpenSidebar={() => setSidebarCollapsed(false)}
-            sidebarOpen={!sidebarCollapsed}
           />
         </div>
       </div>
