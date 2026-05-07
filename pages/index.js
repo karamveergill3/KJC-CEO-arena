@@ -2043,7 +2043,7 @@ export default function Home() {
           collapsed={sidebarCollapsed}
           setCollapsed={setSidebarCollapsed}
         />
-        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+        <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: sidebarCollapsed ? 0 : 280, transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
           <Arena
             user={user}
             profile={profile}
@@ -2062,3 +2062,4 @@ export default function Home() {
     </>
   );
 }
+
