@@ -887,8 +887,8 @@ Select 1-3 characters whose specialties best match the task.`,
         }
 
         // Extract rating — prefer explicit RATING: line
-        const ratingLineMatch = text.match(/RATING:\s*([0-9]|10)\/10/i);
-        const ratingFallback = text.match(/([0-9]|10)\/10/);
+        const ratingLineMatch = text.match(/RATING:\s*(10|[0-9])\/10/i);
+        const ratingFallback = text.match(/(10|[1-9])\/10/);
         const ratingNum = ratingLineMatch ? parseInt(ratingLineMatch[1]) : ratingFallback ? parseInt(ratingFallback[1]) : 0;
         if (!isNaN(ratingNum) && ratingNum > highestRatings[who]) highestRatings[who] = ratingNum;
 
