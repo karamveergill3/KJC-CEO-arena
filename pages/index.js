@@ -301,38 +301,41 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark. Genius. Fast. Decisive. Einstein-quality insight in one sentence.
+  STARK: `You are Tony Stark. Fast, decisive, genius-level insight.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%.
 
-YOU MUST OUTPUT EXACTLY THIS — no additions, no explanations:
-AGREED: [one sentence]
-ISSUE: [one NEW issue not yet raised — or "None" if all resolved]
-RATING: [just the number, 1-10]/10
+EVERY response MUST be exactly these 3 lines — nothing more, nothing less:
+AGREED: [one sentence confirming what is solid]
+ISSUE: [one NEW unresolved problem, or "None" if all resolved]
+RATING: [number 1-10]/10
 
-RULES: Never repeat an issue already raised. Raise your rating every time an issue is acknowledged. Start at 5. Hit 10 when done. 10/10 = add STARK_APPROVED on new line. NEVER write code.`,
+If RATING is 10/10, add STARK_APPROVED on a new line.
+NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
 
-  EDDIE: `You are Eddie Morra on NZT-48. Pure signal. Fast. Decisive. Einstein-quality insight in one sentence.
-
-TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%.
-
-YOU MUST OUTPUT EXACTLY THIS — no additions, no explanations:
-AGREED: [one sentence]
-ISSUE: [one NEW issue not yet raised — or "None" if all resolved]
-RATING: [just the number, 1-10]/10
-
-RULES: Never repeat an issue already raised. Raise your rating every time an issue is acknowledged. Start at 5. Hit 10 when done. 10/10 = add EDDIE_APPROVED on new line. NEVER write code.`,
-
-  SENKU: `You are Senku Ishigami. Precision. Fast. Decisive. Einstein-quality insight in one sentence.
+  EDDIE: `You are Eddie Morra on NZT-48. Fast, decisive, genius-level insight.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%.
 
-YOU MUST OUTPUT EXACTLY THIS — no additions, no explanations:
-AGREED: [one sentence]
-ISSUE: [one NEW issue not yet raised — or "None" if all resolved]
-RATING: [just the number, 1-10]/10
+EVERY response MUST be exactly these 3 lines — nothing more, nothing less:
+AGREED: [one sentence confirming what is solid]
+ISSUE: [one NEW unresolved problem, or "None" if all resolved]
+RATING: [number 1-10]/10
 
-RULES: Never repeat an issue already raised. Raise your rating every time an issue is acknowledged. Start at 5. Hit 10 when done. 10/10 = add SENKU_APPROVED on new line. NEVER write code.`,
+If RATING is 10/10, add EDDIE_APPROVED on a new line.
+NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
+
+  SENKU: `You are Senku Ishigami. Fast, decisive, genius-level insight.
+
+TARGET: 60+ trades/3 months, PF >1.5, win rate >45%, drawdown <15%.
+
+EVERY response MUST be exactly these 3 lines — nothing more, nothing less:
+AGREED: [one sentence confirming what is solid]
+ISSUE: [one NEW unresolved problem, or "None" if all resolved]
+RATING: [number 1-10]/10
+
+If RATING is 10/10, add SENKU_APPROVED on a new line.
+NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -868,8 +871,8 @@ Select 1-3 characters whose specialties best match the task.`,
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nRespond in EXACTLY this format:\nRATING: 5/10\nAGREED: Nothing yet.\nISSUE: [the single biggest structural problem — one sentence, no code]\n\nReplace 5 with your honest starting score. Nothing outside these 3 lines.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-600)}\n\n${ratingCtx}\n\nYour previous rating was ${myRating}/10. You can ONLY go up, never down.\n\nRespond in EXACTLY this format:\nRATING: [${myRating} or higher]/10\nAGREED: [one sentence about what is now solid]\nISSUE: [one NEW problem NOT in the closed list — or "None" if all resolved]\n\nIf ISSUE is None and you are confident: write RATING: 10/10 and add ${who}_APPROVED on the next line.\nNothing else.`;
+        ? `${codeBlock}\n\n${agreedBlock}\n\nRespond with EXACTLY 3 lines in this order:\nAGREED: Nothing yet.\nISSUE: [the single biggest structural problem — one sentence, no code]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-600)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP.\n\nRespond with EXACTLY 3 lines:\nAGREED: [one sentence]\nISSUE: [one NEW problem not in closed list, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
@@ -1274,7 +1277,6 @@ Select 1-3 characters whose specialties best match the task.`,
                 </div>
                 <div style={s.msgText}>{
                   msg.text
-                    .replace(/^RATING:\s*[^\n]*\n?/im, "")
                     .replace(/^AGREED:/im, "AGREED:")
                     .replace(/\nRATING:\s*[^\n]*/im, "")
                     .replace(/```[\s\S]*?```/g, "")
