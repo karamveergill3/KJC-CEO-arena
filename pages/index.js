@@ -835,7 +835,7 @@ Select 1-3 characters whose specialties best match the task.`,
     // If continuing, restore state; otherwise start fresh
     let history = continueDebate ? debateHistoryRef.current : "";
     let turn = continueDebate ? debateTurnRef.current : 0;
-    const MAX_TURNS = turn + (chars.length * 8);
+    const MAX_TURNS = turn + (chars.length * 12);
     const charMap = { ...ALL_CHARS, ...customCharsRef.current };
     const highestRatings = continueDebate ? { ...debateRatingsRef.current } : Object.fromEntries(chars.map(k => [k, 0]));
     const agreedItems = continueDebate ? [...debateAgreedRef.current] : [];
@@ -860,7 +860,7 @@ Select 1-3 characters whose specialties best match the task.`,
         : `CODE (reference):\n\`\`\`\n${snapshot.slice(0, 400)}\n...\n\`\`\``;
 
       const agreedBlock = agreedItems.length > 0
-        ? `CLOSED ISSUES (do not re-raise, raise your RATING for each one acknowledged):\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}`
+        ? `THESE ISSUES ARE CLOSED — DO NOT MENTION THEM AGAIN:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nFor each closed issue, your rating should be higher than last turn.`
         : "AGREED SO FAR: Nothing yet.";
 
       const ratingCtx = myRating > 0
@@ -868,8 +868,8 @@ Select 1-3 characters whose specialties best match the task.`,
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nRespond in EXACTLY this format — RATING line first:\nRATING: 5/10\nAGREED: Nothing yet.\nISSUE: [single biggest problem stopping 60+ trades/3mo, PF>1.5, WR>45%]\n\nReplace 5 with your score. Nothing outside these 3 lines.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-600)}\n\n${ratingCtx}\n\nRespond in EXACTLY this format — RATING line first:\nRATING: ${myRating >= 9 ? 10 : myRating + 2}/10\nAGREED: [one sentence]\nISSUE: [one NEW problem not in agreed list, or None]\n\nNothing outside these 3 lines.`;
+        ? `${codeBlock}\n\n${agreedBlock}\n\nRespond in EXACTLY this format:\nRATING: 5/10\nAGREED: Nothing yet.\nISSUE: [the single biggest structural problem — one sentence, no code]\n\nReplace 5 with your honest starting score. Nothing outside these 3 lines.`
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-600)}\n\n${ratingCtx}\n\nYour previous rating was ${myRating}/10. You can ONLY go up, never down.\n\nRespond in EXACTLY this format:\nRATING: [${myRating} or higher]/10\nAGREED: [one sentence about what is now solid]\nISSUE: [one NEW problem NOT in the closed list — or "None" if all resolved]\n\nIf ISSUE is None and you are confident: write RATING: 10/10 and add ${who}_APPROVED on the next line.\nNothing else.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
@@ -1274,6 +1274,7 @@ Select 1-3 characters whose specialties best match the task.`,
                 </div>
                 <div style={s.msgText}>{
                   msg.text
+                    .replace(/^RATING:\s*[^\n]*\n?/im, "")
                     .replace(/^AGREED:/im, "AGREED:")
                     .replace(/\nRATING:\s*[^\n]*/im, "")
                     .replace(/```[\s\S]*?```/g, "")
