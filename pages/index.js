@@ -1266,13 +1266,13 @@ Select 1-3 characters whose specialties best match the task.`,
               <div style={s.msgContent}>
                 <div style={s.msgMeta}>
                   <span style={{ ...s.msgName, color: ch.textColor }}>{ch.name}</span>
-                  {msg.rating > 0 && <span style={{
+                  {<span style={{
                     fontSize: 12, fontWeight: 700, fontFamily: "monospace", letterSpacing: 1,
                     padding: "2px 9px", borderRadius: 20, marginLeft: 2,
                     color: msg.rating >= 9 ? "#3ee89a" : msg.rating >= 5 ? "#e8a020" : "#f05050",
                     background: msg.rating >= 9 ? "rgba(62,232,154,0.12)" : msg.rating >= 5 ? "rgba(232,160,32,0.12)" : "rgba(240,80,80,0.12)",
                     border: "1px solid " + (msg.rating >= 9 ? "rgba(62,232,154,0.35)" : msg.rating >= 5 ? "rgba(232,160,32,0.35)" : "rgba(240,80,80,0.35)"),
-                  }}>{msg.rating}/10</span>}
+                  }}>{msg.rating > 0 ? msg.rating + "/10" : "..."}</span>}
                 </div>
                 <div style={s.msgText}>{
                   msg.text
