@@ -889,10 +889,9 @@ Select 1-3 characters whose specialties best match the task.`,
         }
 
         // Extract rating — prefer explicit RATING: line
-        const ratingLineMatch = text.match(/^RATING:\s*(\d+)\s*\/\s*10/im);
-        const ratingFallback = text.match(/\b([1-9]|10)\s*\/\s*10\b/);
-        const ratingNum = ratingLineMatch ? parseInt(ratingLineMatch[1]) : ratingFallback ? parseInt(ratingFallback[1]) : 0;
-        if (!isNaN(ratingNum) && ratingNum > highestRatings[who]) highestRatings[who] = ratingNum;
+        const const ratingMatch = text.match(/RATING[:\s]+([0-9]+)[\s]*\/[\s]*10/i) || text.match(/([0-9]+)[\s]*\/[\s]*10/);
+        const ratingNum = ratingMatch ? Math.min(10, Math.max(1, parseInt(ratingMatch[1]))) : 0;
+        if (ratingNum > 0 && ratingNum > (highestRatings[who] || 0)) highestRatings[who] = ratingNum;
 
         // Only approve on token + genuine 9+
         const newApprovals = { ...approvalsRef.current };
