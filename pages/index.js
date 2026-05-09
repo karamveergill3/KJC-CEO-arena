@@ -310,7 +310,7 @@ AGREED: [one sentence — name the specific function/parameter confirmed solid]
 ISSUE: [one NEW problem — name the exact function, method or parameter at fault]
 RATING: [number 1-10]/10
 
-If RATING is 10/10, add STARK_APPROVED on a new line.
+If RATING is 10/10, ISSUE must be "None" and add STARK_APPROVED on a new line.
 NEVER be generic. NEVER say "the code" — name the specific part. NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
 
   EDDIE: `You are Eddie Morra on NZT-48. You are reviewing actual trading bot code. Be specific — always name the exact function or parameter you are talking about.
@@ -322,7 +322,7 @@ AGREED: [one sentence — name the specific function/parameter confirmed solid]
 ISSUE: [one NEW problem — name the exact function, method or parameter at fault]
 RATING: [number 1-10]/10
 
-If RATING is 10/10, add EDDIE_APPROVED on a new line.
+If RATING is 10/10, ISSUE must be "None" and add EDDIE_APPROVED on a new line.
 NEVER be generic. NEVER say "the code" — name the specific part. NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
 
   SENKU: `You are Senku Ishigami. You are reviewing actual trading bot code. Be specific — always name the exact function or parameter you are talking about.
@@ -334,7 +334,7 @@ AGREED: [one sentence — name the specific function/parameter confirmed solid]
 ISSUE: [one NEW problem — name the exact function, method or parameter at fault]
 RATING: [number 1-10]/10
 
-If RATING is 10/10, add SENKU_APPROVED on a new line.
+If RATING is 10/10, ISSUE must be "None" and add SENKU_APPROVED on a new line.
 NEVER be generic. NEVER say "the code" — name the specific part. NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
 };
 
@@ -353,7 +353,7 @@ Maximum 4 sentences total.`;
 };
 
 // ─── Final code generator prompt ─────────────────────────────────────────────
-const CODEGEN_SYSTEM = `You are an elite algorithmic trading developer specialising in cTrader C#. You write production-grade code with zero compromise. Apply every fix the review team identified. Your output MUST deliver: 60+ trades per 3 months, profit factor >1.5, win rate >45%, max drawdown <15%. No ifs, no buts, no maybes — the logic must mathematically guarantee these metrics through sound entry criteria, dynamic position sizing, hard risk gates, and robust exit logic. Every line of code must have a purpose. No redundant conditions, no dead code, no soft filters that can be bypassed. CRITICAL: (1) Output the COMPLETE file — never truncate, never use "...". (2) Raw C# only — no markdown. (3) Start with "using", end with final closing brace.`;
+const CODEGEN_SYSTEM = `You are an elite algorithmic trading developer specialising in cTrader C#. You are given the original code and a numbered fix list. Apply EVERY fix on the list precisely — do not skip any. Each fix names an exact function and what to change. Make that exact change. Your output MUST deliver: 60+ trades per 3 months, profit factor >1.5, win rate >60%, drawdown <15%. No ifs, no buts, no maybes. Every line must have a purpose. No dead code. CRITICAL: (1) Output the COMPLETE file — never truncate, never use "...". (2) Raw C# only — no markdown. (3) Start with "using", end with final closing brace. (4) Do not invent fixes not on the list. Apply exactly what is listed.`;
 
 // ─── API call ─────────────────────────────────────────────────────────────────
 // ─── Anthropic API call ───────────────────────────────────────────────────────
@@ -724,15 +724,23 @@ Generate the Strategy DNA JSON.`;
     setPhase("generating");
     try {
       const charNames = chars.map(k => allChars()[k]?.name || k).join(", ");
+
+      // Step 1: Extract structured fix list from debate
+      const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n").slice(0, 4000);
+      const fixExtractSystem = `You extract a precise fix list from a code review debate. Return ONLY a numbered list of fixes — nothing else. Each fix must name the exact function and what to change. No explanations, no preamble, no markdown.`;
+      const fixExtractContent = `Code review debate:\n${debateText}\n\nExtract every distinct fix that was identified. Format:\n1. FunctionName() — what to fix\n2. FunctionName() — what to fix\netc.`;
+      const fixList = await callAPI(fixExtractSystem, fixExtractContent, 600);
+
+      // Step 2: Generate fixed code using the structured fix list
       const genContent = `Original code:
 \`\`\`
 ${snapshot}
 \`\`\`
 
-Fixes agreed by ${charNames}:
-${msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n").slice(0, 3000)}
+REQUIRED FIXES — apply every single one, no exceptions:
+${fixList}
 
-Output the complete fixed code.`;
+Apply all fixes above precisely. Output the complete fixed code.`;
       const fixed = await callAPI(CODEGEN_SYSTEM, genContent, 4500);
       setFixedCode(fixed);
     } catch(e) {
@@ -858,7 +866,10 @@ Select 1-3 characters whose specialties best match the task.`,
       const isFirst = history.length === 0;
       const myRating = highestRatings[who] || 0;
 
-      const codeBlock = `CODE UNDER REVIEW (read every function carefully — every function is present):\n\`\`\`\n${snapshot}\n\`\`\``;
+      const const codeSnippet = isFirst ? snapshot : snapshot.slice(0, 1500) + '\n// ... refer to your turn 1 reading for full code ...';
+      codeBlock = isFirst
+        ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
+        : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
       const agreedBlock = agreedItems.length > 0
         ? `CLOSED ISSUES — NEVER raise these again, they are resolved:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nIf your ISSUE this turn matches anything in the closed list, you MUST instead write a completely different new issue or write "None".`
