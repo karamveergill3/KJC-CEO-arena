@@ -726,7 +726,7 @@ Generate the Strategy DNA JSON.`;
       const charNames = chars.map(k => allChars()[k]?.name || k).join(", ");
       const genContent = `Original code:
 \`\`\`
-${snapshot.slice(0, 8000)}
+${snapshot}
 \`\`\`
 
 Fixes agreed by ${charNames}:
@@ -858,10 +858,10 @@ Select 1-3 characters whose specialties best match the task.`,
       const isFirst = history.length === 0;
       const myRating = highestRatings[who] || 0;
 
-      const codeBlock = `CODE UNDER REVIEW (read every function carefully):\n\`\`\`\n${snapshot.slice(0, 6000)}\n\`\`\``;
+      const codeBlock = `CODE UNDER REVIEW (read every function carefully — every function is present):\n\`\`\`\n${snapshot}\n\`\`\``;
 
       const agreedBlock = agreedItems.length > 0
-        ? `THESE ISSUES ARE CLOSED — DO NOT MENTION THEM AGAIN:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nFor each closed issue, your rating should be higher than last turn.`
+        ? `CLOSED ISSUES — NEVER raise these again, they are resolved:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nIf your ISSUE this turn matches anything in the closed list, you MUST instead write a completely different new issue or write "None".`
         : "AGREED SO FAR: Nothing yet.";
 
       const ratingCtx = myRating > 0
