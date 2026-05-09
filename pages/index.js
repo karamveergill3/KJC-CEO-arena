@@ -866,7 +866,7 @@ Select 1-3 characters whose specialties best match the task.`,
       const isFirst = history.length === 0;
       const myRating = highestRatings[who] || 0;
 
-      const const codeSnippet = isFirst ? snapshot : snapshot.slice(0, 1500) + '\n// ... refer to your turn 1 reading for full code ...';
+      const codeSnippet = isFirst ? snapshot : snapshot.slice(0, 1500) + '\n// ... refer to your turn 1 reading for full code ...';
       codeBlock = isFirst
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
