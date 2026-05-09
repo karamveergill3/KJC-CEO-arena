@@ -357,26 +357,40 @@ const CODEGEN_SYSTEM = `You are an elite algorithmic trading developer specialis
 
 // ─── API call ─────────────────────────────────────────────────────────────────
 // ─── Anthropic API call ───────────────────────────────────────────────────────
-const callAPI = async (system, userContent, maxTokens = 280, _unused) => {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: "user", content: userContent }],
-    }),
-  });
-  if (!res.ok) {
-    const errBody = await res.text();
-    throw new Error(`API ${res.status}: ${errBody.slice(0, 200)}`);
+const callAPI = async (system, userContent, maxTokens = 280, _unused, retries = 2) => {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: maxTokens,
+          system,
+          messages: [{ role: "user", content: userContent }],
+        }),
+      });
+      if (!res.ok) {
+        const errBody = await res.text();
+        if (res.status === 429 && attempt < retries) {
+          await new Promise(r => setTimeout(r, 8000 * (attempt + 1)));
+          continue;
+        }
+        throw new Error(`API ${res.status}: ${errBody.slice(0, 200)}`);
+      }
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message || "API error");
+      const text = data.content?.find(b => b.type === "text")?.text || "";
+      if (!text) throw new Error("Empty response");
+      return text;
+    } catch(e) {
+      if (attempt < retries && e.message?.includes('429')) {
+        await new Promise(r => setTimeout(r, 8000 * (attempt + 1)));
+        continue;
+      }
+      throw e;
+    }
   }
-  const data = await res.json();
-  if (data.error) throw new Error(data.error.message || "API error");
-  const text = data.content?.find(b => b.type === "text")?.text || "";
-  if (!text) throw new Error("Empty response");
-  return text;
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -726,7 +740,7 @@ Generate the Strategy DNA JSON.`;
       const charNames = chars.map(k => allChars()[k]?.name || k).join(", ");
 
       // Step 1: Extract structured fix list from debate
-      const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n").slice(0, 4000);
+      const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n");
       const fixExtractSystem = `You extract a precise fix list from a code review debate. Return ONLY a numbered list of fixes — nothing else. Each fix must name the exact function and what to change. No explanations, no preamble, no markdown.`;
       const fixExtractContent = `Code review debate:\n${debateText}\n\nExtract every distinct fix that was identified. Format:\n1. FunctionName() — what to fix\n2. FunctionName() — what to fix\netc.`;
       const fixList = await callAPI(fixExtractSystem, fixExtractContent, 600);
@@ -866,7 +880,7 @@ Select 1-3 characters whose specialties best match the task.`,
       const isFirst = history.length === 0;
       const myRating = highestRatings[who] || 0;
 
-      const codeSnippet = isFirst ? snapshot : snapshot.slice(0, 1500) + '\n// ... refer to your turn 1 reading for full code ...';
+      const codeSnippet = isFirst ? snapshot : snapshot.slice(0, 2000) + '\n// ... refer to turn 1 for full code ...';
       codeBlock = isFirst
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
@@ -881,7 +895,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
       const content = isFirst
         ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code carefully. Identify real issues in specific named functions.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [name the exact function/parameter with the biggest problem]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-600)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. Name specific functions from the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-1500)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. Name specific functions from the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
