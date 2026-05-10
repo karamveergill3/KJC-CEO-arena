@@ -658,7 +658,7 @@ function EconomicCalendar({ compact = false }) {
         <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 14 }}>📅</span>
-            <div style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", letterSpacing: 3 }}>ECONOMIC CALENDAR</div>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#ef4444", letterSpacing: 3 }}>ECONOMIC CALENDAR</div>
           </div>
           <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", letterSpacing: 1 }}>NEXT 48H · HIGH IMPACT</div>
         </div>
@@ -669,14 +669,14 @@ function EconomicCalendar({ compact = false }) {
             <div style={{ padding: "16px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>No high impact events in next 48h</div>
           ) : (
             events.slice(0, 6).map((e, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", borderRadius: 8, marginBottom: 3, background: "rgba(255,255,255,0.02)", borderLeft: "2px solid #f59e0b" }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", borderRadius: 8, marginBottom: 3, background: "rgba(255,255,255,0.02)", borderLeft: "2px solid #ef4444" }}>
                 <span style={{ fontSize: 14, flexShrink: 0 }}>{countryFlag(e.country)}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.title}</div>
                   <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{e.country} · {formatDay(e.date)} {formatTime(e.date)}</div>
                 </div>
                 {e.forecast && (
-                  <div style={{ fontSize: 10, color: "#f59e0b", flexShrink: 0, textAlign: "right" }}>
+                  <div style={{ fontSize: 10, color: "#ef4444", flexShrink: 0, textAlign: "right" }}>
                     <div>F: {e.forecast}</div>
                     {e.previous && <div style={{ color: "rgba(255,255,255,0.35)" }}>P: {e.previous}</div>}
                   </div>
@@ -694,11 +694,11 @@ function EconomicCalendar({ compact = false }) {
 
   // Full version for review screen
   return (
-    <div style={{ marginBottom: 16, background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div style={{ marginBottom: 16, background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 14 }}>📅</span>
-          <div style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", letterSpacing: 3 }}>HIGH IMPACT EVENTS — NEXT 48H</div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#ef4444", letterSpacing: 3 }}>HIGH IMPACT EVENTS — NEXT 48H</div>
         </div>
         {lastUpdate && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)" }}>Updated {lastUpdate.toLocaleTimeString()}</div>}
       </div>
@@ -709,7 +709,7 @@ function EconomicCalendar({ compact = false }) {
           <div style={{ padding: "12px", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>No high impact events in next 48 hours</div>
         ) : (
           events.map((e, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 8, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)" }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 8, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
               <span style={{ fontSize: 14 }}>{countryFlag(e.country)}</span>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{e.title}</div>
