@@ -1,5 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
@@ -28,7 +34,7 @@ export default async function handler(req, res) {
 
       let events;
 
-      if (cached && cacheAge < REFRESH_HOURS) {
+      if (cached && cacheAge < REFRESH_HOURS && cached.data?.length > 0) {
         events = cached.data;
       } else {
         // Fetch fresh from Forex Factory
@@ -50,8 +56,14 @@ export default async function handler(req, res) {
           .filter(e => {
             const impact = (e.impact || '').toLowerCase();
             const isHigh = impact === 'high';
-            const eventTime = new Date(`${e.date}T${e.time || '00:00:00'}`);
-            return isHigh && eventTime >= now && eventTime <= cutoff;
+            // FF returns dates like "2026-05-12" and times like "1:30pm"
+            // Be lenient — include all high impact events for the next 2 days
+            if (!isHigh) return false;
+            try {
+              const eventDate = new Date(e.date);
+              const dayDiff = (eventDate - new Date(now.toDateString())) / (1000 * 60 * 60 * 24);
+              return dayDiff >= 0 && dayDiff <= 2;
+            } catch { return true; }
           })
           .map(e => ({
             title: e.title,
@@ -62,7 +74,7 @@ export default async function handler(req, res) {
             forecast: e.forecast,
             previous: e.previous,
           }))
-          .sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
 
         // Upsert cache
         await supabase.from('calendar_cache').upsert({
