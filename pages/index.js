@@ -433,7 +433,7 @@ function LiveTracker({ profile }) {
   const recent = activity.filter(a => a.status !== "reviewing").slice(0, 8);
 
   return (
-    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", marginTop: 12, flex: 1 }}>
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1 }}>
       {/* Header */}
       <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -629,11 +629,11 @@ function EconomicCalendar({ compact = false }) {
     return flags[country] || '🌐';
   };
 
-  const formatTime = (date, time) => {
+  const formatTime = (date) => {
     try {
-      const dt = new Date(`${date}T${time || '00:00:00'}`);
-      return dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
-    } catch { return time || '—'; }
+      const dt = new Date(date);
+      return dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'America/New_York' }) + ' ET';
+    } catch { return '—'; }
   };
 
   const formatDay = (date) => {
@@ -642,10 +642,13 @@ function EconomicCalendar({ compact = false }) {
       const today = new Date();
       const tomorrow = new Date(today);
       tomorrow.setDate(today.getDate() + 1);
-      if (dt.toDateString() === today.toDateString()) return 'TODAY';
-      if (dt.toDateString() === tomorrow.toDateString()) return 'TOMORROW';
+      const dtDate = dt.toLocaleDateString('en-US', { timeZone: 'America/New_York' });
+      const todayDate = today.toLocaleDateString('en-US', { timeZone: 'America/New_York' });
+      const tomorrowDate = tomorrow.toLocaleDateString('en-US', { timeZone: 'America/New_York' });
+      if (dtDate === todayDate) return 'TODAY';
+      if (dtDate === tomorrowDate) return 'TOMORROW';
       return dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
-    } catch { return date; }
+    } catch { return '—'; }
   };
 
   if (compact) {
@@ -670,7 +673,7 @@ function EconomicCalendar({ compact = false }) {
                 <span style={{ fontSize: 14, flexShrink: 0 }}>{countryFlag(e.country)}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.title}</div>
-                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{e.country} · {formatDay(e.date)} {formatTime(e.date, e.time)}</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{e.country} · {formatDay(e.date)} {formatTime(e.date)}</div>
                 </div>
                 {e.forecast && (
                   <div style={{ fontSize: 10, color: "#f59e0b", flexShrink: 0, textAlign: "right" }}>
@@ -710,7 +713,7 @@ function EconomicCalendar({ compact = false }) {
               <span style={{ fontSize: 14 }}>{countryFlag(e.country)}</span>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{e.title}</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>{formatDay(e.date)} · {formatTime(e.date, e.time)}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>{formatDay(e.date)} · {formatTime(e.date)}</div>
               </div>
             </div>
           ))
