@@ -1294,7 +1294,7 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 136, display: "flex", flexDirection: "column", gap: 12, alignSelf: "flex-start" }}>
+        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 140, display: "flex", flexDirection: "column", gap: 12, alignSelf: "flex-start" }}>
           <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
           <EconomicCalendar compact={true} />
           <LiveTracker profile={profile} />
