@@ -21,30 +21,19 @@ export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       // Check cache in Supabase
-      const { data: cached } = await supabase
-        .from('calendar_cache')
-        .select('*')
-        .eq('key', CACHE_KEY)
-        .single();
-
       const now = new Date();
-      const cacheAge = cached
-        ? (now - new Date(cached.updated_at)) / 1000 / 3600
-        : 999;
-
       let events;
 
-      if (cached && cacheAge < REFRESH_HOURS && cached.data?.length > 0) {
-        events = cached.data;
-      } else {
-        // Fetch fresh from Forex Factory
+      {
+        // Always fetch fresh - cache was causing stale empty results
         const response = await fetch(FOREX_FACTORY_URL, {
-          headers: { 'User-Agent': 'Mozilla/5.0' },
+          headers: { 
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json',
+          },
         });
 
         if (!response.ok) {
-          // Return cached data if fetch fails
-          if (cached) return res.status(200).json(cached.data);
           return res.status(200).json([]);
         }
 
@@ -76,12 +65,6 @@ export default async function handler(req, res) {
           }))
           .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // Upsert cache
-        await supabase.from('calendar_cache').upsert({
-          key: CACHE_KEY,
-          data: events,
-          updated_at: now.toISOString(),
-        }, { onConflict: 'key' });
       }
 
       return res.status(200).json(events);
