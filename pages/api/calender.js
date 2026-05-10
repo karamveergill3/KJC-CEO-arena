@@ -1,11 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY
@@ -16,9 +10,8 @@ const CACHE_KEY = 'ff_calendar_cache';
 const REFRESH_HOURS = 12;
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-
   if (req.method === 'GET') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
     try {
       // Check cache in Supabase
       const now = new Date();
