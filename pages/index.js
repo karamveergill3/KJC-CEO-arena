@@ -1291,12 +1291,10 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 170, display: "flex", flexDirection: "column", alignSelf: "stretch" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
-            <EconomicCalendar compact={true} />
-            <LiveTracker profile={profile} />
-          </div>
+        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 170, display: "flex", flexDirection: "column", gap: 12, alignSelf: "stretch" }}>
+          <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
+          <EconomicCalendar compact={true} />
+          <LiveTracker profile={profile} />
         </div>
 
         </div>{/* end two-col */}
