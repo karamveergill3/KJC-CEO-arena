@@ -595,6 +595,131 @@ function DnaLibrary({ sessions, onLoadSession }) {
   );
 }
 
+
+// ─── Economic Calendar ────────────────────────────────────────────────────────
+function EconomicCalendar({ compact = false }) {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(null);
+
+  const fetchCalendar = async () => {
+    try {
+      const res = await fetch('/api/calendar');
+      if (res.ok) {
+        const data = await res.json();
+        setEvents(data);
+        setLastUpdate(new Date());
+      }
+    } catch(e) {}
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchCalendar();
+    // Refresh every 12 hours
+    const interval = setInterval(fetchCalendar, 12 * 60 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const countryFlag = (country) => {
+    const flags = {
+      USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧', JPY: '🇯🇵', AUD: '🇦🇺',
+      CAD: '🇨🇦', CHF: '🇨🇭', NZD: '🇳🇿', CNY: '🇨🇳', ALL: '🌐'
+    };
+    return flags[country] || '🌐';
+  };
+
+  const formatTime = (date, time) => {
+    try {
+      const dt = new Date(`${date}T${time || '00:00:00'}`);
+      return dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC';
+    } catch { return time || '—'; }
+  };
+
+  const formatDay = (date) => {
+    try {
+      const dt = new Date(date);
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      if (dt.toDateString() === today.toDateString()) return 'TODAY';
+      if (dt.toDateString() === tomorrow.toDateString()) return 'TOMORROW';
+      return dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
+    } catch { return date; }
+  };
+
+  if (compact) {
+    // Compact version for setup screen
+    return (
+      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+        <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 14 }}>📅</span>
+            <div style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", letterSpacing: 3 }}>ECONOMIC CALENDAR</div>
+          </div>
+          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", letterSpacing: 1 }}>NEXT 48H · HIGH IMPACT</div>
+        </div>
+        <div style={{ padding: "8px 12px" }}>
+          {loading ? (
+            <div style={{ padding: "16px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Loading...</div>
+          ) : events.length === 0 ? (
+            <div style={{ padding: "16px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>No high impact events in next 48h</div>
+          ) : (
+            events.slice(0, 6).map((e, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", borderRadius: 8, marginBottom: 3, background: "rgba(255,255,255,0.02)", borderLeft: "2px solid #f59e0b" }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>{countryFlag(e.country)}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.title}</div>
+                  <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1 }}>{e.country} · {formatDay(e.date)} {formatTime(e.date, e.time)}</div>
+                </div>
+                {e.forecast && (
+                  <div style={{ fontSize: 10, color: "#f59e0b", flexShrink: 0, textAlign: "right" }}>
+                    <div>F: {e.forecast}</div>
+                    {e.previous && <div style={{ color: "rgba(255,255,255,0.35)" }}>P: {e.previous}</div>}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+          {events.length > 6 && (
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "6px 0" }}>+{events.length - 6} more events</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Full version for review screen
+  return (
+    <div style={{ marginBottom: 16, background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 12, overflow: "hidden" }}>
+      <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(245,158,11,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 14 }}>📅</span>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", letterSpacing: 3 }}>HIGH IMPACT EVENTS — NEXT 48H</div>
+        </div>
+        {lastUpdate && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)" }}>Updated {lastUpdate.toLocaleTimeString()}</div>}
+      </div>
+      <div style={{ padding: "8px 12px", display: "flex", flexWrap: "wrap", gap: 8 }}>
+        {loading ? (
+          <div style={{ padding: "12px", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Loading calendar...</div>
+        ) : events.length === 0 ? (
+          <div style={{ padding: "12px", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>No high impact events in next 48 hours</div>
+        ) : (
+          events.map((e, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 8, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)" }}>
+              <span style={{ fontSize: 14 }}>{countryFlag(e.country)}</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{e.title}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.45)", marginTop: 1 }}>{formatDay(e.date)} · {formatTime(e.date, e.time)}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState(DEFAULT_CODE);
@@ -885,6 +1010,19 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
+      // Build calendar context for characters
+      let calendarContext = "";
+      try {
+        const calRes = await fetch('/api/calendar');
+        if (calRes.ok) {
+          const calEvents = await calRes.json();
+          if (calEvents.length > 0) {
+            calendarContext = "\n\nUPCOMING HIGH IMPACT NEWS (next 48h): " + 
+              calEvents.slice(0, 5).map(e => `${e.country} ${e.title} at ${e.time} UTC`).join(", ");
+          }
+        }
+      } catch(e) {}
+
       const agreedBlock = agreedItems.length > 0
         ? `CLOSED ISSUES — NEVER raise these again, they are resolved:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nIf your ISSUE this turn matches anything in the closed list, you MUST instead write a completely different new issue or write "None".`
         : "AGREED SO FAR: Nothing yet.";
@@ -894,7 +1032,7 @@ Select 1-3 characters whose specialties best match the task.`,
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code carefully. Identify real issues in specific named functions.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [name the exact function/parameter with the biggest problem]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
+        ? `${codeBlock}\n\n${agreedBlock}${calendarContext}\n\nRead the code carefully. Identify real issues in specific named functions.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [name the exact function/parameter with the biggest problem]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
         : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-1500)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. Name specific functions from the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
@@ -1154,6 +1292,7 @@ Select 1-3 characters whose specialties best match the task.`,
         {/* Right column — DNA Library + Live Tracker */}
         <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 170, display: "flex", flexDirection: "column", alignSelf: "stretch" }}>
           <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
+          <EconomicCalendar compact={true} />
           <LiveTracker profile={profile} />
         </div>
 
@@ -1268,6 +1407,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
       {/* Feed */}
       <div style={s.feed}>
+        <EconomicCalendar compact={false} />
         {messages.length === 0 && !thinking && (
           <div style={s.emptyState}>
             <div style={{ fontSize: 24, marginBottom: 12, opacity: 0.12 }}>◈</div>
