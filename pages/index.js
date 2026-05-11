@@ -1147,7 +1147,7 @@ Select 1-3 characters whose specialties best match the task.`,
           </div>
         </div>
 
-        <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: 24, padding: "0 clamp(14px, 4vw, 40px) 60px", width: "100%", maxWidth: 1100, margin: "0 auto", boxSizing: "border-box", alignItems: "flex-start", justifyContent: "center" }}>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: 24, padding: "0 clamp(14px, 4vw, 40px) 60px", width: "100%", maxWidth: 1200, margin: "0 auto", boxSizing: "border-box", alignItems: "flex-start", justifyContent: "center" }}>
         {/* Left column — setup content */}
         <div style={{ flex: "1 1 420px", minWidth: 0, maxWidth: 600, alignSelf: "flex-start" }}>
           <div style={s.logo}>
@@ -1306,12 +1306,12 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 560px", width: 560, paddingTop: 148, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
-          <div style={{ display: "flex", height: 420 }}>
-            <div style={{ flex: 2, borderRight: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
-            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: 420 }}><EconomicCalendar compact={true} /></div>
+        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, paddingTop: 186, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{ display: "flex", flex: 1 }}>
+            <div style={{ flex: "0 0 55%", borderRight: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
+            <div style={{ flex: "0 0 45%", overflow: "hidden", display: "flex", flexDirection: "column" }}><EconomicCalendar compact={true} /></div>
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}><LiveTracker profile={profile} /></div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}><LiveTracker profile={profile} /></div>
         </div>
 
         </div>{/* end two-col */}
