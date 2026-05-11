@@ -1147,16 +1147,19 @@ Select 1-3 characters whose specialties best match the task.`,
           </div>
         </div>
 
-        <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: 24, padding: "0 clamp(14px, 4vw, 40px) 60px", width: "100%", maxWidth: 1200, margin: "0 auto", boxSizing: "border-box", alignItems: "flex-start", justifyContent: "center" }}>
-        {/* Left column — setup content */}
-        <div style={{ flex: "1 1 420px", minWidth: 0, maxWidth: 600, alignSelf: "flex-start" }}>
-          <div style={s.logo}>
+        <div style={{ textAlign: "center", width: "100%", maxWidth: 1200, margin: "0 auto", padding: "0 clamp(14px, 4vw, 40px)", boxSizing: "border-box" }}>
+        <div style={s.logo}>
             <div style={s.logoLine}>
               <span style={s.logoText}>REVIEW</span>
               <span style={s.logoAccent}>ARENA</span>
             </div>
             <div style={s.logoSub}>{activeChars.map(k => ({...ALL_CHARS,...customChars})[k]?.tag||k).join(" · ")} — DEBATE UNTIL 10/10</div>
           </div>
+        </div>
+        <div style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", gap: 24, padding: "0 clamp(14px, 4vw, 40px) 60px", width: "100%", maxWidth: 1200, margin: "0 auto", boxSizing: "border-box", alignItems: "flex-start", justifyContent: "center" }}>
+        {/* Left column — setup content */}
+        <div style={{ flex: "1 1 420px", minWidth: 0, maxWidth: 600, alignSelf: "flex-start" }}>
+          
 
           {/* Task routing */}
           <div style={s.sectionLabel}>TASK ROUTING — OPTIONAL</div>
@@ -1306,8 +1309,8 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, paddingTop: 186, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
-          <div style={{ display: "flex", flex: 1 }}>
+        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, paddingTop: 0, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{ display: "flex", minHeight: 415 }}>
             <div style={{ flex: "0 0 55%", borderRight: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
             <div style={{ flex: "0 0 45%", overflow: "hidden", display: "flex", flexDirection: "column" }}><EconomicCalendar compact={true} /></div>
           </div>
@@ -1683,7 +1686,7 @@ const s = {
 
   // ── Setup ──
   setupWrap: { position: "relative", zIndex: 1, width: "100%", boxSizing: "border-box" },
-  logo: { marginBottom: 56, textAlign: "center" },
+  logo: { marginBottom: 24, textAlign: "center" },
   logoLine: { display: "flex", gap: 14, justifyContent: "center", alignItems: "baseline", marginBottom: 10 },
   logoText: { fontSize: "clamp(24px, 8vw, 36px)", fontWeight: 800, letterSpacing: 6, color: "#fff" },
   logoAccent: { fontSize: "clamp(24px, 8vw, 36px)", fontWeight: 800, letterSpacing: 6, color: "#e8a020" },
