@@ -433,7 +433,208 @@ function LiveTracker({ profile }) {
   const recent = activity.filter(a => a.status !== "reviewing").slice(0, 8);
 
   return (
-    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1 }}>
+    <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1 }}>
+      {/* Header */}
+      <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 8, width: 8, height: 8, borderRadius: "50%", background: "#3ee89a", display: "inline-block", boxShadow: "0 0 6px #3ee89a", animation: "pulse 2s infinite" }} />
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#3ee89a", letterSpacing: 3 }}>LIVE ACTIVITY</div>
+        </div>
+        <button onClick={fetchActivity} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 12, padding: 2, fontFamily: "inherit" }}>↻</button>
+      </div>
+
+      <div style={{ padding: "10px 12px" }}>
+        {loading ? (
+          <div style={{ padding: "20px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Loading...</div>
+        ) : (
+          <>
+            {/* Currently reviewing */}
+            {reviewing.length > 0 && (
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: 3, marginBottom: 6 }}>NOW REVIEWING</div>
+                {reviewing.map((a, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 10px", borderRadius: 8, background: "rgba(56,184,240,0.06)", border: "1px solid rgba(56,184,240,0.15)", marginBottom: 4 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(56,184,240,0.15)", border: "1px solid rgba(56,184,240,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#38b8f0", flexShrink: 0 }}>
+                      {a.username?.[0]?.toUpperCase() || "?"}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@{a.username}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.file_name || "Unknown file"}</div>
+                    </div>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {[0,1,2].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "#38b8f0", animation: `pulse 1.2s ${i*0.2}s ease-in-out infinite` }} />)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Recent completions */}
+            {recent.length > 0 && (
+              <div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.35)", letterSpacing: 3, marginBottom: 6 }}>RECENT</div>
+                {recent.map((a, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, marginBottom: 3, background: "rgba(255,255,255,0.02)" }}>
+                    <div style={{ width: 24, height: 24, borderRadius: "50%", background: statusBg(a.status), border: `1px solid ${statusColor(a.status)}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: statusColor(a.status), flexShrink: 0 }}>
+                      {a.username?.[0]?.toUpperCase() || "?"}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.8)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>@{a.username}</div>
+                      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)", marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.file_name || "Unknown"}</div>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2, flexShrink: 0 }}>
+                      <span style={{ fontSize: 9, padding: "2px 6px", borderRadius: 10, background: statusBg(a.status), color: statusColor(a.status), fontWeight: 700, letterSpacing: 1 }}>{statusLabel(a.status)}</span>
+                      <span style={{ fontSize: 9, color: "rgba(255,255,255,0.25)" }}>{timeAgo(a.updated_at)}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {reviewing.length === 0 && recent.length === 0 && (
+              <div style={{ padding: "24px 16px", textAlign: "center" }}>
+                <div style={{ fontSize: 24, marginBottom: 8, opacity: 0.2 }}>◈</div>
+                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>No activity yet.</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.2)", marginTop: 4 }}>Be the first to start a review.</div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── DNA Library Panel ───────────────────────────────────────────────────────
+function DnaLibrary({ sessions, onLoadSession }) {
+  const [expanded, setExpanded] = useState(null);
+
+  const dnaSessionss = [];
+  // safely filter sessions that have DNA cards
+  try {
+    (sessions || []).forEach(s => {
+      try {
+        if (!s || !s.messages) return;
+        const msgs = typeof s.messages === "string" ? JSON.parse(s.messages) : s.messages;
+        if (msgs && msgs.dnaCard) dnaSessionss.push(s);
+      } catch {}
+    });
+  } catch {}
+
+  const riskColor = (r) => r === "Aggressive" ? "#f07070" : r === "Conservative" ? "#3ee89a" : "#e8a020";
+  const riskBg = (r) => r === "Aggressive" ? "rgba(240,80,80,0.12)" : r === "Conservative" ? "rgba(62,232,154,0.12)" : "rgba(232,160,32,0.12)";
+
+  return (
+    <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* Header */}
+      <div style={{ padding: "16px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+          <span style={{ fontSize: 16 }}>🧬</span>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#c084fc", letterSpacing: 3 }}>STRATEGY DNA LIBRARY</div>
+        </div>
+        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
+          After each 10/10 review, generate a DNA profile for your strategy. It analyses your code and produces a complete personality card — edge, conditions, risk profile, strengths and weaknesses. Build your library over time to compare strategies at a glance.
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: "12px" }}>
+        {dnaSessionss.length === 0 ? (
+          <div style={{ padding: "40px 20px", textAlign: "center" }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>🧬</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>No DNA profiles yet.</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>Complete a review and generate<br/>Strategy DNA to build your library.</div>
+            <div style={{ fontSize: 13, color: "#c084fc", fontWeight: 700, marginTop: 12, fontFamily: "'Bebas Neue', Impact, sans-serif", letterSpacing: 2 }}>DON'T SLACK G</div>
+          </div>
+        ) : (
+          dnaSessionss.map(s => {
+            let dna = null;
+            try {
+              const msgs = typeof s.messages === "string" ? JSON.parse(s.messages) : s.messages;
+              dna = (msgs && msgs.dnaCard) ? msgs.dnaCard : null;
+            } catch { return null; }
+            if (!dna) return null;
+            const isExp = expanded === s.id;
+            return (
+              <div key={s.id} style={{ marginBottom: 8, border: `1px solid ${isExp ? "rgba(192,132,252,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: 10, overflow: "hidden", transition: "all 0.2s" }}>
+                <div onClick={() => setExpanded(isExp ? null : s.id)}
+                  style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", background: isExp ? "rgba(168,85,247,0.08)" : "rgba(255,255,255,0.02)" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", fontFamily: "'Bebas Neue', Impact, sans-serif", letterSpacing: 2, marginBottom: 2 }}>{dna.personality}</div>
+                    <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.file_name || s.title || "Untitled"}</div>
+                  </div>
+                  <span style={{ fontSize: 10, padding: "3px 10px", borderRadius: 20, background: riskBg(dna.risk_profile), color: riskColor(dna.risk_profile), fontWeight: 600, flexShrink: 0 }}>{dna.risk_profile}</span>
+                  <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>{isExp ? "▲" : "▼"}</span>
+                </div>
+                {isExp && (
+                  <div style={{ padding: "14px", background: "rgba(168,85,247,0.03)", borderTop: "1px solid rgba(168,85,247,0.1)" }}>
+                    <div style={{ fontSize: 13, color: "#fff", fontStyle: "italic", marginBottom: 12, lineHeight: 1.6 }}>"{dna.verdict}"</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                      {[
+                        { label: "⚡ EDGE", value: dna.edge },
+                        { label: "✅ BEST FOR", value: dna.best_conditions },
+                      ].map(({ label, value }) => (
+                        <div key={label} style={{ padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
+                          <div style={{ fontSize: 9, color: "rgba(192,132,252,0.6)", letterSpacing: 2, marginBottom: 4 }}>{label}</div>
+                          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={() => onLoadSession(s)}
+                      style={{ width: "100%", padding: "9px", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 7, color: "#c084fc", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1 }}>
+                      OPEN SESSION →
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+// ─── Economic Calendar ────────────────────────────────────────────────────────
+function LiveTracker({ profile }) {
+  const [activity, setActivity] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchActivity = async () => {
+    try {
+      const res = await fetch("/api/activity");
+      if (res.ok) {
+        const data = await res.json();
+        setActivity(data);
+      }
+    } catch(e) {}
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchActivity();
+    const interval = setInterval(fetchActivity, 10000); // poll every 10s
+    return () => clearInterval(interval);
+  }, []);
+
+  const statusColor = (s) => s === "reviewing" ? "#38b8f0" : s === "completed" ? "#3ee89a" : "#e8a020";
+  const statusBg = (s) => s === "reviewing" ? "rgba(56,184,240,0.1)" : s === "completed" ? "rgba(62,232,154,0.1)" : "rgba(232,160,32,0.1)";
+  const statusLabel = (s) => s === "reviewing" ? "REVIEWING" : s === "completed" ? "COMPLETED" : "EXPORTED";
+
+  const timeAgo = (ts) => {
+    const diff = Math.floor((Date.now() - new Date(ts)) / 1000);
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff/3600)}h ago`;
+    return `${Math.floor(diff/86400)}d ago`;
+  };
+
+  const reviewing = activity.filter(a => a.status === "reviewing");
+  const recent = activity.filter(a => a.status !== "reviewing").slice(0, 8);
+
+  return (
+    <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1 }}>
       {/* Header */}
       <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -654,7 +855,7 @@ function EconomicCalendar({ compact = false }) {
   if (compact) {
     // Compact version for setup screen
     return (
-      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
         <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 14 }}>📅</span>
@@ -662,13 +863,13 @@ function EconomicCalendar({ compact = false }) {
           </div>
           <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", letterSpacing: 1 }}>NEXT 48H · HIGH IMPACT</div>
         </div>
-        <div style={{ padding: "8px 12px" }}>
+        <div style={{ padding: "8px 12px", overflowY: "auto", flex: 1 }}>
           {loading ? (
             <div style={{ padding: "16px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Loading...</div>
           ) : events.length === 0 ? (
             <div style={{ padding: "16px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>No high impact events in next 48h</div>
           ) : (
-            events.slice(0, 6).map((e, i) => (
+            events.map((e, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", borderRadius: 8, marginBottom: 3, background: "rgba(255,255,255,0.02)", borderLeft: "2px solid #ef4444" }}>
                 <span style={{ fontSize: 14, flexShrink: 0 }}>{countryFlag(e.country)}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -684,9 +885,7 @@ function EconomicCalendar({ compact = false }) {
               </div>
             ))
           )}
-          {events.length > 6 && (
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", textAlign: "center", padding: "6px 0" }}>+{events.length - 6} more events</div>
-          )}
+
         </div>
       </div>
     );
@@ -1306,12 +1505,12 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 540px", width: 540, paddingTop: 148, display: "flex", flexDirection: "column", gap: 12, alignSelf: "flex-start" }}>
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
-            <div style={{ flex: 1 }}><EconomicCalendar compact={true} /></div>
+        <div className="dna-col" style={{ flex: "0 0 560px", width: 560, paddingTop: 148, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{ display: "flex", height: 420 }}>
+            <div style={{ flex: 2, borderRight: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
+            <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", maxHeight: 420 }}><EconomicCalendar compact={true} /></div>
           </div>
-          <LiveTracker profile={profile} />
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}><LiveTracker profile={profile} /></div>
         </div>
 
         </div>{/* end two-col */}
