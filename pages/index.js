@@ -401,6 +401,7 @@ function LiveTracker({ profile }) {
   const [loading, setLoading] = useState(true);
 
   const fetchActivity = async () => {
+    if (typeof window === 'undefined') return;
     try {
       const res = await fetch("/api/activity");
       if (res.ok) {
