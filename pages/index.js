@@ -301,41 +301,41 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark. You are reviewing actual trading bot code. Be specific — always name the exact function or parameter you are talking about.
+  STARK: `You are Tony Stark — genius billionaire, brutal honesty, zero patience for weak code. Say "yeah no" before dismantling something. Fast, sharp, final sign-off authority.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
+ALWAYS name the exact function or parameter. Never generic.
 
-EVERY response MUST be exactly these 3 lines:
-AGREED: [one sentence — name the specific function/parameter confirmed solid]
-ISSUE: [one NEW problem — name the exact function, method or parameter at fault]
+EVERY response MUST be exactly these 3 lines — no more, no less:
+AGREED: [one sentence naming the specific function/parameter confirmed solid]
+ISSUE: [one NEW specific problem — exact function/parameter — or "None" if all resolved]
 RATING: [number 1-10]/10
 
-If RATING is 10/10, ISSUE must be "None" and add STARK_APPROVED on a new line.
-NEVER be generic. NEVER say "the code" — name the specific part. NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
+RULES: If RATING is 10/10 you MUST write ISSUE: None and then STARK_APPROVED on the next line. Never repeat a closed issue. Never write code. Never add extra lines. Only one issue per turn.`,
 
-  EDDIE: `You are Eddie Morra on NZT-48. You are reviewing actual trading bot code. Be specific — always name the exact function or parameter you are talking about.
+  EDDIE: `You are Eddie Morra on NZT-48 — pure signal, no noise, sees every pattern instantly. Clinical, decisive, no hedging.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
+ALWAYS name the exact function or parameter. Never generic.
 
-EVERY response MUST be exactly these 3 lines:
-AGREED: [one sentence — name the specific function/parameter confirmed solid]
-ISSUE: [one NEW problem — name the exact function, method or parameter at fault]
+EVERY response MUST be exactly these 3 lines — no more, no less:
+AGREED: [one sentence naming the specific function/parameter confirmed solid]
+ISSUE: [one NEW specific problem — exact function/parameter — or "None" if all resolved]
 RATING: [number 1-10]/10
 
-If RATING is 10/10, ISSUE must be "None" and add EDDIE_APPROVED on a new line.
-NEVER be generic. NEVER say "the code" — name the specific part. NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
+RULES: If RATING is 10/10 you MUST write ISSUE: None and then EDDIE_APPROVED on the next line. Never repeat a closed issue. Never write code. Never add extra lines. Only one issue per turn.`,
 
-  SENKU: `You are Senku Ishigami. You are reviewing actual trading bot code. Be specific — always name the exact function or parameter you are talking about.
+  SENKU: `You are Senku Ishigami — ten billion percent scientific precision, zero tolerance for weak methodology. Say "ten billion percent" when certain.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
+ALWAYS name the exact function or parameter. Never generic.
 
-EVERY response MUST be exactly these 3 lines:
-AGREED: [one sentence — name the specific function/parameter confirmed solid]
-ISSUE: [one NEW problem — name the exact function, method or parameter at fault]
+EVERY response MUST be exactly these 3 lines — no more, no less:
+AGREED: [one sentence naming the specific function/parameter confirmed solid]
+ISSUE: [one NEW specific problem — exact function/parameter — or "None" if all resolved]
 RATING: [number 1-10]/10
 
-If RATING is 10/10, ISSUE must be "None" and add SENKU_APPROVED on a new line.
-NEVER be generic. NEVER say "the code" — name the specific part. NEVER repeat a closed issue. NEVER write code. NEVER add extra lines.`,
+RULES: If RATING is 10/10 you MUST write ISSUE: None and then SENKU_APPROVED on the next line. Never repeat a closed issue. Never write code. Never add extra lines. Only one issue per turn.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -880,15 +880,19 @@ Generate the Strategy DNA JSON.`;
       const charNames = chars.map(k => allChars()[k]?.name || k).join(", ");
 
       // Step 1: Extract structured fix list from debate
-      const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n");
-      const fixExtractSystem = `You extract a precise fix list from a code review debate. Return ONLY a numbered list of fixes — nothing else. Each fix must name the exact function and what to change. No explanations, no preamble, no markdown.`;
-      const fixExtractContent = `Code review debate:\n${debateText}\n\nExtract every distinct fix that was identified. Format:\n1. FunctionName() — what to fix\n2. FunctionName() — what to fix\netc.`;
-      const fixList = await callAPI(fixExtractSystem, fixExtractContent, 600);
-
-      // Step 2: Generate fixed code using the structured fix list
+      let fixList = "";
+      try {
+        const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n");
+        const fixExtractSystem = `You extract a precise fix list from a code review debate. Return ONLY a numbered list of fixes — nothing else. Each fix must name the actual function and what to change. No explanations, no preamble, no markdown.`;
+        const fixExtractContent = `Code review debate:\n${debateText}\n\nExtract every distinct fix that was identified. Format:\n1. FunctionName() — what to fix\n2. FunctionName() — what to fix\netc.`;
+        fixList = await callAPI(fixExtractSystem, fixExtractContent, 600);
+      } catch(e) {
+        fixList = "Apply all improvements identified in the debate.";
+      }
+            // Step 2: Generate fixed code using the structured fix list
       const genContent = `Original code:
 \`\`\`
-${snapshot}
+${snapshot.slice(0, 10000)}
 \`\`\`
 
 REQUIRED FIXES — apply every single one, no exceptions:
@@ -1021,7 +1025,7 @@ Select 1-3 characters whose specialties best match the task.`,
       const isFirst = history.length === 0;
       const myRating = highestRatings[who] || 0;
 
-      const codeSnippet = isFirst ? snapshot : snapshot.slice(0, 2000) + '\n// ... refer to turn 1 for full code ...';
+      const codeSnippet = isFirst ? snapshot.slice(0, 8000) : snapshot.slice(0, 1000) + '\n// ... refer to turn 1 for full code ...';
       const codeBlock = isFirst
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
@@ -1036,11 +1040,11 @@ Select 1-3 characters whose specialties best match the task.`,
 
       const content = isFirst
         ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code carefully. Identify real issues in specific named functions.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [name the exact function/parameter with the biggest problem]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-1500)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. Name specific functions from the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. Name specific functions from the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
-        const text = await callAPI(system, content, 260);
+        const text = await callAPI(system, content, 200);
         if (!runRef.current) break;
 
         // Extract AGREED line and add to log if new
