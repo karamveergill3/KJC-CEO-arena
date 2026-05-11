@@ -1309,7 +1309,7 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, position: "sticky", top: 0, marginTop: 42, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", maxHeight: 480, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, position: "sticky", top: 0, marginTop: 28, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", maxHeight: 480, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
             <div style={{ flex: "0 0 55%", borderRight: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
             <div style={{ flex: "0 0 45%", overflow: "hidden", display: "flex", flexDirection: "column" }}><EconomicCalendar compact={true} /></div>
