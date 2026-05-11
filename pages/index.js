@@ -807,6 +807,17 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
 
   const allChars = () => ({ ...ALL_CHARS, ...customChars });
 
+  const clearActivity = () => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      fetch("/api/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ status: "idle", file_name: "" }),
+      }).catch(() => {});
+    });
+  };
+
   const reset = (continueDebate = false) => {
     runRef.current = false;
     setRunning(false); setThinking(null); setPaused(false);
@@ -822,6 +833,7 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
       debateRatingsRef.current = {};
       debateAgreedRef.current = [];
       debateTurnRef.current = 0;
+      clearActivity();
     }
   };
 
@@ -1294,9 +1306,11 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 260px", width: 260, paddingTop: 148, display: "flex", flexDirection: "column", gap: 12, alignSelf: "flex-start" }}>
-          <DnaLibrary sessions={sessions} onLoadSession={onLoadSession} />
-          <EconomicCalendar compact={true} />
+        <div className="dna-col" style={{ flex: "0 0 540px", width: 540, paddingTop: 148, display: "flex", flexDirection: "column", gap: 12, alignSelf: "flex-start" }}>
+          <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ flex: 1 }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
+            <div style={{ flex: 1 }}><EconomicCalendar compact={true} /></div>
+          </div>
           <LiveTracker profile={profile} />
         </div>
 
@@ -1321,7 +1335,7 @@ Select 1-3 characters whose specialties best match the task.`,
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.75)", borderRadius: 2 }} />
           </button>
-          <button onClick={() => { reset(); setScreen("setup"); }} style={s.backBtn}>← SETUP</button>
+          <button onClick={() => { reset(); setScreen("setup"); clearActivity(); }} style={s.backBtn}>← SETUP</button>
           <span style={{ fontSize: 10, color: "rgba(255,165,0,0.7)", letterSpacing: 1 }}>⬡ HAIKU</span>
           <div style={s.topFile}>{fileName}</div>
         </div>
@@ -1801,7 +1815,7 @@ const css = `
   }
 
   /* ── DNA Library — full width on mobile ── */
-  @media (max-width: 860px) {
+  @media (max-width: 1100px) {
     .dna-col { flex: 0 0 100% !important; width: 100% !important; padding-top: 0 !important; }
   }
 
