@@ -1521,7 +1521,6 @@ Select 1-3 characters whose specialties best match the task.`,
 
       {/* Feed */}
       <div style={s.feed}>
-        <EconomicCalendar compact={false} />
         {messages.length === 0 && !thinking && (
           <div style={s.emptyState}>
             <div style={{ fontSize: 24, marginBottom: 12, opacity: 0.12 }}>◈</div>
