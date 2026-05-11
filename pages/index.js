@@ -1128,6 +1128,88 @@ Select 1-3 characters whose specialties best match the task.`,
     }
   };
 
+  const downloadPDF = () => {
+    if (typeof window === 'undefined') return;
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = () => {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const W = 210; const H = 297; const margin = 16; const cW = W - margin * 2;
+      let y = 0;
+      const newPage = () => { doc.addPage(); doc.setFillColor(10,10,15); doc.rect(0,0,W,H,'F'); y = 20; };
+      const chk = (n=10) => { if (y + n > H - 14) newPage(); };
+
+      // Cover page
+      doc.setFillColor(232,160,32); doc.rect(0,0,W,18,'F');
+      doc.setFillColor(10,10,15); doc.rect(0,18,W,H-18,'F');
+      doc.setTextColor(232,160,32); doc.setFontSize(30); doc.setFont('helvetica','bold');
+      doc.text('KJC CAPITAL', W/2, 52, {align:'center'});
+      doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','normal');
+      doc.text('CODE REVIEW ARENA', W/2, 64, {align:'center'});
+      doc.setFontSize(9); doc.setTextColor(150,150,150);
+      doc.text('BACKTESTING REPORT CARD', W/2, 74, {align:'center'});
+      doc.setDrawColor(232,160,32); doc.setLineWidth(0.4); doc.line(margin,82,W-margin,82);
+      doc.setFontSize(15); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
+      doc.text(fileName||'Strategy Review', W/2, 100, {align:'center'});
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(140,140,140);
+      doc.text(new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}), W/2, 110, {align:'center'});
+      const charMap = {...ALL_CHARS,...customCharsRef.current};
+      const chars = activeCharsRef.current;
+      doc.text(chars.map(k=>charMap[k]?.name||k).join('   ·   '), W/2, 120, {align:'center'});
+      const allApp = chars.every(k=>approvalsRef.current[k]);
+      doc.setFillColor(...(allApp?[62,232,154]:[232,160,32]));
+      doc.roundedRect(W/2-45,130,90,11,3,3,'F');
+      doc.setTextColor(0,0,0); doc.setFontSize(8); doc.setFont('helvetica','bold');
+      doc.text(allApp?'CONSENSUS REACHED — 10/10':'REVIEW COMPLETE', W/2, 137.5, {align:'center'});
+
+      // Page 2: Debate
+      newPage();
+      doc.setFillColor(25,25,40); doc.rect(0,y-4,W,13,'F');
+      doc.setTextColor(232,160,32); doc.setFontSize(10); doc.setFont('helvetica','bold');
+      doc.text('DEBATE SUMMARY', margin, y+5); y+=17;
+      const cc = {STARK:[232,160,32],EDDIE:[56,184,240],SENKU:[62,232,154]};
+      (msgsRef.current||[]).forEach(msg => {
+        chk(20);
+        const col = cc[msg.who]||[200,200,200];
+        doc.setFillColor(22,22,38); doc.rect(margin,y,cW,8,'F');
+        doc.setTextColor(...col); doc.setFontSize(7.5); doc.setFont('helvetica','bold');
+        doc.text((charMap[msg.who]?.name||msg.who).toUpperCase(), margin+3, y+5.5);
+        if (msg.rating>0) { doc.setTextColor(180,180,180); doc.setFont('helvetica','normal'); doc.text(msg.rating+'/10', W-margin-3, y+5.5, {align:'right'}); }
+        y+=9;
+        const txt = (msg.text||'').replace(/\nRATING:[^\n]*/i,'').trim();
+        const lines = doc.splitTextToSize(txt, cW-6);
+        const bh = lines.length*4.2+4; chk(bh);
+        doc.setFillColor(14,14,22); doc.rect(margin,y,cW,bh,'F');
+        doc.setTextColor(190,190,190); doc.setFontSize(7); doc.setFont('helvetica','normal');
+        doc.text(lines, margin+3, y+3.5); y+=bh+4;
+      });
+
+      // Page 3: Fixed code
+      if (fixedCode) {
+        newPage();
+        doc.setFillColor(25,25,40); doc.rect(0,y-4,W,13,'F');
+        doc.setTextColor(62,232,154); doc.setFontSize(10); doc.setFont('helvetica','bold');
+        doc.text('FIXED CODE OUTPUT', margin, y+5); y+=17;
+        const cl = doc.splitTextToSize(fixedCode, cW-4);
+        doc.setTextColor(140,210,140); doc.setFontSize(5.5); doc.setFont('courier','normal');
+        cl.forEach(l => { chk(3.8); doc.text(l, margin+2, y); y+=3.8; });
+      }
+
+      // Footer all pages
+      const np = doc.internal.getNumberOfPages();
+      for (let i=1;i<=np;i++) {
+        doc.setPage(i);
+        doc.setFillColor(18,18,28); doc.rect(0,H-9,W,9,'F');
+        doc.setTextColor(90,90,90); doc.setFontSize(6.5); doc.setFont('helvetica','normal');
+        doc.text('KJC CAPITAL — CODE REVIEW ARENA', margin, H-3.5);
+        doc.text('Page '+i+' of '+np, W-margin, H-3.5, {align:'right'});
+      }
+      doc.save('KJC_Report_'+(fileName||'review').replace(/\.[^.]+$/,'')+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+    };
+    document.head.appendChild(script);
+  };
+
   // ─── SETUP SCREEN ──────────────────────────────────────────────────────────
   if (screen === "setup") {
     return (
@@ -1559,6 +1641,9 @@ Select 1-3 characters whose specialties best match the task.`,
                 </button>
                 <button onClick={copyCode} style={{ ...s.ctrlBtn, color: copied ? "#3ee89a" : "#e8a020", borderColor: copied ? "rgba(62,232,154,0.4)" : "rgba(232,160,32,0.4)", fontSize: 9 }}>
                   {copied ? "✓ COPIED" : "⎘ COPY CODE"}
+                </button>
+                <button onClick={downloadPDF} style={{ ...s.ctrlBtn, color: "#c084fc", borderColor: "rgba(192,132,252,0.4)", fontSize: 9 }}>
+                  ⬇ DOWNLOAD REPORT
                 </button>
               </div>
             </div>
