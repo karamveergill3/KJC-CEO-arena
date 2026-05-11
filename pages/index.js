@@ -725,8 +725,8 @@ function EconomicCalendar({ compact = false }) {
 
 function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen }) {
   const [screen, setScreen]         = useState("setup");
-  const [code, setCode]             = useState(DEFAULT_CODE);
-  const [fileName, setFileName]     = useState("SilverScalper_v8.cs");
+  const [code, setCode]             = useState("");
+  const [fileName, setFileName]     = useState("");
   const [messages, setMessages]     = useState([]);
   const [running, setRunning]       = useState(false);
   const [paused, setPaused]         = useState(false);
@@ -1356,23 +1356,29 @@ Select 1-3 characters whose specialties best match the task.`,
               onDrop={e => { e.preventDefault(); setDragOver(false); readFile(e.dataTransfer.files[0]); }}
               style={{
                 ...s.dropZone,
-                borderColor: dragOver ? "#38b8f0" : fileName !== "SilverScalper_v8.cs" ? "#3ee89a" : "rgba(255,255,255,0.08)",
-                background: dragOver ? "rgba(56,184,240,0.06)" : fileName !== "SilverScalper_v8.cs" ? "rgba(62,232,154,0.04)" : "rgba(255,255,255,0.02)",
+                borderColor: dragOver ? "#38b8f0" : fileName ? "#3ee89a" : "rgba(255,255,255,0.08)",
+                background: dragOver ? "rgba(56,184,240,0.06)" : fileName ? "rgba(62,232,154,0.04)" : "rgba(255,255,255,0.02)",
               }}>
               <input id="file-upload" type="file" accept=".cs,.py,.js,.ts,.txt,.mq4,.mq5"
                 style={s.fileInput} onChange={e => { if (e.target.files[0]) readFile(e.target.files[0]); }} />
-              {fileName !== "SilverScalper_v8.cs" ? (
+              {fileName ? (
                 <div style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 20, marginBottom: 8, color: "#3ee89a" }}>✓</div>
                   <div style={{ color: "#3ee89a", fontSize: 13, fontWeight: 600 }}>{fileName}</div>
-                  <div style={{ color: "#3ee89a", fontSize: 11, marginTop: 4, opacity: 0.6 }}>Click to replace</div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 6 }}>
+                    <div style={{ color: "#3ee89a", fontSize: 11, opacity: 0.6 }}>Click to replace</div>
+                    <button onClick={e => { e.preventDefault(); e.stopPropagation(); setCode(""); setFileName(""); setError(null); }}
+                      style={{ background: "rgba(240,80,80,0.15)", border: "1px solid rgba(240,80,80,0.35)", borderRadius: 6, color: "#f07070", fontSize: 11, padding: "2px 8px", cursor: "pointer", fontFamily: "inherit", lineHeight: 1.5 }}>
+                      ✕ Remove
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 20, marginBottom: 8, opacity: 0.25 }}>⬆</div>
                   <div style={{ color: "rgba(255,255,255,0.85)", fontSize: 14 }}>Drop file or click to upload</div>
                   <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, marginTop: 4 }}>.cs .py .js .ts .mq4 .mq5 .txt</div>
-                  <div style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginTop: 5 }}>Default: SilverScalper v8</div>
+                  
                 </div>
               )}
             </label>
