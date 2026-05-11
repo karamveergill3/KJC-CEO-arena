@@ -1025,19 +1025,23 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
-      // Build calendar context for characters
+      // Build calendar context - non-blocking, fetch in background
       let calendarContext = "";
       try {
         if (typeof window !== 'undefined') {
-        const calRes = await fetch('/api/calendar');
-        if (calRes.ok) {
-          const calEvents = await calRes.json();
-          if (calEvents.length > 0) {
-            calendarContext = "\n\nUPCOMING HIGH IMPACT NEWS (next 48h): " + 
-              calEvents.slice(0, 5).map(e => `${e.country} ${e.title} at ${e.time} UTC`).join(", ");
+          const calRes = await Promise.race([
+            fetch('/api/calendar'),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 2000))
+          ]);
+          if (calRes.ok) {
+            const calEvents = await calRes.json();
+            if (calEvents.length > 0) {
+              calendarContext = "\n\nUPCOMING HIGH IMPACT NEWS (next 48h): " +
+                calEvents.slice(0, 5).map(e => `${e.country} ${e.title} at ${e.time} UTC`).join(", ");
+            }
           }
         }
-      }} catch(e) {}
+      } catch(e) {}
 
       const agreedBlock = agreedItems.length > 0
         ? `CLOSED ISSUES — NEVER raise these again, they are resolved:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nIf your ISSUE this turn matches anything in the closed list, you MUST instead write a completely different new issue or write "None".`
