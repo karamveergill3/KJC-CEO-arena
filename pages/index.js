@@ -301,41 +301,47 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark — genius billionaire, brutal honesty, zero patience for weak code. Say "yeah no" before dismantling something. Fast, sharp, final sign-off authority.
+  STARK: `You are Tony Stark — genius, brutal, impatient. Say "yeah no" when something is wrong. Sharp one-liners only.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-ALWAYS name the exact function or parameter. Never generic.
+Name the EXACT function. Never generic.
 
-EVERY response MUST be exactly these 3 lines — no more, no less:
-AGREED: [one sentence naming the specific function/parameter confirmed solid]
-ISSUE: [one NEW specific problem — exact function/parameter — or "None" if all resolved]
+EVERY response MUST be exactly these 3 lines:
+AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet"]
+ISSUE: [one NEW problem in a specific named function — or "None" if genuinely all resolved]
 RATING: [number 1-10]/10
 
-RULES: If RATING is 10/10 you MUST write ISSUE: None and then STARK_APPROVED on the next line. Never repeat a closed issue. Never write code. Never add extra lines. Only one issue per turn.`,
+CRITICAL: AGREED must only confirm what is ACTUALLY IN THE CODE — never agree something is fixed if it wasn't in the original code. Only raise issues that exist in the actual code you read on turn 1.
+If RATING is 10/10 write ISSUE: None then STARK_APPROVED on the next line.
+Never repeat a closed issue. Never write code. Never add extra lines.`,
 
-  EDDIE: `You are Eddie Morra on NZT-48 — pure signal, no noise, sees every pattern instantly. Clinical, decisive, no hedging.
+  EDDIE: `You are Eddie Morra on NZT-48 — every pattern visible, zero noise, clinical precision.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-ALWAYS name the exact function or parameter. Never generic.
+Name the EXACT function. Never generic.
 
-EVERY response MUST be exactly these 3 lines — no more, no less:
-AGREED: [one sentence naming the specific function/parameter confirmed solid]
-ISSUE: [one NEW specific problem — exact function/parameter — or "None" if all resolved]
+EVERY response MUST be exactly these 3 lines:
+AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet"]
+ISSUE: [one NEW problem in a specific named function — or "None" if genuinely all resolved]
 RATING: [number 1-10]/10
 
-RULES: If RATING is 10/10 you MUST write ISSUE: None and then EDDIE_APPROVED on the next line. Never repeat a closed issue. Never write code. Never add extra lines. Only one issue per turn.`,
+CRITICAL: AGREED must only confirm what is ACTUALLY IN THE CODE — never agree something is fixed if it wasn't in the original code. Only raise issues that exist in the actual code you read on turn 1.
+If RATING is 10/10 write ISSUE: None then EDDIE_APPROVED on the next line.
+Never repeat a closed issue. Never write code. Never add extra lines.`,
 
-  SENKU: `You are Senku Ishigami — ten billion percent scientific precision, zero tolerance for weak methodology. Say "ten billion percent" when certain.
+  SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "ten billion percent" when certain. Zero tolerance for weak methodology.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-ALWAYS name the exact function or parameter. Never generic.
+Name the EXACT function. Never generic.
 
-EVERY response MUST be exactly these 3 lines — no more, no less:
-AGREED: [one sentence naming the specific function/parameter confirmed solid]
-ISSUE: [one NEW specific problem — exact function/parameter — or "None" if all resolved]
+EVERY response MUST be exactly these 3 lines:
+AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet"]
+ISSUE: [one NEW problem in a specific named function — or "None" if genuinely all resolved]
 RATING: [number 1-10]/10
 
-RULES: If RATING is 10/10 you MUST write ISSUE: None and then SENKU_APPROVED on the next line. Never repeat a closed issue. Never write code. Never add extra lines. Only one issue per turn.`,
+CRITICAL: AGREED must only confirm what is ACTUALLY IN THE CODE — never agree something is fixed if it wasn't in the original code. Only raise issues that exist in the actual code you read on turn 1.
+If RATING is 10/10 write ISSUE: None then SENKU_APPROVED on the next line.
+Never repeat a closed issue. Never write code. Never add extra lines.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -353,7 +359,7 @@ Maximum 4 sentences total.`;
 };
 
 // ─── Final code generator prompt ─────────────────────────────────────────────
-const CODEGEN_SYSTEM = `You are an elite algorithmic trading developer specialising in cTrader C#. You are given the original code and a numbered fix list. Apply EVERY fix on the list precisely — do not skip any. Each fix names an exact function and what to change. Make that exact change. Your output MUST deliver: 60+ trades per 3 months, profit factor >1.5, win rate >60%, drawdown <15%. No ifs, no buts, no maybes. Every line must have a purpose. No dead code. CRITICAL: (1) Output the COMPLETE file — never truncate, never use "...". (2) Raw C# only — no markdown. (3) Start with "using", end with final closing brace. (4) Do not invent fixes not on the list. Apply exactly what is listed.`;
+const CODEGEN_SYSTEM = `You are an elite cTrader C# developer applying surgical fixes to a trading bot. You will receive the original code and a list of precise fixes — each one names the exact function and what to change. Apply EVERY fix exactly as described. Do not add fixes not on the list. Do not remove existing logic unless a fix requires it. The output MUST deliver: 60+ trades per 3 months, PF >1.5, win rate >60%, drawdown <15%. CRITICAL: (1) Output the COMPLETE file — never truncate, never use "...". (2) Raw C# only — no markdown, no comments explaining what you changed. (3) Start with "using", end with final closing brace.`;
 
 // ─── API call ─────────────────────────────────────────────────────────────────
 // ─── Anthropic API call ───────────────────────────────────────────────────────
@@ -879,26 +885,39 @@ Generate the Strategy DNA JSON.`;
     try {
       const charNames = chars.map(k => allChars()[k]?.name || k).join(", ");
 
-      // Step 1: Extract structured fix list from debate
-      let fixList = "";
+      // Step 1: Extract STRUCTURED fix list — function + exact change
+      let structuredFixes = [];
       try {
         const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n");
-        const fixExtractSystem = `You extract a precise fix list from a code review debate. Return ONLY a numbered list of fixes — nothing else. Each fix must name the actual function and what to change. No explanations, no preamble, no markdown.`;
-        const fixExtractContent = `Code review debate:\n${debateText}\n\nExtract every distinct fix that was identified. Format:\n1. FunctionName() — what to fix\n2. FunctionName() — what to fix\netc.`;
-        fixList = await callAPI(fixExtractSystem, fixExtractContent, 600);
+        const fixExtractSystem = `You extract a precise surgical fix list from a code review debate. Return ONLY valid JSON — an array of fix objects. No markdown, no explanation, no preamble. Only include fixes for issues that were confirmed as real problems in the ORIGINAL code — never include fixes that were "agreed" as already done.`;
+        const fixExtractContent = `Code review debate:\n${debateText.slice(0, 4000)}\n\nExtract every confirmed fix. Return JSON array:\n[{"function":"FunctionName","issue":"what is wrong","fix":"exactly what to change"}]`;
+        const raw = await callAPI(fixExtractSystem, fixExtractContent, 800);
+        const clean = raw.replace(/\`\`\`json|\`\`\`/g, "").trim();
+        const match = clean.match(/\[[\s\S]*\]/);
+        if (match) structuredFixes = JSON.parse(match[0]);
       } catch(e) {
-        fixList = "Apply all improvements identified in the debate.";
+        structuredFixes = [];
       }
-            // Step 2: Generate fixed code using the structured fix list
-      const genContent = `Original code:
+
+      // Step 2: Build precise fix instructions from structured list
+      const fixInstructions = structuredFixes.length > 0
+        ? structuredFixes.map((f, i) => `FIX ${i+1}:\nFunction: ${f.function}\nIssue: ${f.issue}\nRequired change: ${f.fix}`).join("\n\n")
+        : "Apply all improvements identified in the debate to make the strategy profitable.";
+
+      // Step 3: Generate fixed code with surgical instructions
+      const genContent = `You are applying surgical fixes to this trading bot. Read the original code carefully, then apply EVERY fix listed below precisely.
+
+ORIGINAL CODE:
 \`\`\`
 ${snapshot.slice(0, 10000)}
 \`\`\`
 
-REQUIRED FIXES — apply every single one, no exceptions:
-${fixList}
+SURGICAL FIXES TO APPLY (apply ALL of these — do not skip any):
+${fixInstructions}
 
-Apply all fixes above precisely. Output the complete fixed code.`;
+REQUIREMENTS: Output MUST deliver 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
+Output the COMPLETE fixed file. Raw C# only. Start with "using". End with closing brace.`;
+
       const fixed = await callAPI(CODEGEN_SYSTEM, genContent, 4500);
       setFixedCode(fixed);
     } catch(e) {
@@ -1040,7 +1059,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
       const content = isFirst
         ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code carefully. Identify real issues in specific named functions.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [name the exact function/parameter with the biggest problem]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. Name specific functions from the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. IMPORTANT: Only agree on things that are ACTUALLY in the original code. Never fabricate fixes.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
