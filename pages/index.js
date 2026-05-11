@@ -978,6 +978,7 @@ Select 1-3 characters whose specialties best match the task.`,
   };
 
   const beginReview = async (continueDebate = false) => {
+    if (!code && !continueDebate) { setError("Please upload a code file first."); return; }
     const snapshot = code;
     const chars = activeCharsRef.current;
     reset(continueDebate);
@@ -1021,7 +1022,7 @@ Select 1-3 characters whose specialties best match the task.`,
       const myRating = highestRatings[who] || 0;
 
       const codeSnippet = isFirst ? snapshot : snapshot.slice(0, 2000) + '\n// ... refer to turn 1 for full code ...';
-      codeBlock = isFirst
+      const codeBlock = isFirst
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
