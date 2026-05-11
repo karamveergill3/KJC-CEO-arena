@@ -1025,24 +1025,6 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
-      // Build calendar context - non-blocking, fetch in background
-      let calendarContext = "";
-      try {
-        if (typeof window !== 'undefined') {
-          const calRes = await Promise.race([
-            fetch('/api/calendar'),
-            new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 2000))
-          ]);
-          if (calRes.ok) {
-            const calEvents = await calRes.json();
-            if (calEvents.length > 0) {
-              calendarContext = "\n\nUPCOMING HIGH IMPACT NEWS (next 48h): " +
-                calEvents.slice(0, 5).map(e => `${e.country} ${e.title} at ${e.time} UTC`).join(", ");
-            }
-          }
-        }
-      } catch(e) {}
-
       const agreedBlock = agreedItems.length > 0
         ? `CLOSED ISSUES — NEVER raise these again, they are resolved:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nIf your ISSUE this turn matches anything in the closed list, you MUST instead write a completely different new issue or write "None".`
         : "AGREED SO FAR: Nothing yet.";
@@ -1052,7 +1034,7 @@ Select 1-3 characters whose specialties best match the task.`,
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}${calendarContext}\n\nRead the code carefully. Identify real issues in specific named functions.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [name the exact function/parameter with the biggest problem]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
+        ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code carefully. Identify real issues in specific named functions.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [name the exact function/parameter with the biggest problem]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
         : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-1500)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. Name specific functions from the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
