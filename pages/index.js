@@ -528,8 +528,8 @@ function DnaLibrary({ sessions, onLoadSession }) {
   return (
     <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Header */}
-      <div style={{ padding: "16px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+      <div style={{ padding: "10px 14px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 16 }}>🧬</span>
           <div style={{ fontSize: 11, fontWeight: 800, color: "#c084fc", letterSpacing: 3 }}>STRATEGY DNA LIBRARY</div>
         </div>
@@ -1309,7 +1309,7 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, position: "sticky", top: 0, paddingTop: 12, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", maxHeight: 510, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, position: "sticky", top: 0, marginTop: 42, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", maxHeight: 480, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
             <div style={{ flex: "0 0 55%", borderRight: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
             <div style={{ flex: "0 0 45%", overflow: "hidden", display: "flex", flexDirection: "column" }}><EconomicCalendar compact={true} /></div>
