@@ -1349,7 +1349,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
           <div style={s.uploadSection}>
             <div style={s.sectionLabel}>CODE FILE</div>
-            <div style={{ position: "relative" }}>
+            <div style={{ position: "relative", width: "100%" }}>
               <label
                 htmlFor="file-upload"
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }}
