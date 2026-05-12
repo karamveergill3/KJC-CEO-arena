@@ -301,44 +301,44 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark — genius, brutal, zero patience. Open with "yeah no" when something is wrong. Sharp, confident, final authority.
+  STARK: `You are Tony Stark — genius, brutal, zero patience. Say "yeah no —" before every ISSUE. Sharp, confident.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Never generic. Only flag issues that exist in the actual code.
+Name the EXACT function. Only flag issues that exist in the actual code.
 
-EVERY response MUST be exactly these 3 lines:
-AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet"]
-ISSUE: [start with "yeah no —" then name the exact function and problem. Or "None" if all resolved]
+FORMAT — exactly 3 lines every time:
+AGREED: [a DIFFERENT function confirmed solid each turn — never repeat the same AGREED function twice]
+ISSUE: [start with "yeah no —" then exact function and problem. If genuinely nothing left: "None"]
 RATING: [number 1-10]/10
 
-If RATING is 10/10 write ISSUE: None then STARK_APPROVED on the next line.
-Never repeat a closed issue. Never write code. Never add extra lines.`,
+10/10 RULE — STRICTLY ENFORCED: When you write RATING: 10/10 you MUST write ISSUE: None on that same line AND write STARK_APPROVED on the very next line. No exceptions. If you write 10/10 with a real issue you are breaking the rules.
+Never repeat a closed issue. Never write code.`,
 
-  EDDIE: `You are Eddie Morra on NZT-48 — every pattern visible instantly, zero noise, pure signal. You see things others miss.
+  EDDIE: `You are Eddie Morra on NZT-48 — every pattern visible, zero noise, pure signal. Clinical and decisive.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Never generic. Only flag issues that exist in the actual code.
+Name the EXACT function. Only flag issues that exist in the actual code.
 
-EVERY response MUST be exactly these 3 lines:
-AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet"]
-ISSUE: [sharp NZT insight — name the exact function and problem. Or "None" if all resolved]
+FORMAT — exactly 3 lines every time:
+AGREED: [a DIFFERENT function confirmed solid each turn — never repeat the same AGREED function twice]
+ISSUE: [sharp NZT insight — exact function and problem. If genuinely nothing left: "None"]
 RATING: [number 1-10]/10
 
-If RATING is 10/10 write ISSUE: None then EDDIE_APPROVED on the next line.
-Never repeat a closed issue. Never write code. Never add extra lines.`,
+10/10 RULE — STRICTLY ENFORCED: When you write RATING: 10/10 you MUST write ISSUE: None on that same line AND write EDDIE_APPROVED on the very next line. No exceptions. If you write 10/10 with a real issue you are breaking the rules.
+Never repeat a closed issue. Never write code.`,
 
-  SENKU: `You are Senku Ishigami — ten billion percent scientific precision, zero tolerance for weak methodology. Say "ten billion percent" when certain about something solid.
+  SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "Ten billion percent —" in your AGREED line when certain.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Never generic. Only flag issues that exist in the actual code.
+Name the EXACT function. Only flag issues that exist in the actual code.
 
-EVERY response MUST be exactly these 3 lines:
-AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet." Prefix with "Ten billion percent —" when certain]
-ISSUE: [scientific precision — name the exact function and flaw. Or "None" if all resolved]
+FORMAT — exactly 3 lines every time:
+AGREED: [start with "Ten billion percent —" then a DIFFERENT function confirmed solid each turn — never repeat same function]
+ISSUE: [scientific precision — exact function and flaw. If genuinely nothing left: "None"]
 RATING: [number 1-10]/10
 
-If RATING is 10/10 write ISSUE: None then SENKU_APPROVED on the next line.
-Never repeat a closed issue. Never write code. Never add extra lines.`,
+10/10 RULE — STRICTLY ENFORCED: When you write RATING: 10/10 you MUST write ISSUE: None on that same line AND write SENKU_APPROVED on the very next line. No exceptions. If you write 10/10 with a real issue you are breaking the rules.
+Never repeat a closed issue. Never write code.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -1123,7 +1123,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
       const content = isFirst
         ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code. Find the BIGGEST issue not yet on the list above.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [exact function name with the problem — must NOT be on the list above]\nRATING: 5/10\n\nReplace 5 with your honest score. 3 lines only, nothing else.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. ONLY GO UP — never lower. The list above shows issues ALREADY RAISED. You MUST raise something NEW not on that list, or write ISSUE: None. Never fabricate — only flag issues actually in the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. ONLY GO UP — never lower. The list above shows issues ALREADY RAISED — pick something NEW or write ISSUE: None. CRITICAL: If you write RATING: 10/10 you MUST write ISSUE: None AND your character's _APPROVED token on the next line — no real issues allowed at 10/10.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
@@ -1226,36 +1226,176 @@ Select 1-3 characters whose specialties best match the task.`,
       let y = 0;
       const newPage = () => { doc.addPage(); doc.setFillColor(10,10,15); doc.rect(0,0,W,H,'F'); y = 20; };
       const chk = (n=10) => { if (y + n > H - 14) newPage(); };
-
-      // Cover page
-      doc.setFillColor(232,160,32); doc.rect(0,0,W,18,'F');
-      doc.setFillColor(10,10,15); doc.rect(0,18,W,H-18,'F');
-      doc.setTextColor(232,160,32); doc.setFontSize(30); doc.setFont('helvetica','bold');
-      doc.text('KJC CAPITAL', W/2, 52, {align:'center'});
-      doc.setTextColor(255,255,255); doc.setFontSize(14); doc.setFont('helvetica','normal');
-      doc.text('CODE REVIEW ARENA', W/2, 64, {align:'center'});
-      doc.setFontSize(9); doc.setTextColor(150,150,150);
-      doc.text('BACKTESTING REPORT CARD', W/2, 74, {align:'center'});
-      doc.setDrawColor(232,160,32); doc.setLineWidth(0.4); doc.line(margin,82,W-margin,82);
-      doc.setFontSize(15); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
-      doc.text(fileName||'Strategy Review', W/2, 100, {align:'center'});
-      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(140,140,140);
-      doc.text(new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}), W/2, 110, {align:'center'});
       const charMap = {...ALL_CHARS,...customCharsRef.current};
       const chars = activeCharsRef.current;
-      doc.text(chars.map(k=>charMap[k]?.name||k).join('   ·   '), W/2, 120, {align:'center'});
       const allApp = chars.every(k=>approvalsRef.current[k]);
-      doc.setFillColor(...(allApp?[62,232,154]:[232,160,32]));
-      doc.roundedRect(W/2-45,130,90,11,3,3,'F');
-      doc.setTextColor(0,0,0); doc.setFontSize(8); doc.setFont('helvetica','bold');
-      doc.text(allApp?'CONSENSUS REACHED — 10/10':'REVIEW COMPLETE', W/2, 137.5, {align:'center'});
+      const cc = {STARK:[232,160,32],EDDIE:[56,184,240],SENKU:[62,232,154]};
 
-      // Page 2: Debate
+      // ── PAGE 1: COVER ──────────────────────────────────────────────────────
+      doc.setFillColor(232,160,32); doc.rect(0,0,W,18,'F');
+      doc.setFillColor(10,10,15); doc.rect(0,18,W,H-18,'F');
+      // Gold accent line
+      doc.setFillColor(30,30,50); doc.rect(0,18,W,2,'F');
+
+      doc.setTextColor(232,160,32); doc.setFontSize(32); doc.setFont('helvetica','bold');
+      doc.text('KJC CAPITAL', W/2, 52, {align:'center'});
+      doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','normal');
+      doc.text('CODE REVIEW ARENA', W/2, 63, {align:'center'});
+      doc.setFontSize(8); doc.setTextColor(130,130,130);
+      doc.text('BACKTESTING REPORT CARD', W/2, 72, {align:'center'});
+
+      doc.setDrawColor(232,160,32); doc.setLineWidth(0.4); doc.line(margin,80,W-margin,80);
+
+      doc.setFontSize(16); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
+      doc.text(fileName||'Strategy Review', W/2, 96, {align:'center'});
+      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(140,140,140);
+      doc.text(new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}), W/2, 106, {align:'center'});
+      doc.text(chars.map(k=>charMap[k]?.name||k).join('   ·   '), W/2, 114, {align:'center'});
+
+      // Verdict badge
+      const vCol = allApp ? [62,232,154] : [232,160,32];
+      doc.setFillColor(...vCol);
+      doc.roundedRect(W/2-40,122,80,12,3,3,'F');
+      doc.setTextColor(0,0,0); doc.setFontSize(8); doc.setFont('helvetica','bold');
+      doc.text(allApp?'CONSENSUS — ALL APPROVED':'REVIEW COMPLETE', W/2, 129.5, {align:'center'});
+
+      // Stats targets box
+      doc.setFillColor(20,20,35); doc.rect(margin,145,cW,52,'F');
+      doc.setDrawColor(232,160,32); doc.setLineWidth(0.3); doc.rect(margin,145,cW,52,'S');
+      doc.setTextColor(232,160,32); doc.setFontSize(8); doc.setFont('helvetica','bold');
+      doc.text('TARGET PERFORMANCE METRICS', margin+6, 153);
+      const stats = [
+        {label:'Win Rate', value:'>60%', col:[62,232,154]},
+        {label:'Profit Factor', value:'>1.5', col:[62,232,154]},
+        {label:'Trade Count', value:'60+ / 3mo', col:[62,232,154]},
+        {label:'Max Drawdown', value:'<15%', col:[240,100,100]},
+      ];
+      stats.forEach((s,i) => {
+        const sx = margin + 6 + (i * (cW/4));
+        doc.setFillColor(30,30,50); doc.rect(sx, 157, cW/4-4, 30, 'F');
+        doc.setTextColor(...s.col); doc.setFontSize(14); doc.setFont('helvetica','bold');
+        doc.text(s.value, sx + (cW/4-4)/2, 170, {align:'center'});
+        doc.setTextColor(160,160,160); doc.setFontSize(7); doc.setFont('helvetica','normal');
+        doc.text(s.label, sx + (cW/4-4)/2, 179, {align:'center'});
+      });
+
+      // DNA Card on cover if available
+      if (dnaCard) {
+        doc.setFillColor(30,20,50); doc.rect(margin,205,cW,60,'F');
+        doc.setDrawColor(168,85,247); doc.setLineWidth(0.3); doc.rect(margin,205,cW,60,'S');
+        doc.setTextColor(192,132,252); doc.setFontSize(8); doc.setFont('helvetica','bold');
+        doc.text('🧬 STRATEGY DNA — ' + (dnaCard.personality||'').toUpperCase(), margin+6, 213);
+        doc.setFillColor(168,85,247);
+        const rpCol = dnaCard.risk_profile==='Aggressive'?[240,80,80]:dnaCard.risk_profile==='Conservative'?[62,232,154]:[232,160,32];
+        doc.setFillColor(...rpCol); doc.roundedRect(W-margin-28,207,26,8,2,2,'F');
+        doc.setTextColor(0,0,0); doc.setFontSize(7);
+        doc.text(dnaCard.risk_profile||'', W-margin-15, 212.5, {align:'center'});
+        doc.setTextColor(220,220,220); doc.setFontSize(8); doc.setFont('helvetica','italic');
+        const vLines = doc.splitTextToSize('"'+(dnaCard.verdict||'')+'"', cW-12);
+        doc.text(vLines, margin+6, 221);
+        const dnaItems = [
+          {label:'EDGE', val:dnaCard.edge},
+          {label:'BEST FOR', val:dnaCard.best_conditions},
+        ];
+        dnaItems.forEach((d,i) => {
+          const dx = margin+6+(i*(cW/2-4));
+          doc.setFillColor(20,15,35); doc.rect(dx,230,cW/2-8,28,'F');
+          doc.setTextColor(168,85,247); doc.setFontSize(7); doc.setFont('helvetica','bold');
+          doc.text(d.label, dx+4, 237);
+          doc.setTextColor(200,200,200); doc.setFontSize(7); doc.setFont('helvetica','normal');
+          const lines = doc.splitTextToSize(d.val||'', cW/2-16);
+          doc.text(lines.slice(0,3), dx+4, 243);
+        });
+      }
+
+      // ── PAGE 2: ISSUES + CHARACTER CONCLUSIONS ─────────────────────────────
       newPage();
       doc.setFillColor(25,25,40); doc.rect(0,y-4,W,13,'F');
       doc.setTextColor(232,160,32); doc.setFontSize(10); doc.setFont('helvetica','bold');
-      doc.text('DEBATE SUMMARY', margin, y+5); y+=17;
-      const cc = {STARK:[232,160,32],EDDIE:[56,184,240],SENKU:[62,232,154]};
+      doc.text('ISSUES IDENTIFIED', margin, y+5); y+=17;
+
+      // Extract unique issues from debate
+      const issues = [];
+      const seen = new Set();
+      (msgsRef.current||[]).forEach(msg => {
+        const m = (msg.text||'').match(/ISSUE:\s*(.+)/i);
+        if (m) {
+          const txt = m[1].trim();
+          if (txt && txt.toLowerCase()!=='none' && !seen.has(txt.slice(0,40))) {
+            seen.add(txt.slice(0,40));
+            issues.push({who:msg.who, text:txt});
+          }
+        }
+      });
+
+      issues.forEach((issue,i) => {
+        chk(12);
+        const col = cc[issue.who]||[200,200,200];
+        doc.setFillColor(18,18,30); doc.rect(margin,y,cW,10,'F');
+        doc.setFillColor(...col); doc.rect(margin,y,2,10,'F');
+        doc.setTextColor(...col); doc.setFontSize(7); doc.setFont('helvetica','bold');
+        doc.text((i+1)+'', margin+5, y+6.5);
+        doc.setTextColor(200,200,200); doc.setFont('helvetica','normal');
+        const tLines = doc.splitTextToSize(issue.text, cW-20);
+        if (tLines.length > 1) {
+          doc.text(tLines[0], margin+12, y+6.5);
+          y+=10; chk(6);
+          doc.setFillColor(14,14,22); doc.rect(margin,y,cW,6,'F');
+          doc.text(tLines.slice(1,3).join(' '), margin+12, y+4.5);
+          y+=7;
+        } else {
+          doc.text(tLines[0], margin+12, y+6.5);
+          y+=11;
+        }
+      });
+
+      // Character Conclusions
+      y+=6; chk(16);
+      doc.setFillColor(25,25,40); doc.rect(0,y-4,W,13,'F');
+      doc.setTextColor(232,160,32); doc.setFontSize(10); doc.setFont('helvetica','bold');
+      doc.text('CHARACTER CONCLUSIONS', margin, y+5); y+=17;
+
+      chars.forEach(who => {
+        const ch = charMap[who];
+        if (!ch) return;
+        const col = cc[who]||[200,200,200];
+        // Get last message from this character
+        const charMsgs = (msgsRef.current||[]).filter(m=>m.who===who);
+        const lastMsg = charMsgs[charMsgs.length-1];
+        if (!lastMsg) return;
+        const agreed = (lastMsg.text||'').match(/AGREED:\s*(.+)/i)?.[1]||'';
+        const rating = lastMsg.rating||0;
+        const approved = approvalsRef.current[who];
+
+        chk(32);
+        doc.setFillColor(18,18,30); doc.rect(margin,y,cW,approved?30:26,'F');
+        doc.setFillColor(...col); doc.rect(margin,y,3,approved?30:26,'F');
+
+        // Name + rating
+        doc.setTextColor(...col); doc.setFontSize(9); doc.setFont('helvetica','bold');
+        doc.text((ch.name||who).toUpperCase(), margin+8, y+7);
+        if (rating>0) {
+          doc.setTextColor(200,200,200); doc.setFontSize(8);
+          doc.text(rating+'/10', W-margin-4, y+7, {align:'right'});
+        }
+        if (approved) {
+          doc.setFillColor(...col); doc.roundedRect(W-margin-28,y+10,26,8,2,2,'F');
+          doc.setTextColor(0,0,0); doc.setFontSize(6); doc.setFont('helvetica','bold');
+          doc.text('APPROVED ✓', W-margin-15, y+15, {align:'center'});
+        }
+        // Conclusion text
+        doc.setTextColor(190,190,190); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
+        const cLines = doc.splitTextToSize(agreed||'No conclusion recorded.', cW-36);
+        doc.text(cLines.slice(0,3), margin+8, y+16);
+        y+=(approved?31:27);
+      });
+
+      // ── PAGE 3: DEBATE SUMMARY ──────────────────────────────────────────────
+      newPage();
+      doc.setFillColor(25,25,40); doc.rect(0,y-4,W,13,'F');
+      doc.setTextColor(232,160,32); doc.setFontSize(10); doc.setFont('helvetica','bold');
+      doc.text('FULL DEBATE SUMMARY', margin, y+5); y+=17;
+
       (msgsRef.current||[]).forEach(msg => {
         chk(20);
         const col = cc[msg.who]||[200,200,200];
@@ -1266,13 +1406,13 @@ Select 1-3 characters whose specialties best match the task.`,
         y+=9;
         const txt = (msg.text||'').replace(/\nRATING:[^\n]*/i,'').trim();
         const lines = doc.splitTextToSize(txt, cW-6);
-        const bh = lines.length*4.2+4; chk(bh);
+        const bh = Math.min(lines.length*4.2+4, 40); chk(bh);
         doc.setFillColor(14,14,22); doc.rect(margin,y,cW,bh,'F');
         doc.setTextColor(190,190,190); doc.setFontSize(7); doc.setFont('helvetica','normal');
-        doc.text(lines, margin+3, y+3.5); y+=bh+4;
+        doc.text(lines.slice(0,8), margin+3, y+3.5); y+=bh+4;
       });
 
-      // Page 3: Fixed code
+      // ── PAGE 4: FIXED CODE ──────────────────────────────────────────────────
       if (fixedCode) {
         newPage();
         doc.setFillColor(25,25,40); doc.rect(0,y-4,W,13,'F');
@@ -1283,7 +1423,7 @@ Select 1-3 characters whose specialties best match the task.`,
         cl.forEach(l => { chk(3.8); doc.text(l, margin+2, y); y+=3.8; });
       }
 
-      // Footer all pages
+      // ── FOOTER ALL PAGES ────────────────────────────────────────────────────
       const np = doc.internal.getNumberOfPages();
       for (let i=1;i<=np;i++) {
         doc.setPage(i);
@@ -1291,7 +1431,9 @@ Select 1-3 characters whose specialties best match the task.`,
         doc.setTextColor(90,90,90); doc.setFontSize(6.5); doc.setFont('helvetica','normal');
         doc.text('KJC CAPITAL — CODE REVIEW ARENA', margin, H-3.5);
         doc.text('Page '+i+' of '+np, W-margin, H-3.5, {align:'right'});
+        doc.text(new Date().toLocaleDateString('en-GB'), W/2, H-3.5, {align:'center'});
       }
+
       doc.save('KJC_Report_'+(fileName||'review').replace(/\.[^.]+$/,'')+'_'+new Date().toISOString().slice(0,10)+'.pdf');
     };
     document.head.appendChild(script);
