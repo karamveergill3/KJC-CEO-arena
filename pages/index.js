@@ -935,18 +935,28 @@ Generate the Strategy DNA JSON.`;
               const patchData = await patchRes.json();
               const newFn = patchData.content?.find(b => b.type === "text")?.text || "";
               if (newFn && newFn.trim()) {
-                // Find and replace the function in patchedCode
-                // Match: optional access modifier + return type + function name + params + body
-                const fnName = fix.function.replace("()", "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-                const fnRegex = new RegExp(
-                  `(private|public|protected|internal)?\\s*(override\\s+)?\\s*\\w[\\w<>\\[\\]]*\\s+${fnName}\\s*\\([^)]*\\)\\s*\\{[^]*?\\n\\s*\\}`,
-                  "m"
-                );
-                const cleaned = newFn.replace(/^```[\w]*\n?|```$/gm, "").trim();
-                if (fnRegex.test(patchedCode)) {
-                  patchedCode = patchedCode.replace(fnRegex, cleaned);
-                }
-              }
+                // Find and replace the function in patchedCode using line-based search
+                const cleaned = newFn.replace(/```[\w]*/g, "").replace(/```/g, "").trim();
+                const fnBaseName = fix.function.replace("()", "").trim();
+                if (cleaned && fnBaseName) {
+                  const lines = patchedCode.split("\n");
+                  const fnLineIdx = lines.findIndex(l =>
+                    (l.includes(fnBaseName + "(") || l.includes(fnBaseName + " (")) &&
+                    !l.trim().startsWith("//") && !l.trim().startsWith("*")
+                  );
+                  if (fnLineIdx > -1) {
+                    let depth = 0, started = false, endIdx = fnLineIdx;
+                    for (let li = fnLineIdx; li < lines.length; li++) {
+                      for (const ch of lines[li]) {
+                        if (ch === "{") { depth++; started = true; }
+                        if (ch === "}") depth--;
+                      }
+                      if (started && depth === 0) { endIdx = li; break; }
+                    }
+                    lines.splice(fnLineIdx, endIdx - fnLineIdx + 1, ...cleaned.split("\n"));
+                    patchedCode = lines.join("\n");
+                  }
+                }             }
             }
           } catch(e) {
             console.error("Patch failed for", fix.function, e.message);
