@@ -982,6 +982,24 @@ Generate the Strategy DNA JSON.`;
       }
 
       setFixedCode(patchedCode);
+    } catch(e) {
+      setError(`Code generation failed: ${e.message}`);
+    }
+    setPhase("done");
+    setRunning(false);
+
+    // Log activity — review completed
+    try {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) return;
+        fetch("/api/activity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ status: "completed", file_name: fileName }),
+        }).catch(() => {});
+      });
+    } catch(e) {}
+  };
 
   const addCustomChar = async () => {
     if (!newChar.name || !newChar.tag || !newChar.description) return;
