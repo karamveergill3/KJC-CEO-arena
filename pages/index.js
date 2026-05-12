@@ -301,45 +301,42 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark — genius, brutal, impatient. Say "yeah no" when something is wrong. Sharp one-liners only.
+  STARK: `You are Tony Stark — genius, brutal, zero patience. Open with "yeah no" when something is wrong. Sharp, confident, final authority.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Never generic.
+Name the EXACT function. Never generic. Only flag issues that exist in the actual code.
 
 EVERY response MUST be exactly these 3 lines:
 AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet"]
-ISSUE: [one NEW problem in a specific named function — or "None" if genuinely all resolved]
+ISSUE: [start with "yeah no —" then name the exact function and problem. Or "None" if all resolved]
 RATING: [number 1-10]/10
 
-CRITICAL: AGREED must only confirm what is ACTUALLY IN THE CODE — never agree something is fixed if it wasn't in the original code. Only raise issues that exist in the actual code you read on turn 1.
 If RATING is 10/10 write ISSUE: None then STARK_APPROVED on the next line.
 Never repeat a closed issue. Never write code. Never add extra lines.`,
 
-  EDDIE: `You are Eddie Morra on NZT-48 — every pattern visible, zero noise, clinical precision.
+  EDDIE: `You are Eddie Morra on NZT-48 — every pattern visible instantly, zero noise, pure signal. You see things others miss.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Never generic.
+Name the EXACT function. Never generic. Only flag issues that exist in the actual code.
 
 EVERY response MUST be exactly these 3 lines:
 AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet"]
-ISSUE: [one NEW problem in a specific named function — or "None" if genuinely all resolved]
+ISSUE: [sharp NZT insight — name the exact function and problem. Or "None" if all resolved]
 RATING: [number 1-10]/10
 
-CRITICAL: AGREED must only confirm what is ACTUALLY IN THE CODE — never agree something is fixed if it wasn't in the original code. Only raise issues that exist in the actual code you read on turn 1.
 If RATING is 10/10 write ISSUE: None then EDDIE_APPROVED on the next line.
 Never repeat a closed issue. Never write code. Never add extra lines.`,
 
-  SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "ten billion percent" when certain. Zero tolerance for weak methodology.
+  SENKU: `You are Senku Ishigami — ten billion percent scientific precision, zero tolerance for weak methodology. Say "ten billion percent" when certain about something solid.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Never generic.
+Name the EXACT function. Never generic. Only flag issues that exist in the actual code.
 
 EVERY response MUST be exactly these 3 lines:
-AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet"]
-ISSUE: [one NEW problem in a specific named function — or "None" if genuinely all resolved]
+AGREED: [one sentence — name the exact function confirmed solid, or "Nothing yet." Prefix with "Ten billion percent —" when certain]
+ISSUE: [scientific precision — name the exact function and flaw. Or "None" if all resolved]
 RATING: [number 1-10]/10
 
-CRITICAL: AGREED must only confirm what is ACTUALLY IN THE CODE — never agree something is fixed if it wasn't in the original code. Only raise issues that exist in the actual code you read on turn 1.
 If RATING is 10/10 write ISSUE: None then SENKU_APPROVED on the next line.
 Never repeat a closed issue. Never write code. Never add extra lines.`,
 };
@@ -885,59 +882,96 @@ Generate the Strategy DNA JSON.`;
     try {
       const charNames = chars.map(k => allChars()[k]?.name || k).join(", ");
 
-      // Step 1: Extract STRUCTURED fix list — function + exact change
+      // Step 1: Extract structured fix list using Sonnet
       let structuredFixes = [];
       try {
         const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n");
-        const fixExtractSystem = `You extract a precise surgical fix list from a code review debate. Return ONLY valid JSON — an array of fix objects. No markdown, no explanation, no preamble. Only include fixes for issues that were confirmed as real problems in the ORIGINAL code — never include fixes that were "agreed" as already done.`;
+        const fixExtractSystem = `You extract a precise surgical fix list from a code review debate. Return ONLY valid JSON — an array of fix objects. No markdown, no explanation, no preamble. Only include fixes for issues confirmed as real problems in the ORIGINAL code.`;
         const fixExtractContent = `Code review debate:\n${debateText.slice(0, 4000)}\n\nExtract every confirmed fix. Return JSON array:\n[{"function":"FunctionName","issue":"what is wrong","fix":"exactly what to change"}]`;
-        const raw = await callAPI(fixExtractSystem, fixExtractContent, 800);
-        const clean = raw.replace(/\`\`\`json|\`\`\`/g, "").trim();
-        const match = clean.match(/\[[\s\S]*\]/);
-        if (match) structuredFixes = JSON.parse(match[0]);
+        const fixRes = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 1000,
+            system: fixExtractSystem,
+            messages: [{ role: "user", content: fixExtractContent }],
+          }),
+        });
+        if (fixRes.ok) {
+          const fixData = await fixRes.json();
+          const raw = fixData.content?.find(b => b.type === "text")?.text || "";
+          const clean = raw.replace(/```json|```/g, "").trim();
+          const match = clean.match(/\[\s\S]*\]/);
+          if (match) structuredFixes = JSON.parse(match[0]);
+        }
       } catch(e) {
         structuredFixes = [];
       }
 
-      // Step 2: Build precise fix instructions from structured list
-      const fixInstructions = structuredFixes.length > 0
-        ? structuredFixes.map((f, i) => `FIX ${i+1}:\nFunction: ${f.function}\nIssue: ${f.issue}\nRequired change: ${f.fix}`).join("\n\n")
-        : "Apply all improvements identified in the debate to make the strategy profitable.";
+      // Step 2: For each fix, generate ONLY the patched function using Sonnet
+      // Then splice it back into the original file — no truncation risk
+      let patchedCode = snapshot;
 
-      // Step 3: Generate fixed code with surgical instructions
-      const genContent = `You are applying surgical fixes to this trading bot. Read the original code carefully, then apply EVERY fix listed below precisely.
+      if (structuredFixes.length > 0) {
+        const PATCH_SYSTEM = `You are an elite cTrader C# developer. You receive a full trading bot and ONE specific fix to apply. Output ONLY the complete rewritten function — nothing else. No markdown, no explanation, no surrounding code. Just the raw C# function from its access modifier to its closing brace.`;
 
-ORIGINAL CODE:
-\`\`\`
-${snapshot.slice(0, 10000)}
-\`\`\`
+        for (const fix of structuredFixes) {
+          try {
+            const patchContent = `Full bot code:\n\`\`\`\n${patchedCode.slice(0, 12000)}\n\`\`\`\n\nFix to apply:\nFunction: ${fix.function}\nIssue: ${fix.issue}\nRequired change: ${fix.fix}\n\nOutput ONLY the complete rewritten ${fix.function} function. Raw C# only, no markdown.`;
 
-SURGICAL FIXES TO APPLY (apply ALL of these — do not skip any):
-${fixInstructions}
+            const patchRes = await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model: "claude-sonnet-4-5",
+                max_tokens: 2000,
+                system: PATCH_SYSTEM,
+                messages: [{ role: "user", content: patchContent }],
+              }),
+            });
 
-REQUIREMENTS: Output MUST deliver 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Output the COMPLETE fixed file. Raw C# only. Start with "using". End with closing brace.`;
-
-      const fixed = await callAPI(CODEGEN_SYSTEM, genContent, 4500);
-      setFixedCode(fixed);
-    } catch(e) {
-      setError(`Code generation failed: ${e.message}`);
-    }
-    setPhase("done");
-    setRunning(false);
-
-    // Log activity — review completed
-    try {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) return;
-        fetch("/api/activity", {
+            if (patchRes.ok) {
+              const patchData = await patchRes.json();
+              const newFn = patchData.content?.find(b => b.type === "text")?.text || "";
+              if (newFn && newFn.trim()) {
+                // Find and replace the function in patchedCode
+                // Match: optional access modifier + return type + function name + params + body
+                const fnName = fix.function.replace("()", "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                const fnRegex = new RegExp(
+                  `(private|public|protected|internal)?\\s*(override\\s+)?\\s*\\w[\\w<>\\[\\]]*\\s+${fnName}\\s*\\([^)]*\\)\\s*\\{[^]*?\\n\\s*\\}`,
+                  "m"
+                );
+                const cleaned = newFn.replace(/^```[\w]*\n?|```$/gm, "").trim();
+                if (fnRegex.test(patchedCode)) {
+                  patchedCode = patchedCode.replace(fnRegex, cleaned);
+                }
+              }
+            }
+          } catch(e) {
+            console.error("Patch failed for", fix.function, e.message);
+          }
+        }
+      } else {
+        // Fallback: full file rewrite if no structured fixes extracted
+        const genContent = `Original code:\n\`\`\`\n${snapshot.slice(0, 10000)}\n\`\`\`\n\nApply all improvements identified in the debate to make the strategy hit: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%. Output the COMPLETE fixed file. Raw C# only.`;
+        const fallbackRes = await fetch("/api/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ status: "completed", file_name: fileName }),
-        }).catch(() => {});
-      });
-    } catch(e) {}
-  };
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 8000,
+            system: CODEGEN_SYSTEM,
+            messages: [{ role: "user", content: genContent }],
+          }),
+        });
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          patchedCode = fallbackData.content?.find(b => b.type === "text")?.text || patchedCode;
+        }
+      }
+
+      setFixedCode(patchedCode);
 
   const addCustomChar = async () => {
     if (!newChar.name || !newChar.tag || !newChar.description) return;
