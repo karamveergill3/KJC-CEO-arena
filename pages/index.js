@@ -1028,6 +1028,7 @@ Select 1-3 characters whose specialties best match the task.`,
     const charMap = { ...ALL_CHARS, ...customCharsRef.current };
     const highestRatings = continueDebate ? { ...debateRatingsRef.current } : Object.fromEntries(chars.map(k => [k, 0]));
     const agreedItems = continueDebate ? [...debateAgreedRef.current] : [];
+    const closedIssues = continueDebate ? [...(debateAgreedRef.current || [])] : [];
 
     for (let i = 0; i < MAX_TURNS; i++) {
       if (!runRef.current) break;
@@ -1049,29 +1050,43 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
-      const agreedBlock = agreedItems.length > 0
-        ? `CLOSED ISSUES — NEVER raise these again, they are resolved:\n${agreedItems.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nIf your ISSUE this turn matches anything in the closed list, you MUST instead write a completely different new issue or write "None".`
-        : "AGREED SO FAR: Nothing yet.";
+      const closedList = closedIssues.slice(-20); // keep last 20 to avoid token bloat
+      const agreedBlock = closedList.length > 0
+        ? `ISSUES ALREADY RAISED — DO NOT REPEAT THESE, pick something completely new or write "None":\n${closedList.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nYou MUST raise a different function/issue not on this list, or write ISSUE: None.`
+        : "NO ISSUES RAISED YET.";
 
       const ratingCtx = myRating > 0
         ? `Your current rating for THIS session is ${myRating}/10. It can only go UP as issues get fixed in this session, never down.`
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code carefully. Identify real issues in specific named functions.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [name the exact function/parameter with the biggest problem]\nRATING: 5/10\n\nReplace 5 with your score. 3 lines only, nothing else.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Only go UP. IMPORTANT: Only agree on things that are ACTUALLY in the original code. Never fabricate fixes.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
+        ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code. Find the BIGGEST issue not yet on the list above.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [exact function name with the problem — must NOT be on the list above]\nRATING: 5/10\n\nReplace 5 with your honest score. 3 lines only, nothing else.`
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. ONLY GO UP — never lower. The list above shows issues ALREADY RAISED. You MUST raise something NEW not on that list, or write ISSUE: None. Never fabricate — only flag issues actually in the code.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
         const text = await callAPI(system, content, 200);
         if (!runRef.current) break;
 
-        // Extract AGREED line and add to log if new
+        // Extract AGREED line
         const agreedMatch = text.match(/AGREED:\s*(.+)/i);
         if (agreedMatch) {
           const agreedText = agreedMatch[1].trim();
           if (agreedText && agreedText.toLowerCase() !== "nothing yet" && !agreedItems.some(a => a.toLowerCase() === agreedText.toLowerCase())) {
             agreedItems.push(agreedText);
+          }
+        }
+        // Extract ISSUE and track which functions have been flagged
+        const issueMatch = text.match(/ISSUE:\s*(.+)/i);
+        if (issueMatch) {
+          const issueText = issueMatch[1].trim();
+          if (issueText && issueText.toLowerCase() !== "none") {
+            // Extract function name (word before first "()" or "--")
+            const fnMatch = issueText.match(/^([A-Za-z_][A-Za-z0-9_]*(?:\(\))?)/);
+            const fnKey = fnMatch ? fnMatch[1].replace("()", "").toLowerCase() : issueText.slice(0, 30).toLowerCase();
+            if (!closedIssues.some(c => c.toLowerCase().includes(fnKey))) {
+              closedIssues.push(issueText.slice(0, 80));
+            }
           }
         }
 
@@ -1093,7 +1108,7 @@ Select 1-3 characters whose specialties best match the task.`,
         history += `\n\n${charName}: ${text}`;
         debateHistoryRef.current = history;
         debateRatingsRef.current = { ...highestRatings };
-        debateAgreedRef.current = [...agreedItems];
+        debateAgreedRef.current = [...closedIssues];
         debateTurnRef.current = turn;
         setThinking(null);
         await new Promise(r => setTimeout(r, 500));
