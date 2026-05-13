@@ -535,15 +535,15 @@ function DnaLibrary({ sessions, onLoadSession }) {
   const riskBg = (r) => r === "Aggressive" ? "rgba(240,80,80,0.12)" : r === "Conservative" ? "rgba(62,232,154,0.12)" : "rgba(232,160,32,0.12)";
 
   return (
-    <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
+    <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
       {/* Header */}
       <div style={{ padding: "22px 22px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 16 }}>🧬</span>
           <div style={{ fontSize: 11, fontWeight: 800, color: "#c084fc", letterSpacing: 3 }}>STRATEGY DNA LIBRARY</div>
         </div>
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6 }}>
-          After each 10/10 review, generate a DNA profile for your strategy. It analyses your code and produces a complete personality card — edge, conditions, risk profile, strengths and weaknesses. Build your library over time to compare strategies at a glance.
+        <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)", lineHeight: 1.5, marginTop: 4 }}>
+          Generate a DNA profile after each 10/10 review — edge, risk profile, strengths and weaknesses.
         </div>
       </div>
 
