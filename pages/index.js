@@ -537,7 +537,7 @@ function DnaLibrary({ sessions, onLoadSession }) {
   return (
     <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
       {/* Header */}
-      <div style={{ padding: "10px 14px 8px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ padding: "22px 22px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <span style={{ fontSize: 16 }}>🧬</span>
           <div style={{ fontSize: 11, fontWeight: 800, color: "#c084fc", letterSpacing: 3 }}>STRATEGY DNA LIBRARY</div>
@@ -548,9 +548,9 @@ function DnaLibrary({ sessions, onLoadSession }) {
       </div>
 
       {/* Content */}
-      <div style={{ padding: "12px" }}>
+      <div style={{ padding: "20px" }}>
         {dnaSessionss.length === 0 ? (
-          <div style={{ padding: "40px 20px", textAlign: "center" }}>
+          <div style={{ padding: "48px 24px", textAlign: "center" }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🧬</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>No DNA profiles yet.</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>Complete a review and generate<br/>Strategy DNA to build your library.</div>
@@ -568,7 +568,7 @@ function DnaLibrary({ sessions, onLoadSession }) {
             return (
               <div key={s.id} style={{ marginBottom: 8, border: `1px solid ${isExp ? "rgba(192,132,252,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: 10, overflow: "hidden", transition: "all 0.2s" }}>
                 <div onClick={() => setExpanded(isExp ? null : s.id)}
-                  style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", background: isExp ? "rgba(168,85,247,0.08)" : "rgba(255,255,255,0.02)" }}>
+                  style={{ padding: "18px 20px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", background: isExp ? "rgba(168,85,247,0.08)" : "rgba(255,255,255,0.02)" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", fontFamily: "'Bebas Neue', Impact, sans-serif", letterSpacing: 2, marginBottom: 2 }}>{dna.personality}</div>
                     <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.file_name || s.title || "Untitled"}</div>
@@ -577,21 +577,21 @@ function DnaLibrary({ sessions, onLoadSession }) {
                   <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>{isExp ? "▲" : "▼"}</span>
                 </div>
                 {isExp && (
-                  <div style={{ padding: "14px", background: "rgba(168,85,247,0.03)", borderTop: "1px solid rgba(168,85,247,0.1)" }}>
+                  <div style={{ padding: "18px", background: "rgba(168,85,247,0.03)", borderTop: "1px solid rgba(168,85,247,0.1)" }}>
                     <div style={{ fontSize: 13, color: "#fff", fontStyle: "italic", marginBottom: 12, lineHeight: 1.6 }}>"{dna.verdict}"</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
                       {[
                         { label: "⚡ EDGE", value: dna.edge },
                         { label: "✅ BEST FOR", value: dna.best_conditions },
                       ].map(({ label, value }) => (
-                        <div key={label} style={{ padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
+                        <div key={label} style={{ padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
                           <div style={{ fontSize: 9, color: "rgba(192,132,252,0.6)", letterSpacing: 2, marginBottom: 4 }}>{label}</div>
                           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.8)", lineHeight: 1.5 }}>{value}</div>
                         </div>
                       ))}
                     </div>
                     <button onClick={() => onLoadSession(s)}
-                      style={{ width: "100%", padding: "9px", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 7, color: "#c084fc", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1 }}>
+                      style={{ width: "100%", padding: "12px", background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)", borderRadius: 7, color: "#c084fc", fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1 }}>
                       OPEN SESSION →
                     </button>
                   </div>
@@ -666,21 +666,21 @@ function EconomicCalendar({ compact = false }) {
     // Compact version for setup screen
     return (
       <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", height: "100%" }}>
-        <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ padding: "22px 22px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 14 }}>📅</span>
             <div style={{ fontSize: 11, fontWeight: 800, color: "#ef4444", letterSpacing: 3 }}>ECONOMIC CALENDAR</div>
           </div>
           <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)", letterSpacing: 1 }}>NEXT 48H · HIGH IMPACT</div>
         </div>
-        <div style={{ padding: "8px 12px", overflowY: "auto", flex: 1 }}>
+        <div style={{ padding: "16px 20px", overflowY: "auto", flex: 1 }}>
           {loading ? (
             <div style={{ padding: "16px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Loading...</div>
           ) : events.length === 0 ? (
             <div style={{ padding: "16px", textAlign: "center", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>No high impact events in next 48h</div>
           ) : (
             events.map((e, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 8px", borderRadius: 8, marginBottom: 3, background: "rgba(255,255,255,0.02)", borderLeft: "2px solid #ef4444" }}>
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 12px", borderRadius: 8, marginBottom: 3, background: "rgba(255,255,255,0.02)", borderLeft: "2px solid #ef4444" }}>
                 <span style={{ fontSize: 14, flexShrink: 0 }}>{countryFlag(e.country)}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 600, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.title}</div>
@@ -704,21 +704,21 @@ function EconomicCalendar({ compact = false }) {
   // Full version for review screen
   return (
     <div style={{ marginBottom: 16, background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 12, overflow: "hidden" }}>
-      <div style={{ padding: "12px 18px", borderBottom: "1px solid rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ padding: "16px 22px", borderBottom: "1px solid rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 14 }}>📅</span>
           <div style={{ fontSize: 11, fontWeight: 800, color: "#ef4444", letterSpacing: 3 }}>HIGH IMPACT EVENTS — NEXT 48H</div>
         </div>
         {lastUpdate && <div style={{ fontSize: 9, color: "rgba(255,255,255,0.25)" }}>Updated {lastUpdate.toLocaleTimeString()}</div>}
       </div>
-      <div style={{ padding: "8px 12px", display: "flex", flexWrap: "wrap", gap: 8 }}>
+      <div style={{ padding: "16px 20px", display: "flex", flexWrap: "wrap", gap: 8 }}>
         {loading ? (
-          <div style={{ padding: "12px", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Loading calendar...</div>
+          <div style={{ padding: "16px", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>Loading calendar...</div>
         ) : events.length === 0 ? (
-          <div style={{ padding: "12px", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>No high impact events in next 48 hours</div>
+          <div style={{ padding: "16px", color: "rgba(255,255,255,0.3)", fontSize: 12 }}>No high impact events in next 48 hours</div>
         ) : (
           events.map((e, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 12px", borderRadius: 8, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", borderRadius: 8, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)" }}>
               <span style={{ fontSize: 14 }}>{countryFlag(e.country)}</span>
               <div>
                 <div style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>{e.title}</div>
@@ -1717,13 +1717,13 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, position: "sticky", top: 0, marginTop: 28, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", maxHeight: 480, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
-          <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, position: "sticky", top: 0, marginTop: 28, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", maxHeight: 620, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{ display: "flex", flex: "0 0 auto", minHeight: 260, maxHeight: 440, overflow: "hidden" }}>
             <div style={{ flex: "0 0 55%", borderRight: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
             <div style={{ flex: "0 0 45%", overflow: "hidden", display: "flex", flexDirection: "column" }}><EconomicCalendar compact={true} /></div>
           </div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}><LiveTracker profile={profile} /></div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <LeaderboardPreview onOpen={onOpenLeaderboard} />
           </div>
         </div>
