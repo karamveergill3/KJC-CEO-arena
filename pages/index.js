@@ -445,7 +445,7 @@ function LiveTracker({ profile }) {
   return (
     <div style={{ background: "transparent", border: "none", borderRadius: 0, overflow: "hidden", display: "flex", flexDirection: "column", flex: 1 }}>
       {/* Header */}
-      <div style={{ padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 8, width: 8, height: 8, borderRadius: "50%", background: "#3ee89a", display: "inline-block", boxShadow: "0 0 6px #3ee89a", animation: "pulse 2s infinite" }} />
           <div style={{ fontSize: 11, fontWeight: 800, color: "#3ee89a", letterSpacing: 3 }}>LIVE ACTIVITY</div>
@@ -2354,7 +2354,7 @@ function LeaderboardPreview({ onOpen }) {
         <button onClick={onOpen} style={{ background: "none", border: "none", color: "#e8a020", fontSize: 9, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 700, padding: 0 }}>VIEW ALL →</button>
       </div>
       {top3.length === 0 ? (
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "8px 0" }}>No entries yet — be the first.</div>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "14px 0" }}>No entries yet — be the first.</div>
       ) : top3.map((e, i) => (
         <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: i === 0 ? "#e8a020" : i === 1 ? "#aaa" : "#cd7f32", width: 14 }}>{i + 1}</div>
@@ -2370,97 +2370,101 @@ function LeaderboardPreview({ onOpen }) {
 function Leaderboard({ profile, onBack }) {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all | forex | crypto | metals | indices | energy
+  const [filter, setFilter] = useState("all");
   const [myEntry, setMyEntry] = useState(null);
 
-  useEffect(() => {
-    loadLeaderboard();
-  }, []);
+  useEffect(() => { loadLeaderboard(); }, []);
 
   const loadLeaderboard = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/leaderboard");
-      if (res.ok) {
-        const data = await res.json();
-        setEntries(data.entries || []);
-        setMyEntry(data.mine || null);
-      }
+      if (res.ok) { const data = await res.json(); setEntries(data.entries || []); setMyEntry(data.mine || null); }
     } catch(e) {}
     setLoading(false);
   };
 
   const filtered = filter === "all" ? entries : entries.filter(e => e.instrument_type === filter);
   const filters = ["all","forex","crypto","metals","indices","energy"];
+  const medalCol = ["#e8a020","#b0b8c8","#cd7f32"];
 
   return (
-    <div style={{ flex: 1, overflow: "auto", background: "#0a0a0f", padding: "28px 32px" }}>
+    <div style={{ flex: 1, overflow: "auto", background: "#0a0a0f", padding: "36px 48px" }}>
+
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
-        <button onClick={onBack} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 7, color: "rgba(255,255,255,0.4)", padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 11 }}>← BACK</button>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 36 }}>
+        <button onClick={onBack} style={{ marginTop: 6, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.35)", padding: "7px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 11, letterSpacing: 1, flexShrink: 0 }}>← BACK</button>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: "#e8a020", letterSpacing: 2, fontFamily: "'Bebas Neue','Impact',system-ui" }}>COMMUNITY LEADERBOARD</div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 2, marginTop: 2 }}>GREEN-VERDICT STRATEGIES ONLY — ANONYMOUS — STATS ONLY</div>
+          <div style={{ fontSize: 42, fontWeight: 900, color: "#e8a020", letterSpacing: 3, lineHeight: 1, fontFamily: "'Bebas Neue','Impact',system-ui,sans-serif", textTransform: "uppercase" }}>Community Leaderboard</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: 3, marginTop: 6, textTransform: "uppercase" }}>Green-Verdict Strategies Only &nbsp;·&nbsp; Anonymous &nbsp;·&nbsp; Stats Only</div>
         </div>
       </div>
 
-      {/* Filter tabs */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+      {/* Filter + refresh row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 28 }}>
         {filters.map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            style={{ padding: "5px 14px", borderRadius: 20, border: "1px solid", cursor: "pointer", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase",
-              background: filter === f ? "rgba(232,160,32,0.15)" : "rgba(255,255,255,0.04)",
-              borderColor: filter === f ? "rgba(232,160,32,0.5)" : "rgba(255,255,255,0.08)",
-              color: filter === f ? "#e8a020" : "rgba(255,255,255,0.4)" }}>
-            {f}
-          </button>
+          <button key={f} onClick={() => setFilter(f)} style={{
+            padding: "7px 18px", borderRadius: 24, border: "1px solid", cursor: "pointer",
+            fontFamily: "inherit", fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase",
+            background: filter === f ? "rgba(232,160,32,0.15)" : "rgba(255,255,255,0.03)",
+            borderColor: filter === f ? "rgba(232,160,32,0.6)" : "rgba(255,255,255,0.07)",
+            color: filter === f ? "#e8a020" : "rgba(255,255,255,0.35)",
+            transition: "all 0.15s"
+          }}>{f}</button>
         ))}
-        <button onClick={loadLeaderboard} style={{ marginLeft: "auto", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "rgba(255,255,255,0.3)", padding: "5px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: 10 }}>↺ REFRESH</button>
+        <button onClick={loadLeaderboard} style={{ marginLeft: "auto", background: "none", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 8, color: "rgba(255,255,255,0.25)", padding: "7px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 11, letterSpacing: 1 }}>↺ REFRESH</button>
       </div>
 
       {/* Table header */}
-      <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 80px 80px 80px 80px 90px", gap: 8, padding: "8px 14px", marginBottom: 4 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "52px 1fr 100px 110px 90px 100px 90px", gap: 12, padding: "10px 18px", marginBottom: 6, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         {["#","STRATEGY","WIN RATE","PROFIT FACTOR","TRADES","DRAWDOWN","SCORE"].map(h => (
-          <div key={h} style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.25)", letterSpacing: 2 }}>{h}</div>
+          <div key={h} style={{ fontSize: 10, fontWeight: 800, color: "rgba(255,255,255,0.2)", letterSpacing: 3 }}>{h}</div>
         ))}
       </div>
 
-      {/* Entries */}
+      {/* Rows */}
       {loading ? (
-        <div style={{ textAlign: "center", padding: 60, color: "rgba(255,255,255,0.2)", fontSize: 13 }}>Loading...</div>
+        <div style={{ textAlign: "center", padding: 80, color: "rgba(255,255,255,0.15)", fontSize: 14, letterSpacing: 2 }}>LOADING...</div>
       ) : filtered.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 60 }}>
-          <div style={{ fontSize: 32, marginBottom: 12 }}>🏆</div>
-          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>No strategies yet.</div>
-          <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 11, marginTop: 6 }}>Complete a review and get a 10/10 to submit your strategy.</div>
+        <div style={{ textAlign: "center", padding: 80 }}>
+          <div style={{ fontSize: 52, marginBottom: 16 }}>🏆</div>
+          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 18, fontWeight: 700, letterSpacing: 2, marginBottom: 8 }}>NO STRATEGIES YET</div>
+          <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 12, letterSpacing: 2 }}>COMPLETE A REVIEW · GET ALL CHARACTERS TO 10/10 · DOMINATE THE BOARD</div>
         </div>
       ) : filtered.map((entry, i) => {
         const isMe = myEntry && entry.id === myEntry.id;
         const score = Math.round((entry.profit_factor * 40) + (entry.win_rate * 25) + (Math.min(entry.trade_count / 60, 1) * 20) + ((1 - entry.drawdown / 30) * 15));
         return (
-          <div key={entry.id} style={{ display: "grid", gridTemplateColumns: "40px 1fr 80px 80px 80px 80px 90px", gap: 8, padding: "12px 14px", marginBottom: 4, borderRadius: 10, alignItems: "center",
-            background: isMe ? "rgba(232,160,32,0.08)" : i % 2 === 0 ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.01)",
-            border: isMe ? "1px solid rgba(232,160,32,0.2)" : "1px solid transparent" }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: i === 0 ? "#e8a020" : i === 1 ? "#aaa" : i === 2 ? "#cd7f32" : "rgba(255,255,255,0.2)" }}>{i + 1}</div>
+          <div key={entry.id} style={{
+            display: "grid", gridTemplateColumns: "52px 1fr 100px 110px 90px 100px 90px", gap: 12,
+            padding: "16px 18px", marginBottom: 3, borderRadius: 10, alignItems: "center",
+            background: isMe ? "rgba(232,160,32,0.07)" : i < 3 ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.015)",
+            border: isMe ? "1px solid rgba(232,160,32,0.25)" : i < 3 ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
+            transition: "background 0.15s"
+          }}>
+            <div style={{ fontSize: i < 3 ? 20 : 14, fontWeight: 900, color: i < 3 ? medalCol[i] : "rgba(255,255,255,0.18)", fontFamily: "'Bebas Neue','Impact',system-ui" }}>{i + 1}</div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: isMe ? "#e8a020" : "rgba(255,255,255,0.8)" }}>{entry.strategy_name || "Anonymous Strategy"} {isMe && <span style={{ fontSize: 9, color: "#e8a020", marginLeft: 6 }}>YOU</span>}</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{entry.instrument_type || "unknown"} · {entry.characters?.join(", ") || ""}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: isMe ? "#e8a020" : "rgba(255,255,255,0.85)", letterSpacing: 0.5 }}>
+                {entry.strategy_name || "Anonymous Strategy"}
+                {isMe && <span style={{ fontSize: 9, color: "#e8a020", marginLeft: 8, letterSpacing: 2, fontWeight: 800 }}>YOU</span>}
+              </div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.22)", marginTop: 3, letterSpacing: 1, textTransform: "uppercase" }}>{entry.instrument_type || "unknown"} · {entry.characters?.join(" · ") || ""}</div>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#3ee89a" }}>{entry.win_rate?.toFixed(1)}%</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#38b8f0" }}>{entry.profit_factor?.toFixed(2)}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)" }}>{entry.trade_count}</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#f07070" }}>{entry.drawdown?.toFixed(1)}%</div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: "#e8a020" }}>{score}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#3ee89a" }}>{entry.win_rate?.toFixed(1)}%</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#38b8f0" }}>{entry.profit_factor?.toFixed(2)}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "rgba(255,255,255,0.55)" }}>{entry.trade_count}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#f07070" }}>{entry.drawdown?.toFixed(1)}%</div>
+            <div style={{ fontSize: 18, fontWeight: 900, color: "#e8a020", fontFamily: "'Bebas Neue','Impact',system-ui" }}>{score}</div>
           </div>
         );
       })}
 
-      {/* Submit your own */}
+      {/* Submit */}
       {myEntry === null && !loading && (
-        <div style={{ marginTop: 32, padding: "20px 24px", background: "rgba(62,232,154,0.05)", border: "1px solid rgba(62,232,154,0.15)", borderRadius: 12, textAlign: "center" }}>
-          <div style={{ color: "#3ee89a", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>SUBMIT YOUR STRATEGY</div>
-          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginBottom: 14 }}>Complete a review, get all characters to 10/10, and submit your strategy stats anonymously.</div>
-          <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 10 }}>Coming soon — requires walk-forward validation first.</div>
+        <div style={{ marginTop: 40, padding: "28px 32px", background: "rgba(62,232,154,0.04)", border: "1px solid rgba(62,232,154,0.12)", borderRadius: 14, textAlign: "center" }}>
+          <div style={{ color: "#3ee89a", fontSize: 20, fontWeight: 900, letterSpacing: 3, marginBottom: 8, fontFamily: "'Bebas Neue','Impact',system-ui" }}>SUBMIT YOUR STRATEGY</div>
+          <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, letterSpacing: 1, marginBottom: 10 }}>Complete a review · Get all characters to 10/10 · Submit your stats anonymously</div>
+          <div style={{ color: "rgba(255,255,255,0.15)", fontSize: 11, letterSpacing: 2 }}>COMING SOON — REQUIRES WALK-FORWARD VALIDATION</div>
         </div>
       )}
     </div>
