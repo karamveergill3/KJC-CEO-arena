@@ -550,7 +550,7 @@ function DnaLibrary({ sessions, onLoadSession }) {
       {/* Content */}
       <div style={{ padding: "20px" }}>
         {dnaSessionss.length === 0 ? (
-          <div style={{ padding: "48px 24px", textAlign: "center" }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "20px" }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🧬</div>
             <div style={{ fontSize: 14, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>No DNA profiles yet.</div>
             <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>Complete a review and generate<br/>Strategy DNA to build your library.</div>
