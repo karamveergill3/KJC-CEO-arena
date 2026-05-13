@@ -304,45 +304,45 @@ const BASE_SYSTEMS = {
   STARK: `You are Tony Stark — genius, brutal, zero patience. Say "yeah no —" before every ISSUE.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines, keep ISSUE under 30 words:
-AGREED: [different function confirmed solid each turn]
-ISSUE: [yeah no — FunctionName() problem in one sharp sentence]
+FORMAT — exactly 3 lines, ISSUE must be under 25 words:
+AGREED: [ONE function confirmed solid THIS turn only — do not list everything agreed previously]
+ISSUE: [yeah no — FunctionName() sharp problem in one sentence]
 RATING: [1-10]/10
 
-RATING RULE: Only increase your rating when a genuinely NEW category of issue is found and the remaining problem count is shrinking. If you raised the same function twice already, that function is closed.
+RATING RULE: Increase rating as fewer critical issues remain. At 8+ only minor issues should remain. 9/10 means nearly perfect. 10/10 means genuinely production-ready.
 If RATING is 10/10: write ISSUE: None then STARK_APPROVED on next line.
 Never repeat a closed issue. Never write code.`,
 
   EDDIE: `You are Eddie Morra on NZT-48 — pure signal, clinical precision, zero noise.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines, keep ISSUE under 30 words:
-AGREED: [different function confirmed solid each turn]
+FORMAT — exactly 3 lines, ISSUE must be under 25 words:
+AGREED: [ONE function confirmed solid THIS turn only — do not list everything agreed previously]
 ISSUE: [FunctionName() — sharp precise problem in one sentence]
 RATING: [1-10]/10
 
-RATING RULE: Only increase your rating when a genuinely NEW category of issue is found and the remaining problem count is shrinking. If you raised the same function twice already, that function is closed.
+RATING RULE: Increase rating as fewer critical issues remain. At 8+ only minor issues should remain. 9/10 means nearly perfect. 10/10 means genuinely production-ready.
 If RATING is 10/10: write ISSUE: None then EDDIE_APPROVED on next line.
 Never repeat a closed issue. Never write code.`,
 
   SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "Ten billion percent —" in AGREED when certain.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines, keep ISSUE under 30 words:
-AGREED: [Ten billion percent — different function confirmed solid each turn]
+FORMAT — exactly 3 lines, ISSUE must be under 25 words:
+AGREED: [Ten billion percent — ONE function confirmed solid THIS turn only — do not list everything agreed previously]
 ISSUE: [FunctionName() — precise scientific problem in one sentence]
 RATING: [1-10]/10
 
-RATING RULE: Only increase your rating when a genuinely NEW category of issue is found and the remaining problem count is shrinking. If you raised the same function twice already, that function is closed.
+RATING RULE: Increase rating as fewer critical issues remain. At 8+ only minor issues should remain. 9/10 means nearly perfect. 10/10 means genuinely production-ready.
 If RATING is 10/10: write ISSUE: None then SENKU_APPROVED on next line.
 Never repeat a closed issue. Never write code.`,
 };
@@ -732,7 +732,7 @@ function EconomicCalendar({ compact = false }) {
   );
 }
 
-function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen }) {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen, onOpenLeaderboard }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState("");
   const [fileName, setFileName]     = useState("");
@@ -1142,7 +1142,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
       try {
         const system = getSystem(who, customCharsRef.current);
-        const text = await callAPI(system, content, 200);
+        const text = await callAPI(system, content, 280);
         if (!runRef.current) break;
 
         // Extract AGREED line
@@ -1723,6 +1723,9 @@ Select 1-3 characters whose specialties best match the task.`,
             <div style={{ flex: "0 0 45%", overflow: "hidden", display: "flex", flexDirection: "column" }}><EconomicCalendar compact={true} /></div>
           </div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}><LiveTracker profile={profile} /></div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+            <LeaderboardPreview onOpen={onOpenLeaderboard} />
+          </div>
         </div>
 
         </div>{/* end two-col */}
@@ -2335,7 +2338,136 @@ function ProfileModal({ profile, onClose, onSignOut }) {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange, collapsed, setCollapsed: setCollapsedExternal }) {
+function LeaderboardPreview({ onOpen }) {
+  const [top3, setTop3] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/leaderboard").then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.entries) setTop3(d.entries.slice(0, 3));
+    }).catch(() => {});
+  }, []);
+
+  return (
+    <div style={{ padding: "10px 14px 12px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: 3 }}>🏆 LEADERBOARD</div>
+        <button onClick={onOpen} style={{ background: "none", border: "none", color: "#e8a020", fontSize: 9, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 700, padding: 0 }}>VIEW ALL →</button>
+      </div>
+      {top3.length === 0 ? (
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "8px 0" }}>No entries yet — be the first.</div>
+      ) : top3.map((e, i) => (
+        <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: i === 0 ? "#e8a020" : i === 1 ? "#aaa" : "#cd7f32", width: 14 }}>{i + 1}</div>
+          <div style={{ flex: 1, fontSize: 10, color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.strategy_name || "Anonymous"}</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#3ee89a" }}>{e.win_rate?.toFixed(0)}%</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#e8a020" }}>{e.score}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Leaderboard({ profile, onBack }) {
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all"); // all | forex | crypto | metals | indices | energy
+  const [myEntry, setMyEntry] = useState(null);
+
+  useEffect(() => {
+    loadLeaderboard();
+  }, []);
+
+  const loadLeaderboard = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/leaderboard");
+      if (res.ok) {
+        const data = await res.json();
+        setEntries(data.entries || []);
+        setMyEntry(data.mine || null);
+      }
+    } catch(e) {}
+    setLoading(false);
+  };
+
+  const filtered = filter === "all" ? entries : entries.filter(e => e.instrument_type === filter);
+  const filters = ["all","forex","crypto","metals","indices","energy"];
+
+  return (
+    <div style={{ flex: 1, overflow: "auto", background: "#0a0a0f", padding: "28px 32px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 28 }}>
+        <button onClick={onBack} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 7, color: "rgba(255,255,255,0.4)", padding: "6px 14px", cursor: "pointer", fontFamily: "inherit", fontSize: 11 }}>← BACK</button>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: "#e8a020", letterSpacing: 2, fontFamily: "'Bebas Neue','Impact',system-ui" }}>COMMUNITY LEADERBOARD</div>
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", letterSpacing: 2, marginTop: 2 }}>GREEN-VERDICT STRATEGIES ONLY — ANONYMOUS — STATS ONLY</div>
+        </div>
+      </div>
+
+      {/* Filter tabs */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
+        {filters.map(f => (
+          <button key={f} onClick={() => setFilter(f)}
+            style={{ padding: "5px 14px", borderRadius: 20, border: "1px solid", cursor: "pointer", fontFamily: "inherit", fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase",
+              background: filter === f ? "rgba(232,160,32,0.15)" : "rgba(255,255,255,0.04)",
+              borderColor: filter === f ? "rgba(232,160,32,0.5)" : "rgba(255,255,255,0.08)",
+              color: filter === f ? "#e8a020" : "rgba(255,255,255,0.4)" }}>
+            {f}
+          </button>
+        ))}
+        <button onClick={loadLeaderboard} style={{ marginLeft: "auto", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "rgba(255,255,255,0.3)", padding: "5px 12px", cursor: "pointer", fontFamily: "inherit", fontSize: 10 }}>↺ REFRESH</button>
+      </div>
+
+      {/* Table header */}
+      <div style={{ display: "grid", gridTemplateColumns: "40px 1fr 80px 80px 80px 80px 90px", gap: 8, padding: "8px 14px", marginBottom: 4 }}>
+        {["#","STRATEGY","WIN RATE","PROFIT FACTOR","TRADES","DRAWDOWN","SCORE"].map(h => (
+          <div key={h} style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.25)", letterSpacing: 2 }}>{h}</div>
+        ))}
+      </div>
+
+      {/* Entries */}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 60, color: "rgba(255,255,255,0.2)", fontSize: 13 }}>Loading...</div>
+      ) : filtered.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 60 }}>
+          <div style={{ fontSize: 32, marginBottom: 12 }}>🏆</div>
+          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 13 }}>No strategies yet.</div>
+          <div style={{ color: "rgba(255,255,255,0.18)", fontSize: 11, marginTop: 6 }}>Complete a review and get a 10/10 to submit your strategy.</div>
+        </div>
+      ) : filtered.map((entry, i) => {
+        const isMe = myEntry && entry.id === myEntry.id;
+        const score = Math.round((entry.profit_factor * 40) + (entry.win_rate * 25) + (Math.min(entry.trade_count / 60, 1) * 20) + ((1 - entry.drawdown / 30) * 15));
+        return (
+          <div key={entry.id} style={{ display: "grid", gridTemplateColumns: "40px 1fr 80px 80px 80px 80px 90px", gap: 8, padding: "12px 14px", marginBottom: 4, borderRadius: 10, alignItems: "center",
+            background: isMe ? "rgba(232,160,32,0.08)" : i % 2 === 0 ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.01)",
+            border: isMe ? "1px solid rgba(232,160,32,0.2)" : "1px solid transparent" }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: i === 0 ? "#e8a020" : i === 1 ? "#aaa" : i === 2 ? "#cd7f32" : "rgba(255,255,255,0.2)" }}>{i + 1}</div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: isMe ? "#e8a020" : "rgba(255,255,255,0.8)" }}>{entry.strategy_name || "Anonymous Strategy"} {isMe && <span style={{ fontSize: 9, color: "#e8a020", marginLeft: 6 }}>YOU</span>}</div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>{entry.instrument_type || "unknown"} · {entry.characters?.join(", ") || ""}</div>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#3ee89a" }}>{entry.win_rate?.toFixed(1)}%</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#38b8f0" }}>{entry.profit_factor?.toFixed(2)}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.6)" }}>{entry.trade_count}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#f07070" }}>{entry.drawdown?.toFixed(1)}%</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "#e8a020" }}>{score}</div>
+          </div>
+        );
+      })}
+
+      {/* Submit your own */}
+      {myEntry === null && !loading && (
+        <div style={{ marginTop: 32, padding: "20px 24px", background: "rgba(62,232,154,0.05)", border: "1px solid rgba(62,232,154,0.15)", borderRadius: 12, textAlign: "center" }}>
+          <div style={{ color: "#3ee89a", fontSize: 12, fontWeight: 700, marginBottom: 6 }}>SUBMIT YOUR STRATEGY</div>
+          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginBottom: 14 }}>Complete a review, get all characters to 10/10, and submit your strategy stats anonymously.</div>
+          <div style={{ color: "rgba(255,255,255,0.2)", fontSize: 10 }}>Coming soon — requires walk-forward validation first.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange, collapsed, setCollapsed: setCollapsedExternal, onLeaderboard, activeScreen }) {
   const [internalCollapsed, setInternalCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   const isCollapsed = collapsed !== undefined ? collapsed : internalCollapsed;
   const toggleCollapsed = () => {
@@ -2438,6 +2570,10 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
               <button onClick={onNew} style={{ flex: 1, padding: "9px 10px", background: "rgba(232,160,32,0.12)", border: "1px solid rgba(232,160,32,0.25)", borderRadius: 7, color: "#e8a020", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Bebas Neue', 'Impact', system-ui, sans-serif", letterSpacing: 2 }}>
                 + NEW REVIEW
               </button>
+              <button onClick={onLeaderboard}
+                style={{ padding: "8px 10px", background: activeScreen === "leaderboard" ? "rgba(232,160,32,0.15)" : "rgba(255,255,255,0.04)", border: "1px solid rgba(232,160,32,0.2)", borderRadius: 7, color: activeScreen === "leaderboard" ? "#e8a020" : "rgba(255,255,255,0.5)", fontSize: 11, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 600 }}>
+                🏆 LEADERBOARD
+              </button>
               <button onClick={() => setShowNewFolder(p => !p)} title="New Folder" style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "rgba(255,255,255,0.5)", fontSize: 14, cursor: "pointer", fontFamily: "inherit", lineHeight: 1 }}>
                 📁
               </button>
@@ -2537,6 +2673,7 @@ export default function Home() {
   const [loadedSession, setLoadedSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // always starts closed
+  const [mainScreen, setMainScreen] = useState("arena"); // arena | leaderboard
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -2629,6 +2766,8 @@ export default function Home() {
             style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 99, display: typeof window !== "undefined" && window.innerWidth < 768 ? "block" : "none" }} />
         )}
         <Sidebar
+          onLeaderboard={() => setMainScreen(mainScreen === "leaderboard" ? "arena" : "leaderboard")}
+          activeScreen={mainScreen}
           sessions={sessions}
           onLoad={(s) => { handleLoadSession(s); setSidebarCollapsed(true); }}
           onDelete={deleteSession}
@@ -2640,7 +2779,8 @@ export default function Home() {
           setCollapsed={setSidebarCollapsed}
         />
         <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: sidebarCollapsed ? 0 : 280, transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
-          <Arena
+          {mainScreen === "leaderboard" && <Leaderboard profile={profile} onBack={() => setMainScreen("arena")} />}
+          {mainScreen === "arena" && <Arena
             user={user}
             profile={profile}
             onSessionSave={saveSession}
@@ -2652,7 +2792,8 @@ export default function Home() {
             currentSessionId={currentSessionId}
             onOpenSidebar={() => setSidebarCollapsed(false)}
             sidebarOpen={!sidebarCollapsed}
-          />
+            onOpenLeaderboard={() => setMainScreen("leaderboard")}
+          />}
         </div>
       </div>
     </>
