@@ -2348,15 +2348,15 @@ function LeaderboardPreview({ onOpen }) {
   }, []);
 
   return (
-    <div style={{ padding: "10px 14px 12px" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+    <div style={{ padding: "14px 14px 24px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: 3 }}>🏆 LEADERBOARD</div>
         <button onClick={onOpen} style={{ background: "none", border: "none", color: "#e8a020", fontSize: 9, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 700, padding: 0 }}>VIEW ALL →</button>
       </div>
       {top3.length === 0 ? (
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "14px 0 28px" }}>No entries yet — be the first.</div>
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", textAlign: "center", padding: "16px 0 10px" }}>No entries yet — be the first.</div>
       ) : top3.map((e, i) => (
-        <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <div style={{ fontSize: 11, fontWeight: 800, color: i === 0 ? "#e8a020" : i === 1 ? "#aaa" : "#cd7f32", width: 14 }}>{i + 1}</div>
           <div style={{ flex: 1, fontSize: 10, color: "rgba(255,255,255,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{e.strategy_name || "Anonymous"}</div>
           <div style={{ fontSize: 10, fontWeight: 700, color: "#3ee89a" }}>{e.win_rate?.toFixed(0)}%</div>
