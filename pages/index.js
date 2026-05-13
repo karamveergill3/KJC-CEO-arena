@@ -304,7 +304,7 @@ const BASE_SYSTEMS = {
   STARK: `You are Tony Stark — genius, brutal, zero patience. Say "yeah no —" before every ISSUE. Sharp, confident.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Flag structural issues AND parameter values that look suboptimal — wrong defaults, too tight stops, RSI thresholds that will over/under-trade, lot sizes that risk blowout.
+Name the EXACT function. Flag structural issues AND parameter values that look suboptimal — wrong defaults, too tight stops, RSI thresholds that will over/under-trade, lot sizes that risk blowout. CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
 
 FORMAT — exactly 3 lines every time:
 AGREED: [a DIFFERENT function confirmed solid each turn — never repeat the same AGREED function twice]
@@ -317,7 +317,7 @@ Never repeat a closed issue. Never write code.`,
   EDDIE: `You are Eddie Morra on NZT-48 — every pattern visible, zero noise, pure signal. Clinical and decisive.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Flag structural issues AND parameter defaults that look wrong — stops too tight, TP/SL ratios that hurt profit factor, RSI levels that generate too few or too many signals.
+Name the EXACT function. Flag structural issues AND parameter defaults that look wrong — stops too tight, TP/SL ratios that hurt profit factor, RSI levels that generate too few or too many signals. CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
 
 FORMAT — exactly 3 lines every time:
 AGREED: [a DIFFERENT function confirmed solid each turn — never repeat the same AGREED function twice]
@@ -330,7 +330,7 @@ Never repeat a closed issue. Never write code.`,
   SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "Ten billion percent —" in your AGREED line when certain.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Flag structural issues AND parameter values that are statistically suboptimal — identify exact values that should change and what they should be.
+Name the EXACT function. Flag structural issues AND parameter values that are statistically suboptimal — identify exact values that should change and what they should be. CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
 
 FORMAT — exactly 3 lines every time:
 AGREED: [start with "Ten billion percent —" then a DIFFERENT function confirmed solid each turn — never repeat same function]
@@ -1087,7 +1087,7 @@ Select 1-3 characters whose specialties best match the task.`,
     // If continuing, restore state; otherwise start fresh
     let history = continueDebate ? debateHistoryRef.current : "";
     let turn = continueDebate ? debateTurnRef.current : 0;
-    const MAX_TURNS = turn + (chars.length * 12);
+    const MAX_TURNS = turn + (chars.length * 8);
     const charMap = { ...ALL_CHARS, ...customCharsRef.current };
     const highestRatings = continueDebate ? { ...debateRatingsRef.current } : Object.fromEntries(chars.map(k => [k, 0]));
     const agreedItems = continueDebate ? [...debateAgreedRef.current] : [];
@@ -1113,7 +1113,7 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
-      const closedList = closedIssues.slice(-20); // keep last 20 to avoid token bloat
+      const closedList = closedIssues.slice(-30); // keep last 20 to avoid token bloat
       const agreedBlock = closedList.length > 0
         ? `ISSUES ALREADY RAISED — DO NOT REPEAT THESE, pick something completely new or write "None":\n${closedList.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nYou MUST raise a different function/issue not on this list, or write ISSUE: None.`
         : "NO ISSUES RAISED YET.";
@@ -1123,8 +1123,8 @@ Select 1-3 characters whose specialties best match the task.`,
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code. Find the BIGGEST issue not yet on the list above.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [exact function name with the problem — must NOT be on the list above]\nRATING: 5/10\n\nReplace 5 with your honest score. 3 lines only, nothing else.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. ONLY GO UP — never lower. The list above shows issues ALREADY RAISED — pick something NEW or write ISSUE: None. CRITICAL: If you write RATING: 10/10 you MUST write ISSUE: None AND your character's _APPROVED token on the next line — no real issues allowed at 10/10.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
+        ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code carefully. Only reference functions that actually exist in the code above. Find the BIGGEST issue not yet on the list.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [exact function name WITH the problem — must NOT be on the list, must exist in the code]\nRATING: 5/10\n\nReplace 5 with your honest score. 3 lines only, nothing else.`
+        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Your rating reflects how production-ready this code is. Increase it only when the remaining issues genuinely justify it — not just because another turn passed. If you are raising a significant new issue this turn, your rating should stay the same or increase only slightly. Only reach 10/10 when you genuinely believe all critical issues are resolved. CRITICAL: RATING 10/10 requires ISSUE: None AND your _APPROVED token on the next line.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
