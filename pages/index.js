@@ -729,7 +729,7 @@ function EconomicCalendar({ compact = false }) {
   );
 }
 
-function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen, onOpenLeaderboard }) {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen, onOpenLeaderboard, onSendToOptimisation }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState("");
   const [fileName, setFileName]     = useState("");
@@ -2018,6 +2018,11 @@ Select 1-3 characters whose specialties best match the task.`,
                 <button onClick={downloadPDF} style={{ ...s.ctrlBtn, color: "#c084fc", borderColor: "rgba(192,132,252,0.4)", fontSize: 9 }}>
                   ⬇ DOWNLOAD REPORT
                 </button>
+                {onSendToOptimisation && (
+                  <button onClick={() => onSendToOptimisation(fixedCode)} style={{ ...s.ctrlBtn, color: "#38b8f0", borderColor: "rgba(56,184,240,0.4)", fontSize: 9 }}>
+                    📊 OPTIMISE PARAMS
+                  </button>
+                )}
               </div>
             </div>
             {showFixed && (
@@ -2383,6 +2388,303 @@ function ProfileModal({ profile, onClose, onSignOut }) {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
+function OptimisationFolder({ onBack, baseCode }) {
+  const [passes, setPasses] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [rejected, setRejected] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [injecting, setInjecting] = useState(false);
+  const [injectedCode, setInjectedCode] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [showRejected, setShowRejected] = useState(false);
+  const [sortCol, setSortCol] = useState("score");
+
+  const TARGETS = { trades: 60, pf: 1.5, wr: 60, dd: 30 };
+  const RED_FLAGS = { minTrades: 30, maxPF: 5.0, maxWR: 85 };
+
+  const parseFile = (file) => {
+    setLoading(true); setError(null); setPasses([]); setFiltered([]); setRejected([]); setSelected(null); setInjectedCode(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        let rows = [];
+        if (file.name.endsWith(".xml")) {
+          rows = parseXML(text);
+        } else {
+          rows = parseCSV(text);
+        }
+        processPasses(rows);
+      } catch(err) {
+        setError("Failed to parse file: " + err.message);
+      }
+      setLoading(false);
+    };
+    reader.readAsText(file);
+  };
+
+  const parseCSV = (text) => {
+    const lines = text.trim().split("\n");
+    const headers = lines[0].split(",").map(h => h.trim().replace(/"/g,""));
+    return lines.slice(1).map(line => {
+      const vals = line.split(",").map(v => v.trim().replace(/"/g,""));
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = vals[i] || "");
+      return obj;
+    }).filter(r => Object.values(r).some(v => v));
+  };
+
+  const parseXML = (text) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/xml");
+    const rows = [];
+    const items = doc.querySelectorAll("Row, Pass, Result, OptimisationResult");
+    items.forEach(item => {
+      const obj = {};
+      // Try attributes first
+      Array.from(item.attributes).forEach(a => obj[a.name] = a.value);
+      // Then child elements
+      Array.from(item.children).forEach(child => {
+        obj[child.getAttribute("Name") || child.tagName] = child.getAttribute("Value") || child.textContent;
+      });
+      if (Object.keys(obj).length > 0) rows.push(obj);
+    });
+    return rows;
+  };
+
+  const normalise = (row) => {
+    // Map various cTrader column name formats to standard keys
+    const get = (...keys) => {
+      for (const k of keys) {
+        const found = Object.keys(row).find(rk => rk.toLowerCase().replace(/[^a-z0-9]/g,"").includes(k.toLowerCase().replace(/[^a-z0-9]/g,"")));
+        if (found && row[found] !== "" && row[found] !== undefined) return parseFloat(row[found].toString().replace(/[,%$]/g,"")) || 0;
+      }
+      return 0;
+    };
+    const trades = get("trades","totalTrades","tradecount");
+    const winning = get("winning trades","winningtrades","wins");
+    const pf = get("profit factor","profitfactor","pf");
+    const dd = get("max equity drawdown (%)","maxequitydrawdown","drawdown","dd","maxdrawdown");
+    const wr = winning > 0 && trades > 0 ? (winning / trades) * 100 : get("win rate","winrate","wr");
+    const netProfit = get("net profit","netprofit","profit");
+    const pass = get("pass","id") || Object.values(row)[0];
+
+    // Extract parameter columns (everything that isn't a standard perf metric)
+    const perfKeys = ["pass","id","fitness","faults","balance","net profit","trades","winning","losing","profit factor","drawdown","average trade","equity"];
+    const params = {};
+    Object.keys(row).forEach(k => {
+      const kl = k.toLowerCase();
+      if (!perfKeys.some(pk => kl.includes(pk))) {
+        params[k] = row[k];
+      }
+    });
+
+    return { pass, trades, winning, pf, dd, wr, netProfit, params, raw: row };
+  };
+
+  const score = (p) => {
+    const pfScore = Math.min(p.pf / 3, 1) * 40;
+    const wrScore = Math.min(p.wr / 80, 1) * 25;
+    const tradeScore = Math.min(p.trades / 120, 1) * 20;
+    const ddScore = Math.max(0, 1 - p.dd / 30) * 15;
+    return Math.round(pfScore + wrScore + tradeScore + ddScore);
+  };
+
+  const isRedFlag = (p) => {
+    return p.trades < RED_FLAGS.minTrades || p.pf > RED_FLAGS.maxPF || p.wr > RED_FLAGS.maxWR;
+  };
+
+  const processPasses = (rows) => {
+    const normalised = rows.map(normalise).filter(p => p.trades > 0 || p.pf > 0);
+    const pass = normalised.filter(p => p.trades >= TARGETS.trades && p.pf >= TARGETS.pf && p.wr >= TARGETS.wr && p.dd <= TARGETS.dd && !isRedFlag(p));
+    const fail = normalised.filter(p => !(p.trades >= TARGETS.trades && p.pf >= TARGETS.pf && p.wr >= TARGETS.wr && p.dd <= TARGETS.dd) || isRedFlag(p));
+    const scored = pass.map(p => ({ ...p, score: score(p) })).sort((a, b) => b.score - a.score);
+    setPasses(normalised);
+    setFiltered(scored.slice(0, 20));
+    setRejected(fail);
+  };
+
+  const injectParams = async (p) => {
+    if (!baseCode) { setError("No base code available. Complete a review first."); return; }
+    setInjecting(true);
+    try {
+      const paramList = Object.entries(p.params).map(([k, v]) => `${k}: ${v}`).join("\n");
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5",
+          max_tokens: 8000,
+          system: `You are a cTrader C# developer. You receive a trading bot and a set of optimised parameter values. Update every matching [Parameter] DefaultValue in the code to match the provided values. Only change DefaultValue fields — do not change any logic. Output the complete file. Raw C# only, no markdown.`,
+          messages: [{ role: "user", content: `Base code:\n\`\`\`\n${baseCode.slice(0, 10000)}\n\`\`\`\n\nOptimised parameter values to inject:\n${paramList}\n\nUpdate all matching [Parameter] DefaultValue fields and output the complete file.` }]
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const code = data.content?.find(b => b.type === "text")?.text || "";
+        setInjectedCode(code.replace(/^```[\w]*\n?/m, "").replace(/\n?```\s*$/m, "").trim());
+      }
+    } catch(e) { setError("Injection failed: " + e.message); }
+    setInjecting(false);
+  };
+
+  const copyCode = () => {
+    const ta = document.createElement("textarea");
+    ta.value = injectedCode;
+    ta.style.cssText = "position:fixed;opacity:0";
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  };
+
+  const fragileCheck = (p) => {
+    if (p.pf > 4.0) return "PF suspiciously high";
+    if (p.wr > 80) return "Win rate suspiciously high";
+    if (p.trades < 40) return "Low trade count";
+    return null;
+  };
+
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortCol === "score") return b.score - a.score;
+    if (sortCol === "pf") return b.pf - a.pf;
+    if (sortCol === "wr") return b.wr - a.wr;
+    if (sortCol === "trades") return b.trades - a.trades;
+    if (sortCol === "dd") return a.dd - b.dd;
+    return 0;
+  });
+
+  return (
+    <div style={{ flex: 1, overflow: "auto", background: "#0a0a0f", padding: "36px 48px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 32 }}>
+        <button onClick={onBack} style={{ marginTop: 6, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.35)", padding: "7px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 11, letterSpacing: 1, flexShrink: 0 }}>← BACK</button>
+        <div>
+          <div style={{ fontSize: 42, fontWeight: 900, color: "#38b8f0", letterSpacing: 3, lineHeight: 1, fontFamily: "'Bebas Neue','Impact',system-ui,sans-serif" }}>OPTIMISATION FOLDER</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: 3, marginTop: 6, textTransform: "uppercase" }}>Filter · Rank · Inject · Deploy</div>
+        </div>
+      </div>
+
+      {/* Upload */}
+      {passes.length === 0 && !loading && (
+        <label style={{ display: "block", border: "2px dashed rgba(56,184,240,0.3)", borderRadius: 14, padding: "48px 32px", textAlign: "center", cursor: "pointer", background: "rgba(56,184,240,0.03)", marginBottom: 24 }}>
+          <input type="file" accept=".csv,.xml" style={{ display: "none" }} onChange={e => e.target.files[0] && parseFile(e.target.files[0])} />
+          <div style={{ fontSize: 36, marginBottom: 12 }}>📂</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: "#38b8f0", letterSpacing: 2, marginBottom: 8 }}>DROP OPTIMISATION EXPORT HERE</div>
+          <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: 1 }}>cTrader CSV or XML · 200–1500 passes</div>
+          <div style={{ marginTop: 16, fontSize: 11, color: "rgba(255,255,255,0.2)" }}>Filters: 60+ trades · PF &gt;1.5 · WR &gt;60% · DD &lt;30%</div>
+        </label>
+      )}
+
+      {loading && <div style={{ textAlign: "center", padding: 60, color: "#38b8f0", fontSize: 14, letterSpacing: 2 }}>PARSING {passes.length} PASSES...</div>}
+      {error && <div style={{ padding: "12px 16px", background: "rgba(240,80,80,0.1)", border: "1px solid rgba(240,80,80,0.3)", borderRadius: 8, color: "#f07070", fontSize: 12, marginBottom: 16 }}>{error}</div>}
+
+      {passes.length > 0 && (
+        <>
+          {/* Summary bar */}
+          <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+            {[
+              { label: "TOTAL PASSES", val: passes.length, col: "rgba(255,255,255,0.5)" },
+              { label: "PASSED FILTERS", val: filtered.length, col: "#3ee89a" },
+              { label: "REJECTED", val: rejected.length, col: "#f07070" },
+            ].map(s => (
+              <div key={s.label} style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px" }}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: s.col, fontFamily: "'Bebas Neue','Impact',system-ui" }}>{s.val}</div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginTop: 2 }}>{s.label}</div>
+              </div>
+            ))}
+            <button onClick={() => { setPasses([]); setFiltered([]); setRejected([]); setSelected(null); setInjectedCode(null); }}
+              style={{ padding: "0 20px", background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, color: "rgba(255,255,255,0.3)", cursor: "pointer", fontFamily: "inherit", fontSize: 11 }}>
+              ✕ CLEAR
+            </button>
+          </div>
+
+          {/* Targets reminder */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+            {[["PF > 1.5","#38b8f0"],["WR > 60%","#3ee89a"],["Trades ≥ 60","#e8a020"],["DD < 30%","#f07070"]].map(([t, c]) => (
+              <div key={t} style={{ padding: "4px 12px", borderRadius: 20, border: `1px solid ${c}40`, color: c, fontSize: 10, fontWeight: 700, letterSpacing: 1 }}>{t}</div>
+            ))}
+          </div>
+
+          {/* Sort headers */}
+          <div style={{ display: "grid", gridTemplateColumns: "44px 60px 1fr 90px 90px 80px 90px 80px 100px", gap: 10, padding: "8px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", marginBottom: 4 }}>
+            {[["#",""],["PASS",""],["PARAMETERS",""],["WIN RATE","wr"],["PROFIT FACTOR","pf"],["TRADES","trades"],["DRAWDOWN","dd"],["SCORE","score"],["ACTION",""]].map(([h, col]) => (
+              <div key={h} onClick={() => col && setSortCol(col)} style={{ fontSize: 9, fontWeight: 800, color: sortCol === col ? "#38b8f0" : "rgba(255,255,255,0.2)", letterSpacing: 2, cursor: col ? "pointer" : "default" }}>{h}{sortCol===col?" ▼":""}</div>
+            ))}
+          </div>
+
+          {/* Rows */}
+          {sorted.map((p, i) => {
+            const fragile = fragileCheck(p);
+            const isSelected = selected?.pass === p.pass;
+            const rowBg = i === 0 ? "rgba(62,232,154,0.06)" : fragile ? "rgba(232,160,32,0.05)" : "rgba(255,255,255,0.02)";
+            const rowBorder = i === 0 ? "1px solid rgba(62,232,154,0.2)" : fragile ? "1px solid rgba(232,160,32,0.15)" : isSelected ? "1px solid rgba(56,184,240,0.3)" : "1px solid transparent";
+            return (
+              <div key={p.pass} onClick={() => setSelected(isSelected ? null : p)}
+                style={{ display: "grid", gridTemplateColumns: "44px 60px 1fr 90px 90px 80px 90px 80px 100px", gap: 10, padding: "14px 16px", marginBottom: 3, borderRadius: 10, alignItems: "center", background: rowBg, border: rowBorder, cursor: "pointer" }}>
+                <div style={{ fontSize: i < 3 ? 18 : 13, fontWeight: 900, color: i === 0 ? "#3ee89a" : i === 1 ? "#aaa" : i === 2 ? "#cd7f32" : "rgba(255,255,255,0.2)", fontFamily: "'Bebas Neue','Impact',system-ui" }}>{i + 1}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>#{p.pass}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {Object.entries(p.params).slice(0, 4).map(([k, v]) => `${k.split("|").pop().trim()}: ${v}`).join("  ·  ")}
+                  {fragile && <span style={{ marginLeft: 8, color: "#e8a020", fontWeight: 700 }}>⚠ {fragile}</span>}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: p.wr >= 60 ? "#3ee89a" : "#f07070" }}>{p.wr.toFixed(1)}%</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: p.pf >= 1.5 ? "#38b8f0" : "#f07070" }}>{p.pf.toFixed(2)}</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: p.trades >= 60 ? "rgba(255,255,255,0.7)" : "#f07070" }}>{p.trades}</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: p.dd <= 30 ? "#3ee89a" : "#f07070" }}>{p.dd.toFixed(1)}%</div>
+                <div style={{ fontSize: 16, fontWeight: 900, color: "#e8a020", fontFamily: "'Bebas Neue','Impact',system-ui" }}>{p.score}</div>
+                <button onClick={e => { e.stopPropagation(); injectParams(p); }}
+                  disabled={injecting || !baseCode}
+                  style={{ padding: "6px 10px", background: "rgba(56,184,240,0.12)", border: "1px solid rgba(56,184,240,0.3)", borderRadius: 6, color: "#38b8f0", fontSize: 10, cursor: baseCode ? "pointer" : "not-allowed", fontFamily: "inherit", fontWeight: 700, opacity: baseCode ? 1 : 0.4 }}>
+                  {injecting ? "..." : "INJECT"}
+                </button>
+              </div>
+            );
+          })}
+
+          {/* Rejected toggle */}
+          <div style={{ marginTop: 20 }}>
+            <button onClick={() => setShowRejected(p => !p)} style={{ background: "none", border: "1px solid rgba(240,80,80,0.2)", borderRadius: 8, color: "rgba(240,80,80,0.5)", padding: "7px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 10, letterSpacing: 1 }}>
+              {showRejected ? "▲" : "▼"} {rejected.length} REJECTED PASSES
+            </button>
+            {showRejected && rejected.slice(0, 20).map((p, i) => (
+              <div key={i} style={{ display: "grid", gridTemplateColumns: "44px 60px 1fr 90px 90px 80px 90px", gap: 10, padding: "10px 16px", marginTop: 3, borderRadius: 8, background: "rgba(240,80,80,0.03)", border: "1px solid rgba(240,80,80,0.08)", alignItems: "center", opacity: 0.6 }}>
+                <div style={{ fontSize: 11, color: "#f07070" }}>✗</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>#{p.pass}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.25)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{Object.entries(p.params).slice(0,3).map(([k,v]) => `${k.split("|").pop().trim()}: ${v}`).join(" · ")}</div>
+                <div style={{ fontSize: 12, color: p.wr >= 60 ? "rgba(255,255,255,0.4)" : "#f07070" }}>{p.wr.toFixed(1)}%</div>
+                <div style={{ fontSize: 12, color: p.pf >= 1.5 ? "rgba(255,255,255,0.4)" : "#f07070" }}>{p.pf.toFixed(2)}</div>
+                <div style={{ fontSize: 12, color: p.trades >= 60 ? "rgba(255,255,255,0.4)" : "#f07070" }}>{p.trades}</div>
+                <div style={{ fontSize: 12, color: p.dd <= 30 ? "rgba(255,255,255,0.4)" : "#f07070" }}>{p.dd.toFixed(1)}%</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Injected code panel */}
+      {injectedCode && (
+        <div style={{ marginTop: 32, background: "rgba(56,184,240,0.04)", border: "1px solid rgba(56,184,240,0.15)", borderRadius: 14, overflow: "hidden" }}>
+          <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(56,184,240,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#38b8f0", letterSpacing: 2 }}>✦ OPTIMISED CODE — PARAMETERS INJECTED</div>
+            <button onClick={copyCode} style={{ background: "rgba(56,184,240,0.15)", border: "1px solid rgba(56,184,240,0.3)", borderRadius: 6, color: copied ? "#3ee89a" : "#38b8f0", fontSize: 10, padding: "5px 14px", cursor: "pointer", fontFamily: "inherit", fontWeight: 700 }}>
+              {copied ? "✓ COPIED" : "⎘ COPY CODE"}
+            </button>
+          </div>
+          <pre style={{ padding: "16px 20px", fontSize: 11, color: "rgba(140,210,140,0.9)", fontFamily: "monospace", overflow: "auto", maxHeight: 400, margin: 0, whiteSpace: "pre-wrap" }}>{injectedCode}</pre>
+        </div>
+      )}
+
+      {!baseCode && passes.length > 0 && (
+        <div style={{ marginTop: 24, padding: "16px 20px", background: "rgba(232,160,32,0.06)", border: "1px solid rgba(232,160,32,0.15)", borderRadius: 10 }}>
+          <div style={{ color: "#e8a020", fontSize: 12, fontWeight: 700, marginBottom: 4 }}>NO BASE CODE LOADED</div>
+          <div style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>Complete a code review first, then use "📊 OPTIMISE PARAMS" to send your fixed code here. Parameter injection will then be available.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LeaderboardPreview({ onOpen }) {
   const [top3, setTop3] = useState([]);
 
@@ -2516,7 +2818,7 @@ function Leaderboard({ profile, onBack }) {
   );
 }
 
-function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange, collapsed, setCollapsed: setCollapsedExternal, onLeaderboard, activeScreen }) {
+function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange, collapsed, setCollapsed: setCollapsedExternal, onLeaderboard, onOptimisation, activeScreen }) {
   const [internalCollapsed, setInternalCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   const isCollapsed = collapsed !== undefined ? collapsed : internalCollapsed;
   const toggleCollapsed = () => {
@@ -2623,6 +2925,10 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
                 style={{ padding: "8px 10px", background: activeScreen === "leaderboard" ? "rgba(232,160,32,0.15)" : "rgba(255,255,255,0.04)", border: "1px solid rgba(232,160,32,0.2)", borderRadius: 7, color: activeScreen === "leaderboard" ? "#e8a020" : "rgba(255,255,255,0.5)", fontSize: 11, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 600 }}>
                 🏆 LEADERBOARD
               </button>
+              <button onClick={onOptimisation}
+                style={{ padding: "8px 10px", background: activeScreen === "optimisation" ? "rgba(56,184,240,0.15)" : "rgba(255,255,255,0.04)", border: "1px solid rgba(56,184,240,0.2)", borderRadius: 7, color: activeScreen === "optimisation" ? "#38b8f0" : "rgba(255,255,255,0.5)", fontSize: 11, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 600 }}>
+                📊 OPTIMISATION
+              </button>
               <button onClick={() => setShowNewFolder(p => !p)} title="New Folder" style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "rgba(255,255,255,0.5)", fontSize: 14, cursor: "pointer", fontFamily: "inherit", lineHeight: 1 }}>
                 📁
               </button>
@@ -2722,7 +3028,8 @@ export default function Home() {
   const [loadedSession, setLoadedSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // always starts closed
-  const [mainScreen, setMainScreen] = useState("arena"); // arena | leaderboard
+  const [mainScreen, setMainScreen] = useState("arena"); // arena | leaderboard | optimisation
+  const [optimisationCode, setOptimisationCode] = useState(""); // code to inject params into
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -2816,6 +3123,7 @@ export default function Home() {
         )}
         <Sidebar
           onLeaderboard={() => setMainScreen(mainScreen === "leaderboard" ? "arena" : "leaderboard")}
+          onOptimisation={() => setMainScreen(mainScreen === "optimisation" ? "arena" : "optimisation")}
           activeScreen={mainScreen}
           sessions={sessions}
           onLoad={(s) => { handleLoadSession(s); setSidebarCollapsed(true); }}
@@ -2829,6 +3137,7 @@ export default function Home() {
         />
         <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: sidebarCollapsed ? 0 : 280, transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
           {mainScreen === "leaderboard" && <Leaderboard profile={profile} onBack={() => setMainScreen("arena")} />}
+          {mainScreen === "optimisation" && <OptimisationFolder onBack={() => setMainScreen("arena")} baseCode={optimisationCode} />}
           {mainScreen === "arena" && <Arena
             user={user}
             profile={profile}
@@ -2842,6 +3151,7 @@ export default function Home() {
             onOpenSidebar={() => setSidebarCollapsed(false)}
             sidebarOpen={!sidebarCollapsed}
             onOpenLeaderboard={() => setMainScreen("leaderboard")}
+            onSendToOptimisation={(code) => { setOptimisationCode(code); setMainScreen("optimisation"); }}
           />}
         </div>
       </div>
