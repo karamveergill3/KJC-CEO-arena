@@ -729,7 +729,7 @@ function EconomicCalendar({ compact = false }) {
   );
 }
 
-function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen, onOpenLeaderboard, onSendToOptimisation }) {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen, onOpenLeaderboard, onSendToOptimisation, onOpenOptimisation }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState("");
   const [fileName, setFileName]     = useState("");
@@ -1770,6 +1770,9 @@ Select 1-3 characters whose specialties best match the task.`,
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <LeaderboardPreview onOpen={onOpenLeaderboard} />
           </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <OptimisationPreview onOpen={onOpenOptimisation} />
+          </div>
         </div>
 
         </div>{/* end two-col */}
@@ -2685,6 +2688,18 @@ function OptimisationFolder({ onBack, baseCode }) {
   );
 }
 
+function OptimisationPreview({ onOpen }) {
+  return (
+    <div style={{ padding: "14px 14px 20px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: 3 }}>📊 OPTIMISATION</div>
+        <button onClick={onOpen} style={{ background: "none", border: "none", color: "#38b8f0", fontSize: 9, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 700, padding: 0 }}>OPEN →</button>
+      </div>
+      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", lineHeight: 1.6 }}>Upload a cTrader optimisation export to filter, rank and inject the best parameter set into your code.</div>
+    </div>
+  );
+}
+
 function LeaderboardPreview({ onOpen }) {
   const [top3, setTop3] = useState([]);
 
@@ -3152,6 +3167,7 @@ export default function Home() {
             sidebarOpen={!sidebarCollapsed}
             onOpenLeaderboard={() => setMainScreen("leaderboard")}
             onSendToOptimisation={(code) => { setOptimisationCode(code); setMainScreen("optimisation"); }}
+            onOpenOptimisation={() => setMainScreen("optimisation")}
           />}
         </div>
       </div>
