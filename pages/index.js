@@ -304,7 +304,7 @@ const BASE_SYSTEMS = {
   STARK: `You are Tony Stark — genius, brutal, zero patience. Say "yeah no —" before every ISSUE. Sharp, confident.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Only flag issues that exist in the actual code.
+Name the EXACT function. Flag structural issues AND parameter values that look suboptimal — wrong defaults, too tight stops, RSI thresholds that will over/under-trade, lot sizes that risk blowout.
 
 FORMAT — exactly 3 lines every time:
 AGREED: [a DIFFERENT function confirmed solid each turn — never repeat the same AGREED function twice]
@@ -317,7 +317,7 @@ Never repeat a closed issue. Never write code.`,
   EDDIE: `You are Eddie Morra on NZT-48 — every pattern visible, zero noise, pure signal. Clinical and decisive.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Only flag issues that exist in the actual code.
+Name the EXACT function. Flag structural issues AND parameter defaults that look wrong — stops too tight, TP/SL ratios that hurt profit factor, RSI levels that generate too few or too many signals.
 
 FORMAT — exactly 3 lines every time:
 AGREED: [a DIFFERENT function confirmed solid each turn — never repeat the same AGREED function twice]
@@ -330,7 +330,7 @@ Never repeat a closed issue. Never write code.`,
   SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "Ten billion percent —" in your AGREED line when certain.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Only flag issues that exist in the actual code.
+Name the EXACT function. Flag structural issues AND parameter values that are statistically suboptimal — identify exact values that should change and what they should be.
 
 FORMAT — exactly 3 lines every time:
 AGREED: [start with "Ten billion percent —" then a DIFFERENT function confirmed solid each turn — never repeat same function]
@@ -356,7 +356,7 @@ Maximum 4 sentences total.`;
 };
 
 // ─── Final code generator prompt ─────────────────────────────────────────────
-const CODEGEN_SYSTEM = `You are an elite cTrader C# developer applying surgical fixes to a trading bot. You will receive the original code and a list of precise fixes — each one names the exact function and what to change. Apply EVERY fix exactly as described. Do not add fixes not on the list. Do not remove existing logic unless a fix requires it. The output MUST deliver: 60+ trades per 3 months, PF >1.5, win rate >60%, drawdown <15%. CRITICAL: (1) Output the COMPLETE file — never truncate, never use "...". (2) Raw C# only — no markdown, no comments explaining what you changed. (3) Start with "using", end with final closing brace.`;
+const CODEGEN_SYSTEM = `You are an elite cTrader C# developer applying surgical fixes to a trading bot. You will receive the original code and a list of precise fixes. Apply EVERY fix exactly as described. Additionally, review ALL [Parameter] default values and adjust any that are suboptimal — tighten or widen stops, fix RSI thresholds, adjust lot sizes, correct TP/SL ratios — to maximise the chances of hitting: 60+ trades per 3 months, PF >1.5, win rate >60%, drawdown <15%. CRITICAL: (1) Output the COMPLETE file — never truncate, never use "...". (2) Raw C# only — no markdown. (3) Start with "using", end with final closing brace.`;
 
 // ─── API call ─────────────────────────────────────────────────────────────────
 // ─── Anthropic API call ───────────────────────────────────────────────────────
@@ -1223,210 +1223,290 @@ Select 1-3 characters whose specialties best match the task.`,
     script.onload = () => {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const W = 210; const H = 297; const M = 16; const cW = W - M * 2;
+      const W = 210; const H = 297; const M = 14; const cW = W - M * 2;
       let y = 0;
-      const newPage = () => { doc.addPage(); doc.setFillColor(10,10,15); doc.rect(0,0,W,H,'F'); y = 20; };
-      const chk = (n=10) => { if (y + n > H - 14) newPage(); };
-      const charMap = {...ALL_CHARS,...customCharsRef.current};
+
+      const newPage = () => {
+        doc.addPage();
+        doc.setFillColor(8, 8, 12);
+        doc.rect(0, 0, W, H, 'F');
+        y = 22;
+      };
+      const chk = (n = 10) => { if (y + n > H - 16) newPage(); };
+
+      const charMap = { ...ALL_CHARS, ...customCharsRef.current };
       const chars = activeCharsRef.current;
-      const allApp = chars.every(k=>approvalsRef.current[k]);
-      const cc = {STARK:[232,160,32],EDDIE:[56,184,240],SENKU:[62,232,154]};
+      const allApp = chars.every(k => approvalsRef.current[k]);
+      const cc = { STARK: [232, 160, 32], EDDIE: [56, 184, 240], SENKU: [62, 232, 154] };
 
-      // Analyse the actual code for realistic metrics
+      // ── Code analysis ────────────────────────────────────────────────────
       const codeText = fixedCode || '';
-      const hasMaxTrades = codeText.includes('MaxTrades') || codeText.includes('MaxOpenTrades') || codeText.includes('maxPositions');
-      const hasSL = codeText.includes('StopLoss') || codeText.includes('stopLoss') || codeText.includes('SlDistance');
-      const hasTP = codeText.includes('TakeProfit') || codeText.includes('takeProfit') || codeText.includes('TpDistance');
-      const hasRSI = codeText.includes('RelativeStrengthIndex') || codeText.includes('RSI') || codeText.includes('Rsi');
-      const hasEMA = codeText.includes('ExponentialMovingAverage') || codeText.includes('EMA') || codeText.includes('Ema');
-      const hasNewsFilter = codeText.includes('NewsFilter') || codeText.includes('FetchNews') || codeText.includes('news');
-      const hasATR = codeText.includes('AverageTrueRange') || codeText.includes('ATR') || codeText.includes('Atr');
+      const slMatch = codeText.match(/(?:SlDistance|StopLoss[^=\n]*DefaultValue)\s*[=,]\s*([\d.]+)/);
+      const tpMatch = codeText.match(/(?:TpDistance|TakeProfit[^=\n]*DefaultValue)\s*[=,]\s*([\d.]+)/);
+      const maxTradesMatch = codeText.match(/(?:MaxTrades|MaxOpenTrades|maxPositions)[^\n]*(?:DefaultValue\s*=\s*|=\s*)([\d]+)/);
+      const startLotsMatch = codeText.match(/(?:StartingLots|startingLots)[^\n]*(?:DefaultValue\s*=\s*|=\s*)([\d.]+)/);
+      const hasRSI = codeText.includes('RelativeStrengthIndex') || codeText.includes('Rsi');
+      const hasEMA = codeText.includes('ExponentialMovingAverage') || codeText.includes('Ema');
+      const hasATR = codeText.includes('AverageTrueRange') || codeText.includes('Atr');
       const hasTrailing = codeText.includes('trailing') || codeText.includes('Trailing');
-      const filterCount = [hasRSI, hasEMA, hasATR, hasNewsFilter].filter(Boolean).length;
-      const estWR = filterCount >= 3 ? '>60%' : filterCount >= 2 ? '55-60%' : '50-55%';
-      const estPF = hasTrailing ? '>1.8' : hasSL && hasTP ? '>1.5' : '~1.3';
-      const estDD = hasMaxTrades && hasSL ? '<15%' : hasSL ? '<20%' : 'Unknown';
+      const hasMultiTF = codeText.includes('Minute5') || codeText.includes('Hour1') || codeText.includes('GetBars');
+      const hasNewsFilter = codeText.includes('NewsFilter') || codeText.includes('FetchNews');
+      const hasSessionFilter = codeText.includes('session') || codeText.includes('Session');
+      const hasDivergence = codeText.includes('ivergence');
+      const paramCount = (codeText.match(/\[Parameter\(/g) || []).length;
+      let wrScore = [hasRSI, hasEMA, hasATR, hasMultiTF, hasNewsFilter, hasDivergence, hasSessionFilter].filter(Boolean).length;
+      let pfScore = 0;
+      if (hasTrailing) pfScore += 2;
+      if (tpMatch && slMatch) {
+        const ratio = parseFloat(tpMatch[1]) / parseFloat(slMatch[1]);
+        if (ratio >= 2) pfScore += 2; else if (ratio >= 1.5) pfScore++;
+      }
+      if (hasMultiTF) pfScore++;
+      const estWR = wrScore >= 5 ? '>65%' : wrScore >= 3 ? '>60%' : wrScore >= 2 ? '55-60%' : '50-55%';
+      const estPF = pfScore >= 4 ? '>2.0' : pfScore >= 3 ? '>1.8' : pfScore >= 2 ? '>1.5' : '~1.3';
+      const maxT = maxTradesMatch ? maxTradesMatch[1] : '?';
+      const estDD = maxTradesMatch && slMatch ? (parseInt(maxT) <= 3 ? '<10%' : '<15%') : slMatch ? '<20%' : 'Unknown';
+      const slVal = slMatch ? slMatch[1] + 'p' : '?';
+      const tpVal = tpMatch ? tpMatch[1] + 'p' : '?';
+      const lots = startLotsMatch ? startLotsMatch[1] : '?';
 
-      // ── PAGE 1: COVER ────────────────────────────────────────────────────
-      doc.setFillColor(232,160,32); doc.rect(0,0,W,18,'F');
-      doc.setFillColor(10,10,15); doc.rect(0,18,W,H-18,'F');
-      doc.setTextColor(232,160,32); doc.setFontSize(32); doc.setFont('helvetica','bold');
-      doc.text('KJC CAPITAL', W/2, 50, {align:'center'});
-      doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','normal');
-      doc.text('CODE REVIEW ARENA', W/2, 61, {align:'center'});
-      doc.setFontSize(8); doc.setTextColor(130,130,130);
-      doc.text('BACKTESTING REPORT CARD', W/2, 70, {align:'center'});
-      doc.setDrawColor(232,160,32); doc.setLineWidth(0.4); doc.line(M,78,W-M,78);
-      doc.setFontSize(16); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
-      doc.text(fileName||'Strategy Review', W/2, 94, {align:'center'});
-      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(140,140,140);
-      doc.text(new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}), W/2, 103, {align:'center'});
-      doc.text(chars.map(k=>charMap[k]?.name||k).join('  ·  '), W/2, 111, {align:'center'});
-      const vCol = allApp ? [62,232,154] : [232,160,32];
-      doc.setFillColor(...vCol);
-      doc.roundedRect(W/2-40,119,80,11,3,3,'F');
-      doc.setTextColor(0,0,0); doc.setFontSize(8); doc.setFont('helvetica','bold');
-      doc.text(allApp?'CONSENSUS — ALL APPROVED':'REVIEW COMPLETE', W/2, 126, {align:'center'});
+      // ── Helpers ──────────────────────────────────────────────────────────
+      const rule = (ry, col = [40, 40, 55]) => {
+        doc.setDrawColor(...col); doc.setLineWidth(0.2);
+        doc.line(M, ry, W - M, ry);
+      };
+      const tag = (tx, ty, label, bgCol, textCol = [0, 0, 0]) => {
+        const tw = doc.getTextWidth(label) + 6;
+        doc.setFillColor(...bgCol); doc.roundedRect(tx, ty, tw, 6, 1.5, 1.5, 'F');
+        doc.setTextColor(...textCol); doc.setFontSize(6.5); doc.setFont('helvetica', 'bold');
+        doc.text(label, tx + tw / 2, ty + 4, { align: 'center' });
+        return tw + 3;
+      };
 
-      // Estimated metrics from code analysis
-      doc.setFillColor(20,20,35); doc.rect(M,140,cW,46,'F');
-      doc.setDrawColor(232,160,32); doc.setLineWidth(0.3); doc.rect(M,140,cW,46,'S');
-      doc.setTextColor(232,160,32); doc.setFontSize(8); doc.setFont('helvetica','bold');
-      doc.text('ESTIMATED PERFORMANCE METRICS (BASED ON CODE ANALYSIS)', M+5, 148);
-      const metrics = [
-        {label:'Est. Win Rate', value:estWR, col:[62,232,154]},
-        {label:'Est. Profit Factor', value:estPF, col:[62,232,154]},
-        {label:'Trade Count Target', value:'60+/3mo', col:[62,232,154]},
-        {label:'Est. Max Drawdown', value:estDD, col:estDD==='Unknown'?[200,200,200]:[240,100,100]},
+      // ══════════════════════════════════════════════════════════════════════
+      // PAGE 1 — COVER
+      // ══════════════════════════════════════════════════════════════════════
+      doc.setFillColor(8, 8, 12); doc.rect(0, 0, W, H, 'F');
+
+      // Top gold bar
+      doc.setFillColor(232, 160, 32); doc.rect(0, 0, W, 1.5, 'F');
+
+      // KJC wordmark
+      doc.setTextColor(232, 160, 32); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+      doc.text('KJC CAPITAL', M, 14);
+      doc.setTextColor(80, 80, 100); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+      doc.text('CODE REVIEW ARENA', M, 20);
+
+      // Date top right
+      doc.setTextColor(70, 70, 90); doc.setFontSize(7);
+      doc.text(new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }), W - M, 14, { align: 'right' });
+
+      rule(26, [30, 30, 45]);
+
+      // Strategy name — large
+      const stratName = (fileName || 'Strategy Review').replace(/\.[^.]+$/, '').toUpperCase();
+      doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.setFont('helvetica', 'bold');
+      const nameLines = doc.splitTextToSize(stratName, cW);
+      doc.text(nameLines, M, 42);
+      y = 42 + nameLines.length * 10;
+
+      // Verdict badge
+      const vBg = allApp ? [62, 232, 154] : [232, 160, 32];
+      const vText = allApp ? 'CONSENSUS APPROVED' : 'REVIEW COMPLETE';
+      doc.setFillColor(...vBg); doc.roundedRect(M, y + 2, 52, 8, 2, 2, 'F');
+      doc.setTextColor(0, 0, 0); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      doc.text(vText, M + 26, y + 7, { align: 'center' });
+
+      // Reviewers
+      doc.setTextColor(80, 80, 100); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+      doc.text(chars.map(k => charMap[k]?.name || k).join('  ·  '), W - M, y + 7, { align: 'right' });
+      y += 18;
+
+      rule(y);
+      y += 8;
+
+      // ── Metrics grid ─────────────────────────────────────────────────────
+      doc.setTextColor(70, 70, 90); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      doc.text('ESTIMATED PERFORMANCE METRICS', M, y); y += 6;
+
+      const metricCols = Math.min(5, [estWR, estPF, estDD, '60+/3mo', paramCount + ''].length);
+      const metW = (cW - (metricCols - 1) * 3) / metricCols;
+      const metricData = [
+        { val: estWR, label: 'WIN RATE', col: [62, 232, 154] },
+        { val: estPF, label: 'PROFIT FACTOR', col: [56, 184, 240] },
+        { val: estDD, label: 'MAX DRAWDOWN', col: [240, 100, 100] },
+        { val: '60+/3mo', label: 'TRADE TARGET', col: [232, 160, 32] },
+        { val: paramCount + '', label: 'PARAMETERS', col: [192, 132, 252] },
       ];
-      metrics.forEach((m,i) => {
-        const sx = M + 4 + (i*(cW/4));
-        doc.setFillColor(30,30,50); doc.rect(sx,152,cW/4-4,26,'F');
-        doc.setTextColor(...m.col); doc.setFontSize(13); doc.setFont('helvetica','bold');
-        doc.text(m.value, sx+(cW/4-4)/2, 163, {align:'center'});
-        doc.setTextColor(150,150,150); doc.setFontSize(6.5); doc.setFont('helvetica','normal');
-        doc.text(m.label, sx+(cW/4-4)/2, 172, {align:'center'});
+      metricData.forEach((m, i) => {
+        const mx = M + i * (metW + 3);
+        doc.setFillColor(16, 16, 24); doc.rect(mx, y, metW, 22, 'F');
+        doc.setDrawColor(...m.col); doc.setLineWidth(0.4); doc.line(mx, y, mx + metW, y);
+        doc.setTextColor(...m.col); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+        doc.text(m.val, mx + metW / 2, y + 12, { align: 'center' });
+        doc.setTextColor(70, 70, 90); doc.setFontSize(6); doc.setFont('helvetica', 'normal');
+        doc.text(m.label, mx + metW / 2, y + 19, { align: 'center' });
       });
+      y += 28;
 
-      // DNA Card
+      // ── Code details row ─────────────────────────────────────────────────
+      doc.setFillColor(14, 14, 20); doc.rect(M, y, cW, 10, 'F');
+      const details = [
+        ['SL', slVal], ['TP', tpVal], ['MAX TRADES', maxT], ['START LOTS', lots],
+        ['MULTI-TF', hasMultiTF ? 'YES' : 'NO'], ['TRAILING', hasTrailing ? 'YES' : 'NO'],
+        ['NEWS', hasNewsFilter ? 'YES' : 'NO'],
+      ];
+      const dw = cW / details.length;
+      details.forEach(([k, v], i) => {
+        const dx = M + i * dw;
+        doc.setTextColor(60, 60, 80); doc.setFontSize(5.5); doc.setFont('helvetica', 'normal');
+        doc.text(k, dx + dw / 2, y + 4.5, { align: 'center' });
+        const vcol = v === 'YES' ? [62, 232, 154] : v === 'NO' ? [120, 120, 120] : [200, 200, 200];
+        doc.setTextColor(...vcol); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+        doc.text(v, dx + dw / 2, y + 8.5, { align: 'center' });
+      });
+      y += 16;
+
+      // ── DNA card ─────────────────────────────────────────────────────────
       if (dnaCard) {
-        doc.setFillColor(25,15,45); doc.rect(M,196,cW,66,'F');
-        doc.setDrawColor(168,85,247); doc.setLineWidth(0.3); doc.rect(M,196,cW,66,'S');
-        doc.setTextColor(192,132,252); doc.setFontSize(8); doc.setFont('helvetica','bold');
-        doc.text('STRATEGY DNA', M+5, 204);
-        doc.setFontSize(13); doc.setTextColor(255,255,255);
-        doc.text((dnaCard.personality||'').toUpperCase(), M+5, 213);
-        const rpCol = dnaCard.risk_profile==='Aggressive'?[240,80,80]:dnaCard.risk_profile==='Conservative'?[62,232,154]:[232,160,32];
-        doc.setFillColor(...rpCol); doc.roundedRect(W-M-24,198,22,8,2,2,'F');
-        doc.setTextColor(0,0,0); doc.setFontSize(6.5);
-        doc.text(dnaCard.risk_profile||'', W-M-13, 203.5, {align:'center'});
-        doc.setTextColor(210,210,210); doc.setFontSize(8); doc.setFont('helvetica','italic');
-        const vl = doc.splitTextToSize('"'+(dnaCard.verdict||'')+'"', cW-10);
-        doc.text(vl.slice(0,2), M+5, 220);
-        const di = [{label:'EDGE', val:dnaCard.edge},{label:'BEST CONDITIONS', val:dnaCard.best_conditions}];
-        di.forEach((d,i) => {
-          const dx = M+4+(i*(cW/2-2));
-          doc.setFillColor(18,12,35); doc.rect(dx,228,cW/2-6,26,'F');
-          doc.setTextColor(168,85,247); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
-          doc.text(d.label, dx+3, 234);
-          doc.setTextColor(190,190,190); doc.setFontSize(7); doc.setFont('helvetica','normal');
-          const dl = doc.splitTextToSize(d.val||'', cW/2-12);
-          doc.text(dl.slice(0,3), dx+3, 240);
+        rule(y, [30, 20, 50]);
+        y += 8;
+        doc.setTextColor(70, 60, 90); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+        doc.text('STRATEGY DNA', M, y); y += 6;
+        doc.setFillColor(14, 10, 22); doc.rect(M, y, cW, 48, 'F');
+        doc.setDrawColor(100, 50, 160); doc.setLineWidth(0.3); doc.rect(M, y, cW, 48, 'S');
+        const rpBg = dnaCard.risk_profile === 'Aggressive' ? [200, 50, 50] : dnaCard.risk_profile === 'Conservative' ? [40, 160, 100] : [180, 120, 20];
+        tag(W - M - 22, y + 4, (dnaCard.risk_profile || '').toUpperCase(), rpBg, [255, 255, 255]);
+        doc.setTextColor(192, 132, 252); doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+        doc.text((dnaCard.personality || '').toUpperCase(), M + 5, y + 12);
+        doc.setTextColor(160, 160, 180); doc.setFontSize(8); doc.setFont('helvetica', 'italic');
+        const vl = doc.splitTextToSize('"' + (dnaCard.verdict || '') + '"', cW - 10);
+        doc.text(vl.slice(0, 2), M + 5, y + 20);
+        const dnaFields = [{ label: 'EDGE', val: dnaCard.edge }, { label: 'BEST FOR', val: dnaCard.best_conditions }];
+        dnaFields.forEach((d, i) => {
+          const dx2 = M + 5 + i * (cW / 2 - 2);
+          doc.setTextColor(100, 60, 140); doc.setFontSize(6.5); doc.setFont('helvetica', 'bold');
+          doc.text(d.label, dx2, y + 32);
+          doc.setTextColor(160, 160, 180); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+          const dl = doc.splitTextToSize(d.val || '', cW / 2 - 10);
+          doc.text(dl.slice(0, 2), dx2, y + 37);
         });
+        y += 54;
       }
 
-      // ── PAGE 2: ISSUES + CHARACTER CONCLUSIONS ──────────────────────────
+      // ══════════════════════════════════════════════════════════════════════
+      // PAGE 2 — ISSUES + VERDICTS
+      // ══════════════════════════════════════════════════════════════════════
       newPage();
-      doc.setFillColor(25,25,40); doc.rect(0,y-4,W,12,'F');
-      doc.setTextColor(232,160,32); doc.setFontSize(10); doc.setFont('helvetica','bold');
-      doc.text('ISSUES IDENTIFIED', M, y+4); y+=15;
+      doc.setTextColor(70, 70, 90); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      doc.text('ISSUES IDENTIFIED', M, y - 6);
+      rule(y - 2);
 
       const issues = [];
       const seen = new Set();
-      (msgsRef.current||[]).forEach(msg => {
-        const m = (msg.text||'').match(/ISSUE:\s*(.+)/i);
+      (msgsRef.current || []).forEach(msg => {
+        const m = (msg.text || '').match(/ISSUE:\s*(.+)/i);
         if (m) {
           const txt = m[1].trim();
-          if (txt && txt.toLowerCase()!=='none' && !seen.has(txt.slice(0,50))) {
-            seen.add(txt.slice(0,50));
-            issues.push({who:msg.who, text:txt});
+          if (txt && txt.toLowerCase() !== 'none' && !seen.has(txt.slice(0, 50))) {
+            seen.add(txt.slice(0, 50)); issues.push({ who: msg.who, text: txt });
           }
         }
       });
-      issues.forEach((issue,i) => {
-        const col = cc[issue.who]||[200,200,200];
-        const lines = doc.splitTextToSize(`${i+1}. ${issue.text}`, cW-6);
-        const bh = lines.length * 4 + 6;
+
+      issues.forEach((issue, i) => {
+        const col = cc[issue.who] || [160, 160, 160];
+        const lines = doc.splitTextToSize(`${i + 1}.  ${issue.text}`, cW - 10);
+        const bh = lines.length * 4.2 + 6;
         chk(bh);
-        doc.setFillColor(16,16,28); doc.rect(M,y,cW,bh,'F');
-        doc.setFillColor(...col); doc.rect(M,y,2,bh,'F');
-        doc.setTextColor(195,195,195); doc.setFontSize(7); doc.setFont('helvetica','normal');
-        doc.text(lines, M+5, y+4.5);
-        y += bh+3;
+        doc.setFillColor(13, 13, 20); doc.rect(M, y, cW, bh, 'F');
+        doc.setFillColor(...col); doc.rect(M, y, 1.5, bh, 'F');
+        doc.setTextColor(180, 180, 200); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+        doc.text(lines, M + 5, y + 4.5);
+        y += bh + 2;
       });
 
-      // Character Conclusions with personality
-      y+=4; chk(14);
-      doc.setFillColor(25,25,40); doc.rect(0,y-4,W,12,'F');
-      doc.setTextColor(232,160,32); doc.setFontSize(10); doc.setFont('helvetica','bold');
-      doc.text('CHARACTER VERDICTS', M, y+4); y+=15;
+      // Verdicts
+      y += 6; chk(14);
+      doc.setTextColor(70, 70, 90); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      doc.text('CHARACTER VERDICTS', M, y);
+      rule(y + 3);
+      y += 10;
 
-      const personalityLines = {
-        STARK: (msg) => {
-          const rating = msg?.rating||0;
-          const approved = approvalsRef.current['STARK'];
-          return approved
-            ? `Yeah no — I've seen worse. The fundamentals are solid: multi-timeframe EMA filter, RSI entries, position capping. Fix the null-checks and slippage handling and this thing will run. Rating: ${rating}/10. STARK APPROVED.`
-            : `There's real engineering here but the edge cases will kill it live. Fix the critical issues and bring it back. ${rating}/10.`;
-        },
-        EDDIE: (msg) => {
-          const rating = msg?.rating||0;
-          const approved = approvalsRef.current['EDDIE'];
-          return approved
-            ? `The pattern is clear — solid signal logic, sound architecture, the issues are execution details not strategy flaws. With the fixes applied this is deployable. ${rating}/10. EDDIE APPROVED.`
-            : `Signal quality is there. Execution quality needs work. ${rating}/10.`;
-        },
-        SENKU: (msg) => {
-          const rating = msg?.rating||0;
-          const approved = approvalsRef.current['SENKU'];
-          return approved
-            ? `Ten billion percent — the scientific methodology checks out. Multi-timeframe confirmation, RSI oscillator validation, volatility filtering. The parameter bounds and null-safety issues are engineering discipline problems, not design flaws. This strategy has a statistically defensible edge. ${rating}/10. SENKU APPROVED.`
-            : `The methodology has merit but the implementation has critical gaps. ${rating}/10.`;
-        }
+      const verdictText = {
+        STARK: (r, app) => app
+          ? `Yeah no — I've seen worse. The architecture is there, the signal logic holds up. You've got a multi-layer filter stack doing real work. Fix the execution gaps and this runs. ${r}/10. APPROVED.`
+          : `Real issues in the execution layer. Come back when they're fixed. ${r}/10.`,
+        EDDIE: (r, app) => app
+          ? `Pattern is clear. Signal quality is solid, the edge is defensible. With the fixes applied the risk-reward starts making sense. Deployable. ${r}/10. APPROVED.`
+          : `The signal logic is there but the implementation gaps will kill it live. ${r}/10.`,
+        SENKU: (r, app) => app
+          ? `Ten billion percent — the methodology checks out scientifically. Multi-timeframe confirmation, oscillator validation, volatility gating. The parameter adjustments push the probability distributions in the right direction. This has a statistically defensible edge. ${r}/10. APPROVED.`
+          : `Methodology has merit but critical implementation gaps remain. ${r}/10.`,
       };
 
       chars.forEach(who => {
         const ch = charMap[who];
         if (!ch) return;
-        const col = cc[who]||[200,200,200];
-        const charMsgs = (msgsRef.current||[]).filter(m=>m.who===who);
-        const lastMsg = charMsgs[charMsgs.length-1];
+        const col = cc[who] || [160, 160, 160];
+        const charMsgs = (msgsRef.current || []).filter(m => m.who === who);
+        const lastMsg = charMsgs[charMsgs.length - 1];
+        const rating = lastMsg?.rating || 0;
         const approved = approvalsRef.current[who];
-        const conclusionFn = personalityLines[who];
-        const conclusion = conclusionFn ? conclusionFn(lastMsg) : (lastMsg?.text||'').replace(/AGREED:[^\n]*\n?|ISSUE:[^\n]*\n?|RATING:[^\n]*\n?/gi,'').trim().slice(0,200);
-        const lines = doc.splitTextToSize(conclusion, cW-30);
-        const bh = Math.max(lines.length*4+12, 26);
+        const vFn = verdictText[who];
+        const conclusion = vFn ? vFn(rating, approved) : '';
+        const lines = doc.splitTextToSize(conclusion, cW - 28);
+        const bh = Math.max(lines.length * 4.2 + 14, 24);
         chk(bh);
-        doc.setFillColor(18,18,30); doc.rect(M,y,cW,bh,'F');
-        doc.setFillColor(...col); doc.rect(M,y,3,bh,'F');
-        doc.setTextColor(...col); doc.setFontSize(9); doc.setFont('helvetica','bold');
-        doc.text((ch.name||who).toUpperCase(), M+7, y+7);
-        const rating = lastMsg?.rating||0;
-        if (rating>0) { doc.setTextColor(180,180,180); doc.setFontSize(8); doc.text(rating+'/10', W-M-3, y+7, {align:'right'}); }
-        if (approved) {
-          doc.setFillColor(...col); doc.roundedRect(W-M-26,y+9,24,7,2,2,'F');
-          doc.setTextColor(0,0,0); doc.setFontSize(6); doc.setFont('helvetica','bold');
-          doc.text('APPROVED ✓', W-M-14, y+13.5, {align:'center'});
+        doc.setFillColor(13, 13, 20); doc.rect(M, y, cW, bh, 'F');
+        doc.setFillColor(...col); doc.rect(M, y, 1.5, bh, 'F');
+        doc.setTextColor(...col); doc.setFontSize(8.5); doc.setFont('helvetica', 'bold');
+        doc.text((ch.name || who).toUpperCase(), M + 5, y + 7);
+        if (rating > 0) {
+          doc.setTextColor(70, 70, 90); doc.setFontSize(7.5);
+          doc.text(rating + '/10', W - M - 3, y + 7, { align: 'right' });
         }
-        doc.setTextColor(185,185,185); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
-        doc.text(lines, M+7, y+14);
-        y += bh+4;
+        if (approved) {
+          doc.setFillColor(...col); doc.roundedRect(W - M - 26, y + 3, 22, 6, 1.5, 1.5, 'F');
+          doc.setTextColor(0, 0, 0); doc.setFontSize(6); doc.setFont('helvetica', 'bold');
+          doc.text('APPROVED', W - M - 15, y + 7, { align: 'center' });
+        }
+        doc.setTextColor(150, 150, 170); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+        doc.text(lines, M + 5, y + 13);
+        y += bh + 4;
       });
 
-      // ── PAGE 3: FIXED CODE ─────────────────────────────────────────────
+      // ══════════════════════════════════════════════════════════════════════
+      // PAGE 3 — FIXED CODE
+      // ══════════════════════════════════════════════════════════════════════
       if (fixedCode) {
         newPage();
-        doc.setFillColor(25,25,40); doc.rect(0,y-4,W,12,'F');
-        doc.setTextColor(62,232,154); doc.setFontSize(10); doc.setFont('helvetica','bold');
-        doc.text('FIXED CODE OUTPUT', M, y+4); y+=14;
-        // Strip backtick code fences if present
-        const cleanCode = fixedCode.split('\n').filter((l,i,a)=>!(i===0||i===a.length-1)||!l.startsWith('\x60\x60\x60')).join('\n').trim();
-        const cl = doc.splitTextToSize(cleanCode, cW-4);
-        doc.setTextColor(140,210,140); doc.setFontSize(5.5); doc.setFont('courier','normal');
-        cl.forEach(l => { chk(3.8); doc.text(l, M+2, y); y+=3.8; });
+        doc.setTextColor(62, 232, 154); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+        doc.text('FIXED CODE OUTPUT', M, y - 6);
+        rule(y - 2, [30, 80, 50]);
+        const codeLines = fixedCode.split('\n');
+        const start = codeLines[0].startsWith('\x60\x60\x60') ? 1 : 0;
+        const end2 = codeLines[codeLines.length - 1].startsWith('\x60\x60\x60') ? codeLines.length - 1 : codeLines.length;
+        const cleanCode = codeLines.slice(start, end2).join('\n').trim();
+        const cl = doc.splitTextToSize(cleanCode, cW - 4);
+        doc.setTextColor(100, 180, 120); doc.setFontSize(5.5); doc.setFont('courier', 'normal');
+        cl.forEach(l => { chk(3.8); doc.text(l, M + 2, y); y += 3.8; });
       }
 
-      // Footers
+      // ── Footers ──────────────────────────────────────────────────────────
       const np = doc.internal.getNumberOfPages();
-      for (let i=1;i<=np;i++) {
+      for (let i = 1; i <= np; i++) {
         doc.setPage(i);
-        doc.setFillColor(18,18,28); doc.rect(0,H-9,W,9,'F');
-        doc.setTextColor(90,90,90); doc.setFontSize(6.5); doc.setFont('helvetica','normal');
-        doc.text('KJC CAPITAL — CODE REVIEW ARENA', M, H-3.5);
-        doc.text('Page '+i+' of '+np, W-M, H-3.5, {align:'right'});
-        doc.text(new Date().toLocaleDateString('en-GB'), W/2, H-3.5, {align:'center'});
+        doc.setFillColor(8, 8, 12); doc.rect(0, H - 10, W, 10, 'F');
+        doc.setDrawColor(30, 30, 45); doc.setLineWidth(0.2); doc.line(M, H - 10, W - M, H - 10);
+        doc.setTextColor(50, 50, 70); doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
+        doc.text('KJC CAPITAL — CODE REVIEW ARENA', M, H - 4);
+        doc.text('Page ' + i + ' of ' + np, W - M, H - 4, { align: 'right' });
+        doc.setTextColor(232, 160, 32); doc.setFontSize(6.5);
+        doc.text('CONFIDENTIAL', W / 2, H - 4, { align: 'center' });
       }
-      doc.save('KJC_Report_'+(fileName||'review').replace(/\.[^.]+$/,'')+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+
+      doc.save('KJC_Report_' + (fileName || 'review').replace(/\.[^.]+$/, '') + '_' + new Date().toISOString().slice(0, 10) + '.pdf');
     };
     document.head.appendChild(script);
   };
