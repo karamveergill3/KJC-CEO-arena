@@ -301,43 +301,49 @@ const DEFAULT_ACTIVE = ["STARK", "EDDIE", "SENKU"];
 
 // ─── System prompts ──────────────────────────────────────────────────────────
 const BASE_SYSTEMS = {
-  STARK: `You are Tony Stark — genius, brutal, zero patience. Say "yeah no —" before every ISSUE. Sharp, confident.
+  STARK: `You are Tony Stark — genius, brutal, zero patience. Say "yeah no —" before every ISSUE.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Flag structural issues AND parameter values that look suboptimal — wrong defaults, too tight stops, RSI thresholds that will over/under-trade, lot sizes that risk blowout. CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines every time:
-AGREED: [a DIFFERENT function confirmed solid each turn — never repeat the same AGREED function twice]
-ISSUE: [start with "yeah no —" then exact function and problem. If genuinely nothing left: "None"]
-RATING: [number 1-10]/10
+FORMAT — exactly 3 lines, keep ISSUE under 30 words:
+AGREED: [different function confirmed solid each turn]
+ISSUE: [yeah no — FunctionName() problem in one sharp sentence]
+RATING: [1-10]/10
 
-10/10 RULE — STRICTLY ENFORCED: When you write RATING: 10/10 you MUST write ISSUE: None on that same line AND write STARK_APPROVED on the very next line. No exceptions. If you write 10/10 with a real issue you are breaking the rules.
+RATING RULE: Only increase your rating when a genuinely NEW category of issue is found and the remaining problem count is shrinking. If you raised the same function twice already, that function is closed.
+If RATING is 10/10: write ISSUE: None then STARK_APPROVED on next line.
 Never repeat a closed issue. Never write code.`,
 
-  EDDIE: `You are Eddie Morra on NZT-48 — every pattern visible, zero noise, pure signal. Clinical and decisive.
+  EDDIE: `You are Eddie Morra on NZT-48 — pure signal, clinical precision, zero noise.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Flag structural issues AND parameter defaults that look wrong — stops too tight, TP/SL ratios that hurt profit factor, RSI levels that generate too few or too many signals. CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines every time:
-AGREED: [a DIFFERENT function confirmed solid each turn — never repeat the same AGREED function twice]
-ISSUE: [sharp NZT insight — exact function and problem. If genuinely nothing left: "None"]
-RATING: [number 1-10]/10
+FORMAT — exactly 3 lines, keep ISSUE under 30 words:
+AGREED: [different function confirmed solid each turn]
+ISSUE: [FunctionName() — sharp precise problem in one sentence]
+RATING: [1-10]/10
 
-10/10 RULE — STRICTLY ENFORCED: When you write RATING: 10/10 you MUST write ISSUE: None on that same line AND write EDDIE_APPROVED on the very next line. No exceptions. If you write 10/10 with a real issue you are breaking the rules.
+RATING RULE: Only increase your rating when a genuinely NEW category of issue is found and the remaining problem count is shrinking. If you raised the same function twice already, that function is closed.
+If RATING is 10/10: write ISSUE: None then EDDIE_APPROVED on next line.
 Never repeat a closed issue. Never write code.`,
 
-  SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "Ten billion percent —" in your AGREED line when certain.
+  SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "Ten billion percent —" in AGREED when certain.
 
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
-Name the EXACT function. Flag structural issues AND parameter values that are statistically suboptimal — identify exact values that should change and what they should be. CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+CRITICAL: Only reference functions that ACTUALLY EXIST in the uploaded code. Never invent function names.
+Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines every time:
-AGREED: [start with "Ten billion percent —" then a DIFFERENT function confirmed solid each turn — never repeat same function]
-ISSUE: [scientific precision — exact function and flaw. If genuinely nothing left: "None"]
-RATING: [number 1-10]/10
+FORMAT — exactly 3 lines, keep ISSUE under 30 words:
+AGREED: [Ten billion percent — different function confirmed solid each turn]
+ISSUE: [FunctionName() — precise scientific problem in one sentence]
+RATING: [1-10]/10
 
-10/10 RULE — STRICTLY ENFORCED: When you write RATING: 10/10 you MUST write ISSUE: None on that same line AND write SENKU_APPROVED on the very next line. No exceptions. If you write 10/10 with a real issue you are breaking the rules.
+RATING RULE: Only increase your rating when a genuinely NEW category of issue is found and the remaining problem count is shrinking. If you raised the same function twice already, that function is closed.
+If RATING is 10/10: write ISSUE: None then SENKU_APPROVED on next line.
 Never repeat a closed issue. Never write code.`,
 };
 
@@ -982,7 +988,14 @@ Generate the Strategy DNA JSON.`;
         }
       }
 
-      setFixedCode(patchedCode.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim());
+      const finalCode = patchedCode.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+      // Basic compile check
+      const opens = (finalCode.match(/{/g)||[]).length;
+      const closes = (finalCode.match(/}/g)||[]).length;
+      const truncated = !finalCode.trimEnd().endsWith('}');
+      const compileWarning = truncated ? '⚠️ WARNING: Code may be truncated — check last function is complete.' : opens !== closes ? `⚠️ WARNING: Brace mismatch (${opens} open, ${closes} close) — may not compile.` : null;
+      if (compileWarning) setError(compileWarning);
+      setFixedCode(finalCode);
     } catch(e) {
       setError(`Code generation failed: ${e.message}`);
     }
@@ -1108,7 +1121,8 @@ Select 1-3 characters whose specialties best match the task.`,
       const isFirst = history.length === 0;
       const myRating = highestRatings[who] || 0;
 
-      const codeSnippet = isFirst ? snapshot.slice(0, 8000) : snapshot.slice(0, 1000) + '\n// ... refer to turn 1 for full code ...';
+      const addLineNums = (code) => code.split('\n').map((l, i) => `${String(i+1).padStart(4,' ')} | ${l}`).join('\n');
+      const codeSnippet = isFirst ? addLineNums(snapshot.slice(0, 7000)) : snapshot.slice(0, 1000) + '\n// ... refer to turn 1 for full code ...';
       const codeBlock = isFirst
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
@@ -1123,8 +1137,8 @@ Select 1-3 characters whose specialties best match the task.`,
         : "Give your honest assessment of the code quality as it stands.";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nRead the code carefully. Only reference functions that actually exist in the code above. Find the BIGGEST issue not yet on the list.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [exact function name WITH the problem — must NOT be on the list, must exist in the code]\nRATING: 5/10\n\nReplace 5 with your honest score. 3 lines only, nothing else.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nRECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Your rating reflects how production-ready this code is. Increase it only when the remaining issues genuinely justify it — not just because another turn passed. If you are raising a significant new issue this turn, your rating should stay the same or increase only slightly. Only reach 10/10 when you genuinely believe all critical issues are resolved. CRITICAL: RATING 10/10 requires ISSUE: None AND your _APPROVED token on the next line.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
+        ? `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS THAT EXIST IN THIS CODE: ${snapshot.match(/(?:protected override|private|public|void|bool|double|int|string)\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).pop().replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference functions from the list above. Find the BIGGEST issue not yet raised.\n\nRespond with EXACTLY 3 lines:\nAGREED: Nothing yet.\nISSUE: [function from the list above + problem]\nRATING: 5/10\n\nReplace 5 with your honest score. 3 lines only, nothing else.`
+        : `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS IN THIS CODE: ${snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?\w+\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).slice(-1)[0].replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference these functions. RECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Your rating reflects how production-ready this code is. Increase it only when the remaining issues genuinely justify it — not just because another turn passed. If you are raising a significant new issue this turn, your rating should stay the same or increase only slightly. Only reach 10/10 when you genuinely believe all critical issues are resolved. CRITICAL: RATING 10/10 requires ISSUE: None AND your _APPROVED token on the next line.\n\nRespond with EXACTLY 3 lines:\nAGREED: [name the specific function/parameter confirmed]\nISSUE: [name the exact function/parameter still at fault, or "None"]\nRATING: ${myRating >= 9 ? 10 : myRating + 1}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). 3 lines only. If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
@@ -1144,11 +1158,15 @@ Select 1-3 characters whose specialties best match the task.`,
         if (issueMatch) {
           const issueText = issueMatch[1].trim();
           if (issueText && issueText.toLowerCase() !== "none") {
-            // Extract function name (word before first "()" or "--")
             const fnMatch = issueText.match(/^([A-Za-z_][A-Za-z0-9_]*(?:\(\))?)/);
             const fnKey = fnMatch ? fnMatch[1].replace("()", "").toLowerCase() : issueText.slice(0, 30).toLowerCase();
-            if (!closedIssues.some(c => c.toLowerCase().includes(fnKey))) {
+            // Count how many times this function has been raised
+            const fnCount = closedIssues.filter(c => c.toLowerCase().includes(fnKey)).length;
+            // After 2 issues on same function, mark it as exhausted
+            if (fnCount < 2) {
               closedIssues.push(issueText.slice(0, 80));
+            } else if (fnCount === 2) {
+              closedIssues.push(fnKey + "() — EXHAUSTED, do not raise again");
             }
           }
         }
