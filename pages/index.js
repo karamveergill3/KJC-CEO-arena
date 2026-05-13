@@ -985,8 +985,55 @@ Generate the Strategy DNA JSON.`;
         }
       }
 
-      const finalCode = patchedCode.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
-      // Basic compile check
+      const strippedCode = patchedCode.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+
+      // ── Parameter Optimisation Pass ─────────────────────────────────────
+      // After fixes applied, Sonnet reviews parameters specifically against targets
+      let finalCode = strippedCode;
+      setPhase("optimising");
+      try {
+        const optSystem = `You are an elite algorithmic trading parameter specialist. You receive a fixed trading bot and must ensure its [Parameter] default values are optimised to hit these EXACT targets:
+- 60+ trades per 3 months
+- Profit Factor > 1.5
+- Win Rate > 60%
+- Max Drawdown < 30%
+
+Scoring weights: PF 40%, Win Rate 25%, Trade Count 20%, Drawdown 15%
+
+Review EVERY [Parameter] DefaultValue. For each one, ask:
+1. Will RsiLongLevel/RsiShortLevel generate enough signals for 60+ trades?
+2. Is TpDistance/SlDistance ratio producing PF > 1.5? (TP must be >= 1.5x SL)
+3. Is MaxTrades high enough to hit 60+ trades but low enough to control drawdown?
+4. Is risk per trade / lot sizing set to keep drawdown < 30%?
+5. Are EMA lengths appropriate for the timeframe (not too slow, not too noisy)?
+
+Make ONLY parameter value changes — do not change logic or structure. Output the COMPLETE file with optimised parameters. Raw C# only, no markdown.`;
+
+        const optContent = `Trading bot to optimise:\n\`\`\`\n${strippedCode.slice(0, 12000)}\n\`\`\`\n\nReview all [Parameter] DefaultValue entries and adjust any that would prevent hitting: 60+ trades/3mo, PF >1.5, WR >60%, drawdown <30%. Output the complete optimised file.`;
+
+        const optRes = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 8000,
+            system: optSystem,
+            messages: [{ role: "user", content: optContent }],
+          }),
+        });
+        if (optRes.ok) {
+          const optData = await optRes.json();
+          const optCode = optData.content?.find(b => b.type === "text")?.text || "";
+          if (optCode && optCode.trim().length > 100) {
+            finalCode = optCode.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+          }
+        }
+      } catch(e) {
+        console.error("Optimisation pass failed:", e.message);
+        // Keep strippedCode as finalCode
+      }
+
+      // ── Compile check ────────────────────────────────────────────────────
       const opens = (finalCode.match(/{/g)||[]).length;
       const closes = (finalCode.match(/}/g)||[]).length;
       const truncated = !finalCode.trimEnd().endsWith('}');
@@ -1816,6 +1863,7 @@ Select 1-3 characters whose specialties best match the task.`,
           {phase === "idle" && "READY"}
           {phase === "debating" && (running ? `DEBATING — ${messages.length} EXCHANGES` : "PAUSED")}
           {phase === "generating" && "✦ GENERATING FIXED CODE..."}
+          {phase === "optimising" && "✦ OPTIMISING PARAMETERS FOR TARGET METRICS..."}
           {phase === "done" && (allApproved ? "✦ CONSENSUS REACHED — 10/10 ACHIEVED" : "✦ FIXED CODE EXPORTED")}
           {phase === "capped" && "⚠ CAP REACHED — CONSENSUS NOT YET MET"}
           {phase === "stopped" && "■ DEBATE STOPPED"}
