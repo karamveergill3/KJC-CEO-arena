@@ -1383,8 +1383,7 @@ Select 1-3 characters whose specialties best match the task.`,
         const lastMsg = charMsgs[charMsgs.length-1];
         const approved = approvalsRef.current[who];
         const conclusionFn = personalityLines[who];
-        const conclusion = conclusionFn ? conclusionFn(lastMsg) : (lastMsg?.text||'').replace(/AGREED:|ISSUE:|RATING:[^
-]*/gi,'').trim().slice(0,200);
+        const conclusion = conclusionFn ? conclusionFn(lastMsg) : (lastMsg?.text||'').replace(/AGREED:[^\n]*\n?|ISSUE:[^\n]*\n?|RATING:[^\n]*\n?/gi,'').trim().slice(0,200);
         const lines = doc.splitTextToSize(conclusion, cW-30);
         const bh = Math.max(lines.length*4+12, 26);
         chk(bh);
