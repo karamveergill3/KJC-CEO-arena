@@ -1410,8 +1410,7 @@ Select 1-3 characters whose specialties best match the task.`,
         doc.setTextColor(62,232,154); doc.setFontSize(10); doc.setFont('helvetica','bold');
         doc.text('FIXED CODE OUTPUT', M, y+4); y+=14;
         // Strip backtick code fences if present
-        const cleanCode = fixedCode.replace(/^```[\w]*
-?/,'').replace(/```\s*$/,'').trim();
+        const cleanCode = fixedCode.split('\n').filter((l,i,a)=>!(i===0||i===a.length-1)||!l.startsWith('\x60\x60\x60')).join('\n').trim();
         const cl = doc.splitTextToSize(cleanCode, cW-4);
         doc.setTextColor(140,210,140); doc.setFontSize(5.5); doc.setFont('courier','normal');
         cl.forEach(l => { chk(3.8); doc.text(l, M+2, y); y+=3.8; });
