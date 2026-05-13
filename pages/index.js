@@ -1771,7 +1771,7 @@ Select 1-3 characters whose specialties best match the task.`,
             <LeaderboardPreview onOpen={onOpenLeaderboard} />
           </div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-            <OptimisationPreview onOpen={onOpenOptimisation} />
+            <OptimisationPreview onOpen={onOpenOptimisation} onFileLoaded={(file) => onOpenOptimisation(file)} />
           </div>
         </div>
 
@@ -2391,7 +2391,7 @@ function ProfileModal({ profile, onClose, onSignOut }) {
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-function OptimisationFolder({ onBack, baseCode }) {
+function OptimisationFolder({ onBack, baseCode, preloadedFile, onFileClear }) {
   const [passes, setPasses] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [rejected, setRejected] = useState([]);
@@ -2403,6 +2403,10 @@ function OptimisationFolder({ onBack, baseCode }) {
   const [copied, setCopied] = useState(false);
   const [showRejected, setShowRejected] = useState(false);
   const [sortCol, setSortCol] = useState("score");
+
+  useEffect(() => {
+    if (preloadedFile) { parseFile(preloadedFile); if (onFileClear) onFileClear(); }
+  }, [preloadedFile]);
 
   const TARGETS = { trades: 60, pf: 1.5, wr: 60, dd: 30 };
   const RED_FLAGS = { minTrades: 30, maxPF: 5.0, maxWR: 85 };
@@ -2688,14 +2692,23 @@ function OptimisationFolder({ onBack, baseCode }) {
   );
 }
 
-function OptimisationPreview({ onOpen }) {
+function OptimisationPreview({ onOpen, onFileLoaded }) {
+  const handleFile = (file) => {
+    if (!file) return;
+    onFileLoaded(file);
+    onOpen();
+  };
   return (
     <div style={{ padding: "14px 14px 20px" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.35)", letterSpacing: 3 }}>📊 OPTIMISATION</div>
-        <button onClick={onOpen} style={{ background: "none", border: "none", color: "#38b8f0", fontSize: 9, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 700, padding: 0 }}>OPEN →</button>
+        <button onClick={onOpen} style={{ background: "none", border: "none", color: "#38b8f0", fontSize: 9, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 700, padding: 0 }}>VIEW →</button>
       </div>
-      <div style={{ fontSize: 10, color: "rgba(255,255,255,0.2)", lineHeight: 1.6 }}>Upload a cTrader optimisation export to filter, rank and inject the best parameter set into your code.</div>
+      <label style={{ display: "block", border: "1px dashed rgba(56,184,240,0.25)", borderRadius: 8, padding: "12px", textAlign: "center", cursor: "pointer", background: "rgba(56,184,240,0.03)" }}>
+        <input type="file" accept=".csv,.xml" style={{ display: "none" }} onChange={e => e.target.files[0] && handleFile(e.target.files[0])} />
+        <div style={{ fontSize: 11, color: "rgba(56,184,240,0.7)", fontWeight: 600, marginBottom: 3 }}>Drop CSV / XML here</div>
+        <div style={{ fontSize: 9, color: "rgba(255,255,255,0.2)", letterSpacing: 1 }}>cTrader optimisation export</div>
+      </label>
     </div>
   );
 }
@@ -2757,7 +2770,7 @@ function Leaderboard({ profile, onBack }) {
       <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 36 }}>
         <button onClick={onBack} style={{ marginTop: 6, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.35)", padding: "7px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 11, letterSpacing: 1, flexShrink: 0 }}>← BACK</button>
         <div>
-          <div style={{ fontSize: 42, fontWeight: 900, color: "#e8a020", letterSpacing: 3, lineHeight: 1, fontFamily: "'Bebas Neue','Impact',system-ui,sans-serif", textTransform: "uppercase" }}>Community Leaderboard</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#e8a020", letterSpacing: 4, lineHeight: 1, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>Community Leaderboard</div>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: 3, marginTop: 6, textTransform: "uppercase" }}>Green-Verdict Strategies Only &nbsp;·&nbsp; Anonymous &nbsp;·&nbsp; Stats Only</div>
         </div>
       </div>
@@ -2804,7 +2817,7 @@ function Leaderboard({ profile, onBack }) {
             border: isMe ? "1px solid rgba(232,160,32,0.25)" : i < 3 ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
             transition: "background 0.15s"
           }}>
-            <div style={{ fontSize: i < 3 ? 20 : 14, fontWeight: 900, color: i < 3 ? medalCol[i] : "rgba(255,255,255,0.18)", fontFamily: "'Bebas Neue','Impact',system-ui" }}>{i + 1}</div>
+            <div style={{ fontSize: i < 3 ? 20 : 14, fontWeight: 900, color: i < 3 ? medalCol[i] : "rgba(255,255,255,0.18)", fontFamily: "'Inter',system-ui,sans-serif" }}>{i + 1}</div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: isMe ? "#e8a020" : "rgba(255,255,255,0.85)", letterSpacing: 0.5 }}>
                 {entry.strategy_name || "Anonymous Strategy"}
@@ -2816,7 +2829,7 @@ function Leaderboard({ profile, onBack }) {
             <div style={{ fontSize: 15, fontWeight: 800, color: "#38b8f0" }}>{entry.profit_factor?.toFixed(2)}</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: "rgba(255,255,255,0.55)" }}>{entry.trade_count}</div>
             <div style={{ fontSize: 15, fontWeight: 800, color: "#f07070" }}>{entry.drawdown?.toFixed(1)}%</div>
-            <div style={{ fontSize: 18, fontWeight: 900, color: "#e8a020", fontFamily: "'Bebas Neue','Impact',system-ui" }}>{score}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "#e8a020" }}>{score}</div>
           </div>
         );
       })}
@@ -2824,7 +2837,7 @@ function Leaderboard({ profile, onBack }) {
       {/* Submit */}
       {myEntry === null && !loading && (
         <div style={{ marginTop: 40, padding: "28px 32px", background: "rgba(62,232,154,0.04)", border: "1px solid rgba(62,232,154,0.12)", borderRadius: 14, textAlign: "center" }}>
-          <div style={{ color: "#3ee89a", fontSize: 20, fontWeight: 900, letterSpacing: 3, marginBottom: 8, fontFamily: "'Bebas Neue','Impact',system-ui" }}>SUBMIT YOUR STRATEGY</div>
+          <div style={{ color: "#3ee89a", fontSize: 16, fontWeight: 800, letterSpacing: 3, marginBottom: 8 }}>SUBMIT YOUR STRATEGY</div>
           <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, letterSpacing: 1, marginBottom: 10 }}>Complete a review · Get all characters to 10/10 · Submit your stats anonymously</div>
           <div style={{ color: "rgba(255,255,255,0.15)", fontSize: 11, letterSpacing: 2 }}>COMING SOON — REQUIRES WALK-FORWARD VALIDATION</div>
         </div>
@@ -3045,6 +3058,7 @@ export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // always starts closed
   const [mainScreen, setMainScreen] = useState("arena"); // arena | leaderboard | optimisation
   const [optimisationCode, setOptimisationCode] = useState(""); // code to inject params into
+  const [optimisationFile, setOptimisationFile] = useState(null); // pre-loaded file from preview
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -3152,7 +3166,7 @@ export default function Home() {
         />
         <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: sidebarCollapsed ? 0 : 280, transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
           {mainScreen === "leaderboard" && <Leaderboard profile={profile} onBack={() => setMainScreen("arena")} />}
-          {mainScreen === "optimisation" && <OptimisationFolder onBack={() => setMainScreen("arena")} baseCode={optimisationCode} />}
+          {mainScreen === "optimisation" && <OptimisationFolder onBack={() => setMainScreen("arena")} baseCode={optimisationCode} preloadedFile={optimisationFile} onFileClear={() => setOptimisationFile(null)} />}
           {mainScreen === "arena" && <Arena
             user={user}
             profile={profile}
@@ -3167,7 +3181,7 @@ export default function Home() {
             sidebarOpen={!sidebarCollapsed}
             onOpenLeaderboard={() => setMainScreen("leaderboard")}
             onSendToOptimisation={(code) => { setOptimisationCode(code); setMainScreen("optimisation"); }}
-            onOpenOptimisation={() => setMainScreen("optimisation")}
+            onOpenOptimisation={(file) => { if(file) setOptimisationFile(file); setMainScreen("optimisation"); }}
           />}
         </div>
       </div>
