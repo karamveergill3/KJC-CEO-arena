@@ -729,7 +729,7 @@ function EconomicCalendar({ compact = false }) {
   );
 }
 
-function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen, onOpenLeaderboard, onSendToOptimisation, onOpenOptimisation }) {
+function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSession, onSignOut, isSidebarCollapsed, onOpenSidebar, sidebarOpen, onOpenLeaderboard, onSendToOptimisation, onOpenOptimisation, onOpenWalkForward }) {
   const [screen, setScreen]         = useState("setup");
   const [code, setCode]             = useState("");
   const [fileName, setFileName]     = useState("");
@@ -747,6 +747,7 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
   const [dnaCard, setDnaCard]         = useState(null);
   const [generatingDna, setGeneratingDna] = useState(false);
   const [copied, setCopied]         = useState(false);
+  const [showGuide, setShowGuide]   = useState(false);
 
   // Character management
   const [activeChars, setActiveChars] = useState(DEFAULT_ACTIVE);
@@ -774,14 +775,11 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
   useEffect(() => {
     (async () => {
       try {
-        const stored = window.storage?.get ? await window.storage.get("arena_custom_chars") : { value: localStorage.getItem("arena_custom_chars") };
-        if (stored?.value) {
-          const parsed = JSON.parse(stored.value);
-          setCustomChars(parsed);
-          customCharsRef.current = parsed;
-          // Restore their photos placeholder
-          Object.keys(parsed).forEach(k => { if (!PHOTOS[k]) PHOTOS[k] = null; });
-        }
+        try {
+          const _raw = window.storage?.get ? await window.storage.get("arena_custom_chars") : null;
+          const _val = _raw?.value || localStorage.getItem("arena_custom_chars");
+          if (_val) { const parsed = JSON.parse(_val); setCustomChars(parsed); customCharsRef.current = parsed; Object.keys(parsed).forEach(k => { if (!PHOTOS[k]) PHOTOS[k] = null; }); }
+        } catch(e) {}
       } catch(e) { /* no stored chars yet */ }
     })();
   }, []);
@@ -789,7 +787,7 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
   // Persist customChars whenever they change
   useEffect(() => {
     if (Object.keys(customChars).length === 0) return;
-    window.storage?.set ? window.storage.set("arena_custom_chars", JSON.stringify(customChars)).catch(() => {}) : localStorage.setItem("arena_custom_chars", JSON.stringify(customChars));
+    try { if (window.storage?.set) { window.storage.set("arena_custom_chars", JSON.stringify(customChars)).catch(()=>{}); } else { localStorage.setItem("arena_custom_chars", JSON.stringify(customChars)); } } catch(e) {}
     customCharsRef.current = customChars;
   }, [customChars]);
 
@@ -1577,6 +1575,7 @@ Select 1-3 characters whose specialties best match the task.`,
   if (screen === "setup") {
     return (
       <div style={s.root}>
+        {showGuide && <ArenaGuide onClose={() => setShowGuide(false)} />}
         <GridBg />
         {/* Top bar with hamburger + logo */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", flexShrink: 0 }}>
@@ -1585,10 +1584,13 @@ Select 1-3 characters whose specialties best match the task.`,
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
             <span style={{ display: "block", width: 18, height: 2, background: "rgba(255,255,255,0.7)", borderRadius: 2 }} />
           </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>KJC</span>
-            <span style={{ width: 1, height: 10, background: "rgba(232,160,32,0.4)" }} />
-            <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 3, color: "#c8900a" }}>CAPITAL</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button onClick={() => setShowGuide(true)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "5px 14px", fontFamily: "inherit", letterSpacing: 1 }}>? HOW TO USE</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>KJC</span>
+              <span style={{ width: 1, height: 10, background: "rgba(232,160,32,0.4)" }} />
+              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 3, color: "#c8900a" }}>CAPITAL</span>
+            </div>
           </div>
         </div>
 
@@ -1772,6 +1774,15 @@ Select 1-3 characters whose specialties best match the task.`,
           </div>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <OptimisationPreview onOpen={onOpenOptimisation} onFileLoaded={(file) => onOpenOptimisation(file)} />
+          </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ padding: "14px 14px 20px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#3ee89a", letterSpacing: 3 }}>📈 WALK-FORWARD</div>
+                <button onClick={onOpenWalkForward} style={{ background: "none", border: "none", color: "#3ee89a", fontSize: 9, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 700, padding: 0 }}>OPEN →</button>
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>Validate your edge — upload in-sample + out-of-sample CSV or connect cTrader for auto OOS fetch.</div>
+            </div>
           </div>
         </div>
 
@@ -2594,10 +2605,10 @@ function OptimisationFolder({ onBack, baseCode, preloadedFile, onFileClear }) {
               { label: "TOTAL PASSES", val: passes.length, col: "rgba(255,255,255,0.5)" },
               { label: "PASSED FILTERS", val: filtered.length, col: "#3ee89a" },
               { label: "REJECTED", val: rejected.length, col: "#f07070" },
-            ].map(stat => (
-              <div key={stat.label} style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px" }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: stat.col, fontFamily: "'Bebas Neue','Impact',system-ui" }}>{stat.val}</div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginTop: 2 }}>{stat.label}</div>
+            ].map(st => (
+              <div key={st.label} style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px" }}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: st.col, fontFamily: "'Bebas Neue','Impact',system-ui" }}>{st.val}</div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginTop: 2 }}>{st.label}</div>
               </div>
             ))}
             <button onClick={() => { setPasses([]); setFiltered([]); setRejected([]); setSelected(null); setInjectedCode(null); }}
@@ -2738,6 +2749,264 @@ function LeaderboardPreview({ onOpen }) {
           <div style={{ fontSize: 10, fontWeight: 700, color: "#e8a020" }}>{e.score}</div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─── Arena Guide Modal ───────────────────────────────────────────────────────
+function ArenaGuide({ onClose }) {
+  const steps = [
+    { n: "1", col: "#e8a020", title: "Upload Your Code", body: "Drag and drop your cTrader .cs bot file into the CODE FILE box. Supported: .cs .py .js .ts .mq4 .mq5 .txt" },
+    { n: "2", col: "#38b8f0", title: "Choose Your Reviewers", body: "Tony Stark, Eddie Morra, and Senku Ishigami are pre-selected. Click any to toggle. Add custom characters too." },
+    { n: "3", col: "#c084fc", title: "Optional: Task Routing", body: "Type a task (e.g. review risk management) and hit AUTO-SELECT. The system picks the best reviewers automatically." },
+    { n: "4", col: "#3ee89a", title: "Begin the Review", body: "Hit BEGIN REVIEW. Characters debate your code, raising issues one at a time. Debate continues until all reach 10/10." },
+    { n: "5", col: "#e8a020", title: "Fixed Code Generated", body: "Once consensus is reached, every agreed fix is applied surgically to your original file. Parameters are also optimised." },
+    { n: "6", col: "#38b8f0", title: "Review the Output", body: "Copy the fixed code directly or download the full PDF Report Card — cover metrics, issues, verdicts, and fixed code." },
+    { n: "7", col: "#3ee89a", title: "Generate Strategy DNA", body: "Hit GENERATE STRATEGY DNA for a full AI personality profile of your strategy. Saved to your DNA Library." },
+    { n: "8", col: "#c084fc", title: "Optimisation Folder", body: "Export cTrader optimisation results as CSV/XML and upload. Filters, scores and ranks all passes. Inject best params back." },
+    { n: "9", col: "#3ee89a", title: "Walk-Forward Validation", body: "Upload in-sample + out-of-sample CSV, or connect cTrader for auto OOS fetch. Get a Green/Amber/Red verdict on your edge." },
+    { n: "10", col: "#e8a020", title: "Sessions and Folders", body: "Every review is saved automatically. Access past sessions from the sidebar. Drag into folders to stay organised." },
+  ];
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px", backdropFilter: "blur(8px)" }} onClick={onClose}>
+      <div style={{ background: "linear-gradient(160deg, #0e0e1c 0%, #08080f 100%)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, width: "100%", maxWidth: 680, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 100px rgba(0,0,0,0.8)", fontFamily: "'Outfit', system-ui, sans-serif" }} onClick={e => e.stopPropagation()}>
+        <div style={{ height: 3, background: "linear-gradient(90deg, #e8a020, #3ee89a, #38b8f0)", flexShrink: 0 }} />
+        <div style={{ padding: "22px 28px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 900, color: "#fff", letterSpacing: 2 }}>HOW TO USE THE ARENA</div>
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 3, letterSpacing: 1 }}>Step-by-step — from upload to deployment</div>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.4)", fontSize: 18, cursor: "pointer", padding: "4px 12px", fontFamily: "inherit", lineHeight: 1 }}>x</button>
+        </div>
+        <div style={{ overflowY: "auto", padding: "20px 28px 28px", flex: 1 }}>
+          {steps.map(({ n, col, title, body }) => (
+            <div key={n} style={{ display: "flex", gap: 16, marginBottom: 20, alignItems: "flex-start" }}>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: col+"18", border: "2px solid "+col+"60", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: col, flexShrink: 0 }}>{n}</div>
+              <div style={{ flex: 1, paddingTop: 4 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", marginBottom: 5 }}>{title}</div>
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.8 }}>{body}</div>
+              </div>
+            </div>
+          ))}
+          <div style={{ marginTop: 8, padding: "16px 20px", background: "rgba(232,160,32,0.06)", border: "1px solid rgba(232,160,32,0.15)", borderRadius: 10, textAlign: "center" }}>
+            <div style={{ fontSize: 15, fontWeight: 900, color: "#e8a020", letterSpacing: 2 }}>DON'T SLACK G</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Walk-Forward Validation Engine ──────────────────────────────────────────
+function WalkForward({ onBack }) {
+  const [isFile, setIsFile] = useState(null);
+  const [oosFile, setOosFile] = useState(null);
+  const [isData, setIsData] = useState(null);
+  const [oosData, setOosData] = useState(null);
+  const [verdict, setVerdict] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [ctraderToken, setCtraderToken] = useState(() => typeof window !== "undefined" ? sessionStorage.getItem("ctrader_token") || null : null);
+  const [fetchingOOS, setFetchingOOS] = useState(false);
+  const [oosMonths, setOosMonths] = useState(3);
+  const [oosSource, setOosSource] = useState("file");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const t = new URLSearchParams(window.location.search).get("ctrader_token");
+    if (t) { sessionStorage.setItem("ctrader_token", t); setCtraderToken(t); window.history.replaceState({}, "", window.location.pathname); }
+  }, []);
+
+  const parseCSV = (text) => {
+    const lines = text.trim().split("\n");
+    const headers = lines[0].split(",").map(h => h.trim().replace(/"/g,""));
+    return lines.slice(1).map(line => { const vals = line.split(",").map(v => v.trim().replace(/"/g,"")); const obj = {}; headers.forEach((h,i) => obj[h]=vals[i]||""); return obj; }).filter(r => Object.values(r).some(v=>v));
+  };
+
+  const parseXML = (text) => {
+    const doc = new DOMParser().parseFromString(text, "text/xml"); const rows = [];
+    doc.querySelectorAll("Row, Pass, Result, OptimisationResult").forEach(item => {
+      const obj = {};
+      Array.from(item.attributes).forEach(a => obj[a.name]=a.value);
+      Array.from(item.children).forEach(c => { obj[c.getAttribute("Name")||c.tagName]=c.getAttribute("Value")||c.textContent; });
+      if (Object.keys(obj).length) rows.push(obj);
+    }); return rows;
+  };
+
+  const normaliseRow = (row) => {
+    const get = (...keys) => { for (const k of keys) { const f = Object.keys(row).find(rk=>rk.toLowerCase().replace(/[^a-z0-9]/g,"").includes(k.toLowerCase().replace(/[^a-z0-9]/g,""))); if (f&&row[f]!=="") return parseFloat(row[f].toString().replace(/[,%$]/g,""))||0; } return 0; };
+    const trades=get("trades","totalTrades","tradecount"), winning=get("winningtrades","wins"), pf=get("profitfactor","pf"), dd=get("maxequitydrawdown","drawdown","dd"), wr=winning>0&&trades>0?(winning/trades)*100:get("winrate","wr");
+    return { trades, pf, dd, wr };
+  };
+
+  const parseFile = (file, cb) => {
+    if (!file || !(file instanceof Blob)) return;
+    const reader = new FileReader();
+    reader.onload = e => { try { const rows=(file.name.endsWith(".xml")?parseXML:parseCSV)(e.target.result); const n=rows.map(normaliseRow).filter(p=>p.trades>0||p.pf>0); if(!n.length){setError("No valid passes found.");return;} cb(n); } catch(err){setError("Parse failed: "+err.message);} };
+    reader.readAsText(file);
+  };
+
+  const aggregate = (passes) => {
+    if (!passes?.length) return null;
+    const avg = k => passes.reduce((s,p)=>s+(p[k]||0),0)/passes.length;
+    const best = passes.reduce((a,b)=>b.pf>a.pf?b:a,passes[0]);
+    return { count:passes.length, avgPF:avg("pf"), avgWR:avg("wr"), avgDD:avg("dd"), avgTrades:avg("trades"), bestPF:best.pf };
+  };
+
+  const runValidation = () => {
+    if (!isData||!oosData) { setError("Upload both files first."); return; }
+    setLoading(true); setError(null);
+    const is=aggregate(isData), oos=aggregate(oosData);
+    const pfDrop=is.avgPF>0?((is.avgPF-oos.avgPF)/is.avgPF)*100:100;
+    const wrDrop=is.avgWR-oos.avgWR;
+    const ddInc=is.avgDD>0?((oos.avgDD-is.avgDD)/is.avgDD)*100:100;
+    const tdDrop=is.avgTrades>0?((is.avgTrades-oos.avgTrades)/is.avgTrades)*100:100;
+    const checks=[
+      {label:"Profit Factor",pass:pfDrop<40,is:is.avgPF.toFixed(2),oos:oos.avgPF.toFixed(2),detail:`${pfDrop>0?"-":"+"}${Math.abs(pfDrop).toFixed(0)}% degradation (limit 40%)`},
+      {label:"Win Rate",pass:wrDrop<10,is:is.avgWR.toFixed(1)+"%",oos:oos.avgWR.toFixed(1)+"%",detail:`${wrDrop>0?"-":"+"}${Math.abs(wrDrop).toFixed(1)}pp shift (limit 10pp)`},
+      {label:"Drawdown",pass:ddInc<50,is:is.avgDD.toFixed(1)+"%",oos:oos.avgDD.toFixed(1)+"%",detail:`${ddInc>0?"+":""}${ddInc.toFixed(0)}% increase (limit 50%)`},
+      {label:"Trade Count",pass:tdDrop<30,is:Math.round(is.avgTrades),oos:Math.round(oos.avgTrades),detail:`${tdDrop>0?"-":"+"}${Math.abs(tdDrop).toFixed(0)}% shift (limit 30%)`},
+      {label:"OOS Profitable",pass:oos.avgPF>=1.0,is:"—",oos:oos.avgPF.toFixed(2),detail:oos.avgPF>=1.0?"OOS PF above 1.0":"OOS PF below 1.0"},
+      {label:"OOS Win Rate",pass:oos.avgWR>=50,is:"—",oos:oos.avgWR.toFixed(1)+"%",detail:oos.avgWR>=50?"Above 50% OOS":"Below 50% OOS"},
+    ];
+    const passed=checks.filter(c=>c.pass).length;
+    setVerdict({checks,is,oos,color:passed===6?"green":passed>=4?"amber":"red",passed,total:checks.length});
+    setLoading(false);
+  };
+
+  const fetchOOS = async () => {
+    if (!ctraderToken){setError("Connect cTrader first.");return;}
+    setFetchingOOS(true);setError(null);
+    try {
+      const res=await fetch(`/api/ctrader/oos?token=${ctraderToken}&months=${oosMonths}`);
+      const data=await res.json();
+      if (!res.ok) throw new Error(data.error||"Failed");
+      if (!data.trades){setError("No trades found.");setFetchingOOS(false);return;}
+      setOosData(Array(data.trades).fill({trades:data.trades,pf:data.pf,wr:data.wr,dd:data.dd}));
+      setOosFile({name:`cTrader live — last ${oosMonths}mo (${data.trades} trades)`});
+      setOosSource("ctrader");
+    } catch(e){setError("cTrader: "+e.message);}
+    setFetchingOOS(false);
+  };
+
+  const vColor=verdict?.color==="green"?"#3ee89a":verdict?.color==="amber"?"#e8a020":"#f07070";
+  const vBg=verdict?.color==="green"?"rgba(62,232,154,0.08)":verdict?.color==="amber"?"rgba(232,160,32,0.08)":"rgba(240,80,80,0.08)";
+  const vLabel=verdict?.color==="green"?"✅ REAL EDGE CONFIRMED":verdict?.color==="amber"?"⚠ PARTIAL EDGE — CAUTION":"❌ OVERFITTED — DO NOT DEPLOY";
+
+  const UBox=({label,file,onFile,color})=>(
+    <label style={{display:"block",flex:1,border:`2px dashed ${file?color:"rgba(255,255,255,0.1)"}`,borderRadius:12,padding:"28px 20px",textAlign:"center",cursor:"pointer",background:file?color+"08":"rgba(255,255,255,0.02)"}}>
+      <input type="file" accept=".csv,.xml" style={{display:"none"}} onChange={e=>e.target.files[0]&&onFile(e.target.files[0])}/>
+      <div style={{fontSize:28,marginBottom:8}}>{file?"✓":"⬆"}</div>
+      <div style={{fontSize:13,fontWeight:700,color:file?color:"rgba(255,255,255,0.5)",marginBottom:4}}>{label}</div>
+      <div style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>{file?file.name:"CSV or XML"}</div>
+    </label>
+  );
+
+  return (
+    <div style={{flex:1,overflow:"auto",background:"#0a0a0f",padding:"36px 48px",fontFamily:"'Outfit', system-ui, sans-serif"}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:20,marginBottom:32}}>
+        <button onClick={onBack} style={{marginTop:6,background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"rgba(255,255,255,0.35)",padding:"7px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:11,letterSpacing:1,flexShrink:0}}>← BACK</button>
+        <div>
+          <div style={{fontSize:36,fontWeight:900,color:"#3ee89a",letterSpacing:3,lineHeight:1}}>WALK-FORWARD VALIDATION</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,0.3)",letterSpacing:2,marginTop:6}}>IN-SAMPLE vs OUT-OF-SAMPLE · REAL EDGE OR OVERFIT?</div>
+        </div>
+      </div>
+
+      <div style={{marginBottom:24,padding:"22px 26px",background:"rgba(62,232,154,0.03)",border:"1px solid rgba(62,232,154,0.12)",borderRadius:12}}>
+        <div style={{fontSize:11,fontWeight:800,color:"#3ee89a",letterSpacing:3,marginBottom:12}}>HOW IT WORKS</div>
+        <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.9,marginBottom:14}}>Walk-forward validation checks if your strategy has a <span style={{color:"#3ee89a",fontWeight:700}}>genuine edge</span> or was just curve-fitted. A strategy that only works on data it was optimised on is <span style={{color:"#f07070",fontWeight:700}}>worthless live</span>.</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
+          {[{col:"#e8a020",label:"① IN-SAMPLE",desc:"The data your strategy was optimised on. Export from cTrader optimisation results."},{col:"#38b8f0",label:"② OUT-OF-SAMPLE",desc:"Fresh data it has never seen. Export a separate backtest from a different time period."},{col:"#3ee89a",label:"③ VERDICT",desc:"We compare both. Close performance = real edge. Collapse = overfitted."}].map(({col,label,desc})=>(
+            <div key={label} style={{padding:"12px 14px",background:"rgba(255,255,255,0.02)",border:`1px solid ${col}25`,borderRadius:10}}>
+              <div style={{fontSize:10,fontWeight:800,color:col,letterSpacing:2,marginBottom:6}}>{label}</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",lineHeight:1.7}}>{desc}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.25)",letterSpacing:2,marginBottom:8}}>STEPS</div>
+        {[["1","#e8a020","Run optimisation in cTrader on an older period (e.g. Jan 2023–Dec 2024). Export as CSV."],["2","#38b8f0","Run a separate backtest on recent period (e.g. Jan 2025–now). Export that CSV too."],["3","#3ee89a","Upload older CSV as IN-SAMPLE and recent CSV as OUT-OF-SAMPLE — or connect cTrader to auto-fetch OOS."],["4","#c084fc","Hit RUN. We compare 6 metrics and give a Green / Amber / Red verdict."],["5","#fff","Green = real edge. Amber = reduce size. Red = overfitted, go back to optimisation."]].map(([n,col,txt])=>(
+          <div key={n} style={{display:"flex",gap:10,marginBottom:6,alignItems:"flex-start"}}>
+            <div style={{width:20,height:20,borderRadius:"50%",background:col+"22",border:`1px solid ${col}60`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:col,flexShrink:0}}>{n}</div>
+            <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",lineHeight:1.7}}>{txt}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:"flex",gap:16,marginBottom:16}}>
+        <UBox label="IN-SAMPLE DATA" file={isFile} color="#e8a020" onFile={f=>{setIsFile(f);parseFile(f,d=>{setIsData(d);setIsFile({...f,_parsed:d.length});});setVerdict(null);}}/>
+        <UBox label="OUT-OF-SAMPLE DATA" file={oosSource==="ctrader"?oosFile:oosFile} color="#38b8f0" onFile={f=>{setOosSource("file");setOosFile(f);parseFile(f,d=>{setOosData(d);setOosFile({...f,_parsed:d.length});});setVerdict(null);}}/>
+      </div>
+
+      <div style={{marginBottom:24,padding:"16px 20px",background:"rgba(56,184,240,0.04)",border:"1px solid rgba(56,184,240,0.15)",borderRadius:12}}>
+        <div style={{fontSize:11,fontWeight:800,color:"#38b8f0",letterSpacing:3,marginBottom:10}}>⚡ AUTO-FETCH OOS FROM CTRADER</div>
+        {!ctraderToken?(
+          <button onClick={()=>window.location.href="/api/ctrader/auth"} style={{padding:"9px 20px",background:"rgba(56,184,240,0.15)",border:"1px solid rgba(56,184,240,0.35)",borderRadius:8,color:"#38b8f0",fontSize:12,fontWeight:700,letterSpacing:2,cursor:"pointer",fontFamily:"inherit"}}>CONNECT CTRADER →</button>
+        ):(
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+            <span style={{fontSize:11,color:"#3ee89a",fontWeight:700}}>✓ CONNECTED</span>
+            <select value={oosMonths} onChange={e=>setOosMonths(Number(e.target.value))} style={{padding:"6px 10px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#fff",fontSize:12,fontFamily:"inherit"}}>
+              {[1,2,3,6].map(m=><option key={m} value={m}>{m} month{m>1?"s":""}</option>)}
+            </select>
+            <button onClick={fetchOOS} disabled={fetchingOOS} style={{padding:"8px 18px",background:"rgba(56,184,240,0.2)",border:"1px solid rgba(56,184,240,0.4)",borderRadius:8,color:"#38b8f0",fontSize:12,fontWeight:700,cursor:fetchingOOS?"not-allowed":"pointer",fontFamily:"inherit"}}>{fetchingOOS?"FETCHING...":"FETCH OOS ▶"}</button>
+            {oosSource==="ctrader"&&oosFile&&<span style={{fontSize:11,color:"#3ee89a"}}>✓ {oosFile.name}</span>}
+            <button onClick={()=>{setCtraderToken(null);sessionStorage.removeItem("ctrader_token");}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.2)",cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>Disconnect</button>
+          </div>
+        )}
+      </div>
+
+      {error&&<div style={{padding:"12px 16px",background:"rgba(240,80,80,0.08)",border:"1px solid rgba(240,80,80,0.2)",borderRadius:8,color:"#f07070",fontSize:12,marginBottom:16}}>{error}</div>}
+
+      <button onClick={runValidation} disabled={!isData||!oosData||loading} style={{width:"100%",padding:"16px",background:isData&&oosData?"linear-gradient(135deg,#3ee89a,#2bc97a)":"rgba(255,255,255,0.05)",border:"none",borderRadius:10,color:isData&&oosData?"#000":"rgba(255,255,255,0.2)",fontSize:14,fontWeight:800,letterSpacing:3,cursor:isData&&oosData?"pointer":"not-allowed",fontFamily:"inherit",marginBottom:32}}>
+        {loading?"ANALYSING...":"RUN WALK-FORWARD VALIDATION ▶"}
+      </button>
+
+      {verdict&&(
+        <>
+          <div style={{padding:"24px 28px",background:vBg,border:`2px solid ${vColor}40`,borderRadius:14,marginBottom:28,textAlign:"center"}}>
+            <div style={{fontSize:28,fontWeight:900,color:vColor,letterSpacing:3,marginBottom:6}}>{vLabel}</div>
+            <div style={{fontSize:13,color:"rgba(255,255,255,0.5)"}}>{verdict.passed}/{verdict.total} checks passed</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:28}}>
+            {[{label:"IN-SAMPLE",data:verdict.is,col:"#e8a020"},{label:"OUT-OF-SAMPLE",data:verdict.oos,col:"#38b8f0"}].map(({label,data,col})=>(
+              <div key={label} style={{padding:"20px 24px",background:"rgba(255,255,255,0.02)",border:`1px solid ${col}30`,borderRadius:12}}>
+                <div style={{fontSize:10,fontWeight:800,color:col,letterSpacing:3,marginBottom:14}}>{label}</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  {[["Avg PF",data.avgPF?.toFixed(2)],["Win Rate",data.avgWR?.toFixed(1)+"%"],["Drawdown",data.avgDD?.toFixed(1)+"%"],["Trades",Math.round(data.avgTrades)],["Passes",data.count],["Best PF",data.bestPF?.toFixed(2)]].map(([k,v])=>(
+                    <div key={k} style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",borderRadius:8}}>
+                      <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:2,marginBottom:3}}>{k}</div>
+                      <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{marginBottom:28}}>
+            <div style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.3)",letterSpacing:3,marginBottom:10}}>VERDICT PANEL</div>
+            {verdict.checks.map((c,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",borderRadius:10,marginBottom:4,background:c.pass?"rgba(62,232,154,0.04)":"rgba(240,80,80,0.04)",border:`1px solid ${c.pass?"rgba(62,232,154,0.15)":"rgba(240,80,80,0.15)"}`}}>
+                <div style={{fontSize:20,flexShrink:0}}>{c.pass?"✅":"❌"}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>{c.label}</div>
+                  <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{c.detail}</div>
+                </div>
+                <div style={{display:"flex",gap:14,flexShrink:0,textAlign:"right"}}>
+                  {c.is!=="—"&&<div><div style={{fontSize:9,color:"#e8a020",letterSpacing:1}}>IS</div><div style={{fontSize:14,fontWeight:700,color:"#e8a020"}}>{c.is}</div></div>}
+                  <div><div style={{fontSize:9,color:"#38b8f0",letterSpacing:1}}>OOS</div><div style={{fontSize:14,fontWeight:700,color:c.pass?"#3ee89a":"#f07070"}}>{c.oos}</div></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{padding:"20px 24px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12}}>
+            <div style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.3)",letterSpacing:3,marginBottom:10}}>RECOMMENDATION</div>
+            <div style={{fontSize:14,color:"rgba(255,255,255,0.8)",lineHeight:1.8}}>
+              {verdict.color==="green"&&"Strategy shows consistent performance on unseen data. Edge appears genuine. Safe to consider for live deployment with proper risk management."}
+              {verdict.color==="amber"&&"Partial robustness. Some degradation on out-of-sample data. Consider reducing position size before live deployment."}
+              {verdict.color==="red"&&"Performance collapsed on out-of-sample data. Strong indicator of curve-fitting. Do not deploy live. Return to optimisation with wider parameter ranges."}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -3166,6 +3435,7 @@ export default function Home() {
         />
         <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", marginLeft: sidebarCollapsed ? 0 : 280, transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)" }}>
           {mainScreen === "leaderboard" && <Leaderboard profile={profile} onBack={() => setMainScreen("arena")} />}
+          {mainScreen === "walkforward" && <WalkForward onBack={() => setMainScreen("arena")} />}
           {mainScreen === "optimisation" && <OptimisationFolder onBack={() => setMainScreen("arena")} baseCode={optimisationCode} preloadedFile={optimisationFile} onFileClear={() => setOptimisationFile(null)} />}
           {mainScreen === "arena" && <Arena
             user={user}
@@ -3180,6 +3450,7 @@ export default function Home() {
             onOpenSidebar={() => setSidebarCollapsed(false)}
             sidebarOpen={!sidebarCollapsed}
             onOpenLeaderboard={() => setMainScreen("leaderboard")}
+            onOpenWalkForward={() => setMainScreen("walkforward")}
             onSendToOptimisation={(code) => { setOptimisationCode(code); setMainScreen("optimisation"); }}
             onOpenOptimisation={(file) => { if(file) setOptimisationFile(file); setMainScreen("optimisation"); }}
           />}
