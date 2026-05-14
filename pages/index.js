@@ -2405,7 +2405,7 @@ function OptimisationFolder({ onBack, baseCode, preloadedFile, onFileClear }) {
   const [sortCol, setSortCol] = useState("score");
 
   useEffect(() => {
-    if (preloadedFile) { parseFile(preloadedFile); if (onFileClear) onFileClear(); }
+    if (preloadedFile && preloadedFile instanceof Blob) { parseFile(preloadedFile); if (onFileClear) onFileClear(); }
   }, [preloadedFile]);
 
   const TARGETS = { trades: 60, pf: 1.5, wr: 60, dd: 30 };
