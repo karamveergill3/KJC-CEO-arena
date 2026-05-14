@@ -2594,10 +2594,10 @@ function OptimisationFolder({ onBack, baseCode, preloadedFile, onFileClear }) {
               { label: "TOTAL PASSES", val: passes.length, col: "rgba(255,255,255,0.5)" },
               { label: "PASSED FILTERS", val: filtered.length, col: "#3ee89a" },
               { label: "REJECTED", val: rejected.length, col: "#f07070" },
-            ].map(s => (
-              <div key={s.label} style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px" }}>
-                <div style={{ fontSize: 22, fontWeight: 900, color: s.col, fontFamily: "'Bebas Neue','Impact',system-ui" }}>{s.val}</div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginTop: 2 }}>{s.label}</div>
+            ].map(stat => (
+              <div key={stat.label} style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "14px 18px" }}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: stat.col, fontFamily: "'Bebas Neue','Impact',system-ui" }}>{stat.val}</div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: 2, marginTop: 2 }}>{stat.label}</div>
               </div>
             ))}
             <button onClick={() => { setPasses([]); setFiltered([]); setRejected([]); setSelected(null); setInjectedCode(null); }}
