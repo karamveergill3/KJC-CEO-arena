@@ -2211,7 +2211,7 @@ const s = {
 };
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=Bebas+Neue&display=swap');
   @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
   @keyframes pulse  { 0%,100%{opacity:0.2;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
 
@@ -2770,7 +2770,7 @@ function Leaderboard({ profile, onBack }) {
       <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 36 }}>
         <button onClick={onBack} style={{ marginTop: 6, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.35)", padding: "7px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 11, letterSpacing: 1, flexShrink: 0 }}>← BACK</button>
         <div>
-          <div style={{ fontSize: 28, fontWeight: 800, color: "#e8a020", letterSpacing: 4, lineHeight: 1, fontFamily: "'Inter',system-ui,sans-serif", textTransform: "uppercase" }}>Community Leaderboard</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: "#e8a020", letterSpacing: 4, lineHeight: 1, fontFamily: "'Outfit', system-ui, sans-serif", textTransform: "uppercase" }}>Community Leaderboard</div>
           <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", letterSpacing: 3, marginTop: 6, textTransform: "uppercase" }}>Green-Verdict Strategies Only &nbsp;·&nbsp; Anonymous &nbsp;·&nbsp; Stats Only</div>
         </div>
       </div>
@@ -2817,7 +2817,7 @@ function Leaderboard({ profile, onBack }) {
             border: isMe ? "1px solid rgba(232,160,32,0.25)" : i < 3 ? "1px solid rgba(255,255,255,0.05)" : "1px solid transparent",
             transition: "background 0.15s"
           }}>
-            <div style={{ fontSize: i < 3 ? 20 : 14, fontWeight: 900, color: i < 3 ? medalCol[i] : "rgba(255,255,255,0.18)", fontFamily: "'Inter',system-ui,sans-serif" }}>{i + 1}</div>
+            <div style={{ fontSize: i < 3 ? 20 : 14, fontWeight: 900, color: i < 3 ? medalCol[i] : "rgba(255,255,255,0.18)", fontFamily: "'Outfit', system-ui, sans-serif" }}>{i + 1}</div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: isMe ? "#e8a020" : "rgba(255,255,255,0.85)", letterSpacing: 0.5 }}>
                 {entry.strategy_name || "Anonymous Strategy"}
