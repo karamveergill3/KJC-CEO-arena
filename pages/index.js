@@ -774,14 +774,21 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
   useEffect(() => {
     (async () => {
       try {
-        const stored = await window.storage.get("arena_custom_chars");
-        if (stored?.value) {
-          const parsed = JSON.parse(stored.value);
-          setCustomChars(parsed);
-          customCharsRef.current = parsed;
-          // Restore their photos placeholder
-          Object.keys(parsed).forEach(k => { if (!PHOTOS[k]) PHOTOS[k] = null; });
-        }
+        try {
+          let stored = null;
+          if (window.storage?.get) {
+            stored = await window.storage.get("arena_custom_chars");
+          } else {
+            const ls = localStorage.getItem("arena_custom_chars");
+            stored = ls ? { value: ls } : null;
+          }
+          if (stored?.value) {
+            const parsed = JSON.parse(stored.value);
+            setCustomChars(parsed);
+            customCharsRef.current = parsed;
+            Object.keys(parsed).forEach(k => { if (!PHOTOS[k]) PHOTOS[k] = null; });
+          }
+        } catch(storageErr) { /* no stored chars */ }
       } catch(e) { /* no stored chars yet */ }
     })();
   }, []);
@@ -789,7 +796,13 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
   // Persist customChars whenever they change
   useEffect(() => {
     if (Object.keys(customChars).length === 0) return;
-    window.storage.set("arena_custom_chars", JSON.stringify(customChars)).catch(() => {});
+    try {
+      if (window.storage?.set) {
+        window.storage.set("arena_custom_chars", JSON.stringify(customChars)).catch(() => {});
+      } else {
+        localStorage.setItem("arena_custom_chars", JSON.stringify(customChars));
+      }
+    } catch(e) {}
     customCharsRef.current = customChars;
   }, [customChars]);
 
