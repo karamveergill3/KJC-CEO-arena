@@ -2562,7 +2562,7 @@ function OptimisationFolder({ onBack, baseCode, preloadedFile, onFileClear }) {
   });
 
   return (
-    <div style={{ flex: 1, overflow: "auto", background: "#0a0a0f", padding: "36px 48px" }}>
+    <div style={{ flex: 1, overflow: "auto", background: "#0a0a0f", padding: "36px 48px", fontFamily: "'Outfit', system-ui, sans-serif" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 32 }}>
         <button onClick={onBack} style={{ marginTop: 6, background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.35)", padding: "7px 16px", cursor: "pointer", fontFamily: "inherit", fontSize: 11, letterSpacing: 1, flexShrink: 0 }}>← BACK</button>
@@ -2764,7 +2764,7 @@ function Leaderboard({ profile, onBack }) {
   const medalCol = ["#e8a020","#b0b8c8","#cd7f32"];
 
   return (
-    <div style={{ flex: 1, overflow: "auto", background: "#0a0a0f", padding: "36px 48px" }}>
+    <div style={{ flex: 1, overflow: "auto", background: "#0a0a0f", padding: "36px 48px", fontFamily: "'Outfit', system-ui, sans-serif" }}>
 
       {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 20, marginBottom: 36 }}>
