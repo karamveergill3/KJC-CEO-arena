@@ -789,7 +789,7 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
   // Persist customChars whenever they change
   useEffect(() => {
     if (Object.keys(customChars).length === 0) return;
-    (window.storage?.set || ((_k,v) => localStorage.setItem(_k, v)))"arena_custom_chars", JSON.stringify(customChars));
+    window.storage?.set ? window.storage.set("arena_custom_chars", JSON.stringify(customChars)).catch(() => {}) : localStorage.setItem("arena_custom_chars", JSON.stringify(customChars));
     customCharsRef.current = customChars;
   }, [customChars]);
 
