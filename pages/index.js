@@ -3012,7 +3012,15 @@ function WalkForward({ onBack }) {
           <div style={{ fontSize:28, flexShrink:0 }}>💻</div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:13, fontWeight:800, color:"#e8a020", marginBottom:4 }}>KJC DESKTOP APP REQUIRED</div>
-            <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.7 }}>The desktop app runs OOS backtests automatically inside your cTrader. Install it once and everything runs hands-free. Keep cTrader open when running OOS.</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.7, marginBottom:10 }}>The desktop app runs OOS backtests automatically inside your cTrader. Install it once and everything runs hands-free.</div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:5 }}>
+              {[["1","Download & run KJCArena-Setup.exe"],["2","Windows warning → More info → Run anyway"],["3","Tick 'Start on Windows startup'"],["4","Click Install then Finish"],["5","Open cTrader"],["6","KJC Arena icon appears in system tray"],["7","Return here — see DESKTOP CONNECTED"]].map(([n,t])=>(
+                <div key={n} style={{ padding:"6px 8px", background:"rgba(232,160,32,0.06)", border:"1px solid rgba(232,160,32,0.15)", borderRadius:6, textAlign:"center" }}>
+                  <div style={{ fontSize:11, fontWeight:900, color:"#e8a020", marginBottom:2 }}>{n}</div>
+                  <div style={{ fontSize:9, color:"rgba(255,255,255,0.45)", lineHeight:1.5 }}>{t}</div>
+                </div>
+              ))}
+            </div>
           </div>
           <a href="https://github.com/karamveergill3/kjc-ctrader-proxy/releases/download/v1.0/KJCArena-Setup.exe" download style={{ padding:"10px 20px", background:"linear-gradient(135deg,#e8a020,#c07010)", border:"none", borderRadius:8, color:"#000", fontSize:12, fontWeight:800, cursor:"pointer", textDecoration:"none", letterSpacing:1, flexShrink:0 }}>DOWNLOAD APP</a>
         </div>
