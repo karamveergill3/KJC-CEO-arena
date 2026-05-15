@@ -2809,10 +2809,12 @@ function WalkForward({ onBack }) {
   const [ws, setWs] = useState(null);
   const [sessionId] = useState(() => Math.random().toString(36).slice(2));
   const [error, setError] = useState(null);
-  const [symbol, setSymbol] = useState("EURUSD");
+  const [symbol, setSymbol] = useState("");
   const [timeframe, setTimeframe] = useState("Hour1");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const today = new Date(); const sixWeeksAgo = new Date(today - 42*24*60*60*1000);
+  const fmt = d => d.toISOString().split("T")[0];
+  const [fromDate] = useState(fmt(sixWeeksAgo));
+  const [toDate] = useState(fmt(today));
 
   // Connect WebSocket to desktop app bridge
   useEffect(() => {
@@ -2857,10 +2859,21 @@ function WalkForward({ onBack }) {
     return () => clearInterval(t);
   }, [ws]);
 
-  const parseOptres = (text) => {
+  const parseOptres = (text, filename) => {
     try {
       const data = JSON.parse(text);
       const passes = data?.results?.passes || [];
+      const params = data?.parameters || [];
+      // Extract timeframe from parameters
+      const tfParam = params.find(p => p.parameterType === "TimeFrame");
+      const defaultTF = tfParam?.value || "h1";
+      // Try to extract symbol from filename (e.g. "slagbot_XAUUSD_..." or just use default)
+      const knownSymbols = ["XAUUSD","EURUSD","GBPUSD","USDJPY","BTCUSD","ETHUSD","XTIUSD","XAGUSD","SOLUSD","GBPJPY","AUDUSD","USDCAD","NZDUSD","USDCHF"];
+      const upperName = (filename||"").toUpperCase();
+      const detectedSymbol = knownSymbols.find(s => upperName.includes(s)) || "";
+      // Store metadata on first call
+      if (detectedSymbol) window._optresSymbol = detectedSymbol;
+      window._optresTF = defaultTF;
       return passes.filter(p => p.status === "Completed").map(p => ({
         passId: String(p.passId),
         netProfit: p.netProfit || 0,
@@ -2871,6 +2884,7 @@ function WalkForward({ onBack }) {
         maxEquityDrawdownPercent: p.maxEquityDrawdownPercent || 0,
         maxBalanceDrawdownPercent: p.maxBalanceDrawdownPercent || 0,
         fitness: p.fitness || 0,
+        _timeframe: defaultTF,
       }));
     } catch(e) { return []; }
   };
@@ -2937,7 +2951,7 @@ function WalkForward({ onBack }) {
     reader.onload = e => {
       try {
         const text = e.target.result;
-        const rows = file.name.endsWith(".xml") ? parseXML(text) : file.name.endsWith(".optres") ? parseOptres(text) : parseCSV(text);
+        const rows = file.name.endsWith(".xml") ? parseXML(text) : file.name.endsWith(".optres") ? parseOptres(text, file.name) : parseCSV(text);
         if (!rows.length) { setError("No valid passes found in file."); return; }
         // Score and rank all passes
         const scored = rows.map((row, i) => ({
@@ -2957,6 +2971,9 @@ function WalkForward({ onBack }) {
         setBestPasses(top15);
         setStage("selected");
         setError(null);
+        // Auto-detect symbol and timeframe from optres
+        if (window._optresSymbol) setSymbol(window._optresSymbol);
+        if (window._optresTF) setTimeframe(window._optresTF);
       } catch(err) { setError("Parse failed: " + err.message); }
     };
     reader.readAsText(file);
@@ -3093,13 +3110,17 @@ function WalkForward({ onBack }) {
           <div style={{ marginBottom:24, padding:"18px 22px", background:"rgba(56,184,240,0.04)", border:"1px solid rgba(56,184,240,0.15)", borderRadius:12 }}>
             <div style={{ fontSize:11, fontWeight:800, color:"#38b8f0", letterSpacing:3, marginBottom:14 }}>OOS BACKTEST SETTINGS</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:12 }}>
-              {[["Symbol","text",symbol,setSymbol,"EURUSD"],["Timeframe","text",timeframe,setTimeframe,"Hour1"],["OOS From","date",fromDate,setFromDate,""],["OOS To","date",toDate,setToDate,""]].map(([label,type,val,setter,ph])=>(
+              {[["SYMBOL",symbol||"Auto-detected"],["TIMEFRAME",timeframe],["OOS FROM",fromDate],["OOS TO",toDate]].map(([label,val])=>(
                 <div key={label}>
-                  <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", letterSpacing:2, marginBottom:5 }}>{label.toUpperCase()}</div>
-                  <input type={type} value={val} onChange={e=>setter(e.target.value)} placeholder={ph} style={{ width:"100%", padding:"8px 12px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#fff", fontSize:12, fontFamily:"inherit", boxSizing:"border-box" }} />
+                  <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", letterSpacing:2, marginBottom:5 }}>{label}</div>
+                  <div style={{ width:"100%", padding:"8px 12px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, color: label==="SYMBOL"&&!symbol?"rgba(255,255,255,0.3)":"#fff", fontSize:12, fontFamily:"inherit", boxSizing:"border-box" }}>
+                    {val || <span style={{color:"rgba(255,255,255,0.3)"}}>Enter in cTrader</span>}
+                    {(label==="OOS FROM"||label==="OOS TO") && <span style={{fontSize:9,color:"rgba(255,255,255,0.25)",marginLeft:6}}>🔒 AUTO</span>}
+                  </div>
                 </div>
               ))}
             </div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,0.3)", marginTop:8 }}>OOS period is locked to 6 weeks ago → today. Symbol and timeframe are auto-detected from your .optres file.</div>
           </div>
 
           {/* Best passes table */}
