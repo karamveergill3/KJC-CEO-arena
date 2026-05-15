@@ -2857,6 +2857,24 @@ function WalkForward({ onBack }) {
     return () => clearInterval(t);
   }, [ws]);
 
+  const parseOptres = (text) => {
+    try {
+      const data = JSON.parse(text);
+      const passes = data?.results?.passes || [];
+      return passes.filter(p => p.status === "Completed").map(p => ({
+        passId: String(p.passId),
+        netProfit: p.netProfit || 0,
+        profitFactor: p.profitFactor || 0,
+        trades: p.trades || 0,
+        winningTrades: p.winningTrades || 0,
+        losingTrades: p.losingTrades || 0,
+        maxEquityDrawdownPercent: p.maxEquityDrawdownPercent || 0,
+        maxBalanceDrawdownPercent: p.maxBalanceDrawdownPercent || 0,
+        fitness: p.fitness || 0,
+      }));
+    } catch(e) { return []; }
+  };
+
   const parseCSV = (text) => {
     const lines = text.trim().split("\n");
     const headers = lines[0].split(",").map(h => h.trim().replace(/"/g,""));
@@ -2882,7 +2900,7 @@ function WalkForward({ onBack }) {
   const get = (row, ...keys) => {
     for (const k of keys) {
       const f = Object.keys(row).find(rk => rk.toLowerCase().replace(/[^a-z0-9]/g,"").includes(k.toLowerCase().replace(/[^a-z0-9]/g,"")));
-      if (f && row[f] !== "") return parseFloat(row[f].toString().replace(/[,%$]/g,"")) || 0;
+      if (f && row[f] !== "" && row[f] !== null && row[f] !== undefined) return parseFloat(row[f].toString().replace(/[,%$]/g,"")) || 0;
     }
     return 0;
   };
@@ -2890,10 +2908,10 @@ function WalkForward({ onBack }) {
   // Equity curve smoothness: R² of equity curve vs straight line
   const smoothnessScore = (row) => {
     const trades = get(row,"trades","totalTrades");
-    const pf = get(row,"profitfactor","pf");
-    const wr = get(row,"winrate","wr","winningtrades");
-    const dd = get(row,"maxdrawdown","drawdown","dd");
-    const net = get(row,"netprofit","profit");
+    const pf = get(row,"profitfactor","pf","profitFactor");
+    const wr = get(row,"winrate","wr","winningtrades","winningTrades");
+    const dd = get(row,"maxequitydrawdownpercent","maxdrawdown","drawdown","dd","maxEquityDrawdownPercent");
+    const net = get(row,"netprofit","profit","netProfit");
     if (trades < 30) return 0;
     // Score: high PF + high WR + low DD + positive net = smooth uptrend
     const pfScore = Math.min(pf / 3, 1) * 30;
@@ -2919,7 +2937,7 @@ function WalkForward({ onBack }) {
     reader.onload = e => {
       try {
         const text = e.target.result;
-        const rows = file.name.endsWith(".xml") ? parseXML(text) : parseCSV(text);
+        const rows = file.name.endsWith(".xml") ? parseXML(text) : file.name.endsWith(".optres") ? parseOptres(text) : parseCSV(text);
         if (!rows.length) { setError("No valid passes found in file."); return; }
         // Score and rank all passes
         const scored = rows.map((row, i) => ({
@@ -3045,7 +3063,7 @@ function WalkForward({ onBack }) {
             <input type="file" accept=".csv,.xml" style={{ display:"none" }} onChange={e=>e.target.files[0]&&(setIsFile(e.target.files[0]),parseFile(e.target.files[0]))} />
             <div style={{ fontSize:40, marginBottom:12 }}>📊</div>
             <div style={{ fontSize:16, fontWeight:800, color:"#3ee89a", marginBottom:6 }}>DROP IN-SAMPLE OPTIMISATION CSV</div>
-            <div style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>Export from cTrader optimisation results · CSV or XML · Any number of passes</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>cTrader .optres file · CSV or XML · Any number of passes</div>
           </label>
           {error && <div style={{ marginTop:16, padding:"12px 16px", background:"rgba(240,80,80,0.08)", border:"1px solid rgba(240,80,80,0.2)", borderRadius:8, color:"#f07070", fontSize:12 }}>{error}</div>}
         </div>
