@@ -2981,35 +2981,60 @@ function WalkForward({ onBack }) {
     reader.readAsText(file);
   };
 
-  const runOOS = () => {
-    if (!ws || ws.readyState !== 1 || !desktopConnected) {
-      setError("KJC Desktop App not connected. Please install and open it.");
-      return;
-    }
-    if (!fromDate || !toDate) {
-      setError("Please set OOS date range first.");
-      return;
-    }
+  const runOOS = async () => {
+    if (!fromDate || !toDate) { setError("Please set OOS date range first."); return; }
     setStage("running");
     setError(null);
-    setProgress({ completed:0, total:bestPasses.length, message:"Connecting to cTrader..." });
-    ws.send(JSON.stringify({
-      type: "RUN_OOS",
-      sessionId,
-      passes: bestPasses.map(p => ({
-        PassNumber: p._passNumber,
-        PF: p._pf,
-        WR: p._wr,
-        DD: p._dd,
-        NetProfit: p._net,
-        SmoothnessScore: p._score,
-        ParamValues: p._params,
-      })),
-      symbol,
-      timeframe,
-      fromDate,
-      toDate,
+    setProgress({ completed:0, total:bestPasses.length, message:"Connecting to cTrader plugin..." });
+
+    const passes = bestPasses.map(p => ({
+      PassNumber: p._passNumber,
+      PF: p._pf, WR: p._wr, DD: p._dd,
+      NetProfit: p._net, SmoothnessScore: p._score,
+      ParamValues: p._params,
     }));
+
+    // Try direct plugin connection first (port 7823)
+    try {
+      const health = await fetch("http://127.0.0.1:7823/health", { mode: "cors" });
+      if (health.ok) {
+        // Plugin is running — send directly
+        const resp = await fetch("http://127.0.0.1:7823/run-oos", {
+          method: "POST", mode: "cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ Passes: passes, Symbol: symbol, Timeframe: timeframe, FromDate: fromDate, ToDate: toDate, SessionId: sessionId }),
+        });
+        if (!resp.ok) { setError("Plugin error: " + await resp.text()); setStage("selected"); return; }
+        // Poll for results
+        setProgress({ completed:0, total:passes.length, message:"cTrader running backtests..." });
+        const poll = setInterval(async () => {
+          try {
+            const r = await fetch("http://127.0.0.1:7823/results", { mode: "cors" });
+            const data = await r.json();
+            const completed = data.completed || 0;
+            const running = data.running || false;
+            setProgress({ completed, total: passes.length, message: `Completed ${completed} of ${passes.length} backtests` });
+            if (!running) {
+              clearInterval(poll);
+              setOosResults(data.results || []);
+              setStage("complete");
+            }
+          } catch { clearInterval(poll); setError("Lost connection to plugin."); setStage("selected"); }
+        }, 3000);
+        return;
+      }
+    } catch(e) {
+      // Plugin not reachable directly — fall back to desktop app via Railway
+    }
+
+    // Fallback: route via Railway WebSocket (desktop app)
+    if (!ws || ws.readyState !== 1 || !desktopConnected) {
+      setError("cTrader plugin not reachable on port 7823, and Desktop App not connected. Make sure the KJC Arena plugin is running in cTrader.");
+      setStage("selected");
+      return;
+    }
+    setProgress({ completed:0, total:passes.length, message:"Sending to Desktop App..." });
+    ws.send(JSON.stringify({ type:"RUN_OOS", sessionId, passes, symbol, timeframe, fromDate, toDate }));
   };
 
   // Compute verdict from IS vs OOS
@@ -3152,7 +3177,7 @@ function WalkForward({ onBack }) {
 
           {error && <div style={{ marginBottom:16, padding:"12px 16px", background:"rgba(240,80,80,0.08)", border:"1px solid rgba(240,80,80,0.2)", borderRadius:8, color:"#f07070", fontSize:12 }}>{error}</div>}
 
-          <button onClick={runOOS} disabled={!desktopConnected||!fromDate||!toDate} style={{ width:"100%", padding:"18px", background:desktopConnected&&fromDate&&toDate?"linear-gradient(135deg,#3ee89a,#2bc97a)":"rgba(255,255,255,0.05)", border:"none", borderRadius:10, color:desktopConnected&&fromDate&&toDate?"#000":"rgba(255,255,255,0.2)", fontSize:15, fontWeight:900, cursor:desktopConnected&&fromDate&&toDate?"pointer":"not-allowed", fontFamily:"inherit", letterSpacing:3 }}>
+          <button onClick={runOOS} disabled={!fromDate||!toDate} style={{ width:"100%", padding:"18px", background:fromDate&&toDate?"linear-gradient(135deg,#3ee89a,#2bc97a)":"rgba(255,255,255,0.05)", border:"none", borderRadius:10, color:fromDate&&toDate?"#000":"rgba(255,255,255,0.2)", fontSize:15, fontWeight:900, cursor:fromDate&&toDate?"pointer":"not-allowed", fontFamily:"inherit", letterSpacing:3 }}>
             {desktopConnected ? "▶ RUN OOS BACKTESTS AUTOMATICALLY" : "💻 CONNECT DESKTOP APP TO RUN OOS"}
           </button>
         </div>
