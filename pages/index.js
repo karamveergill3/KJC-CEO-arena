@@ -3059,11 +3059,16 @@ function WalkForward({ onBack }) {
               ))}
             </div>
           </div>
-          <label style={{ display:"block", border:"2px dashed rgba(62,232,154,0.2)", borderRadius:14, padding:"48px 20px", textAlign:"center", cursor:"pointer", background:"rgba(62,232,154,0.02)" }}>
-            <input type="file" accept=".csv,.xml" style={{ display:"none" }} onChange={e=>e.target.files[0]&&(setIsFile(e.target.files[0]),parseFile(e.target.files[0]))} />
+          <label
+            style={{ display:"block", border:"2px dashed rgba(62,232,154,0.2)", borderRadius:14, padding:"48px 20px", textAlign:"center", cursor:"pointer", background:"rgba(62,232,154,0.02)" }}
+            onDragOver={e=>{e.preventDefault();e.stopPropagation();}}
+            onDragEnter={e=>{e.preventDefault();e.stopPropagation();}}
+            onDrop={e=>{e.preventDefault();e.stopPropagation();const f=e.dataTransfer.files[0];if(f){setIsFile(f);parseFile(f);}}}
+          >
+            <input type="file" accept=".csv,.xml,.optres,*" style={{ display:"none" }} onChange={e=>e.target.files[0]&&(setIsFile(e.target.files[0]),parseFile(e.target.files[0]))} />
             <div style={{ fontSize:40, marginBottom:12 }}>📊</div>
-            <div style={{ fontSize:16, fontWeight:800, color:"#3ee89a", marginBottom:6 }}>DROP IN-SAMPLE OPTIMISATION CSV</div>
-            <div style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>cTrader .optres file · CSV or XML · Any number of passes</div>
+            <div style={{ fontSize:16, fontWeight:800, color:"#3ee89a", marginBottom:6 }}>DROP IN-SAMPLE OPTIMISATION FILE</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>cTrader .optres · CSV · XML · Any number of passes</div>
           </label>
           {error && <div style={{ marginTop:16, padding:"12px 16px", background:"rgba(240,80,80,0.08)", border:"1px solid rgba(240,80,80,0.2)", borderRadius:8, color:"#f07070", fontSize:12 }}>{error}</div>}
         </div>
