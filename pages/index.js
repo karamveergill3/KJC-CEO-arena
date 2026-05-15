@@ -3058,7 +3058,7 @@ function WalkForward({ onBack }) {
               ))}
             </div>
           </div>
-          <a href="https://github.com/karamveergill3/kjc-ctrader-proxy/releases/download/v1.0/KJCArena-Setup.exe" download style={{ padding:"10px 20px", background:"linear-gradient(135deg,#e8a020,#c07010)", border:"none", borderRadius:8, color:"#000", fontSize:12, fontWeight:800, cursor:"pointer", textDecoration:"none", letterSpacing:1, flexShrink:0 }}>DOWNLOAD APP</a>
+          <a href="https://github.com/karamveergill3/kjc-ctrader-proxy/releases/download/v1.1/KJCArena-Setup.exe" download style={{ padding:"10px 20px", background:"linear-gradient(135deg,#e8a020,#c07010)", border:"none", borderRadius:8, color:"#000", fontSize:12, fontWeight:800, cursor:"pointer", textDecoration:"none", letterSpacing:1, flexShrink:0 }}>DOWNLOAD APP</a>
         </div>
       )}
 
