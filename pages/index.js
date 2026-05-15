@@ -2817,7 +2817,7 @@ function WalkForward({ onBack }) {
   // Connect WebSocket to desktop app bridge
   useEffect(() => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/api/desktop-ws`;
+    const wsUrl = "wss://kjc-ctrader-proxy-production.up.railway.app/ws";
     let socket;
     try {
       socket = new WebSocket(wsUrl);
