@@ -2830,6 +2830,7 @@ function WalkForward({ onBack }) {
         try {
           const msg = JSON.parse(e.data);
           if (msg.type === "PONG") setDesktopConnected(true);
+          if (msg.type === "DESKTOP_CONNECTED") setDesktopConnected(true);
           if (msg.type === "DESKTOP_DISCONNECTED") setDesktopConnected(false);
           if (msg.type === "OOS_PROGRESS") {
             setProgress({ completed:msg.completed, total:msg.total, message:msg.message });
