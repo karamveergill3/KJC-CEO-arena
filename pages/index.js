@@ -2858,8 +2858,7 @@ function WalkForward({ onBack }) {
   }, [ws]);
 
   const parseCSV = (text) => {
-    const lines = text.trim().split("
-");
+    const lines = text.trim().split("\n");
     const headers = lines[0].split(",").map(h => h.trim().replace(/"/g,""));
     return lines.slice(1).map(line => {
       const vals = line.split(",").map(v => v.trim().replace(/"/g,""));
