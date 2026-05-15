@@ -2881,6 +2881,7 @@ function WalkForward({ onBack }) {
         trades: p.trades || 0,
         winningTrades: p.winningTrades || 0,
         losingTrades: p.losingTrades || 0,
+        winRate: p.trades > 0 ? (p.winningTrades / p.trades) * 100 : 0,
         maxEquityDrawdownPercent: p.maxEquityDrawdownPercent || 0,
         maxBalanceDrawdownPercent: p.maxBalanceDrawdownPercent || 0,
         fitness: p.fitness || 0,
@@ -2923,7 +2924,7 @@ function WalkForward({ onBack }) {
   const smoothnessScore = (row) => {
     const trades = get(row,"trades","totalTrades");
     const pf = get(row,"profitfactor","pf","profitFactor");
-    const wr = get(row,"winrate","wr","winningtrades","winningTrades");
+    const wr = row.winRate !== undefined ? row.winRate : get(row,"winrate","wr","winningtrades","winningTrades");
     const dd = get(row,"maxequitydrawdownpercent","maxdrawdown","drawdown","dd","maxEquityDrawdownPercent");
     const net = get(row,"netprofit","profit","netProfit");
     if (trades < 30) return 0;
@@ -3103,6 +3104,10 @@ function WalkForward({ onBack }) {
               <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", letterSpacing:2, marginBottom:2 }}>SELECTED FOR OOS</div>
               <div style={{ fontSize:22, fontWeight:900, color:"#3ee89a" }}>{bestPasses.length}</div>
             </div>
+            <div style={{ padding:"10px 20px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:10 }}>
+              <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", letterSpacing:2, marginBottom:2 }}>FILTERED OUT</div>
+              <div style={{ fontSize:22, fontWeight:900, color:"rgba(255,255,255,0.3)" }}>{isData ? isData.length - bestPasses.length : 0} <span style={{fontSize:11,color:"rgba(255,255,255,0.2)"}}>low quality</span></div>
+            </div>
             <button onClick={() => { setStage("upload"); setIsFile(null); setIsData(null); setBestPasses([]); }} style={{ marginLeft:"auto", background:"none", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"rgba(255,255,255,0.4)", padding:"8px 16px", cursor:"pointer", fontFamily:"inherit", fontSize:11 }}>↑ UPLOAD NEW FILE</button>
           </div>
 
@@ -3110,7 +3115,7 @@ function WalkForward({ onBack }) {
           <div style={{ marginBottom:24, padding:"18px 22px", background:"rgba(56,184,240,0.04)", border:"1px solid rgba(56,184,240,0.15)", borderRadius:12 }}>
             <div style={{ fontSize:11, fontWeight:800, color:"#38b8f0", letterSpacing:3, marginBottom:14 }}>OOS BACKTEST SETTINGS</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:12 }}>
-              {[["SYMBOL",symbol||"Auto-detected"],["TIMEFRAME",timeframe],["OOS FROM",fromDate],["OOS TO",toDate]].map(([label,val])=>(
+              {[["SYMBOL",symbol||"Auto-detected"],["OOS FROM",fromDate],["OOS TO",toDate]].map(([label,val])=>(
                 <div key={label}>
                   <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", letterSpacing:2, marginBottom:5 }}>{label}</div>
                   <div style={{ width:"100%", padding:"8px 12px", background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:8, color: label==="SYMBOL"&&!symbol?"rgba(255,255,255,0.3)":"#fff", fontSize:12, fontFamily:"inherit", boxSizing:"border-box" }}>
