@@ -3014,7 +3014,7 @@ function WalkForward({ onBack }) {
             <div style={{ fontSize:13, fontWeight:800, color:"#e8a020", marginBottom:4 }}>KJC DESKTOP APP REQUIRED</div>
             <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.7 }}>The desktop app runs OOS backtests automatically inside your cTrader. Install it once and everything runs hands-free. Keep cTrader open when running OOS.</div>
           </div>
-          <a href="/KJCArena-Setup.exe" download style={{ padding:"10px 20px", background:"linear-gradient(135deg,#e8a020,#c07010)", border:"none", borderRadius:8, color:"#000", fontSize:12, fontWeight:800, cursor:"pointer", textDecoration:"none", letterSpacing:1, flexShrink:0 }}>DOWNLOAD APP</a>
+          <a href="https://github.com/karamveergill3/kjc-ctrader-proxy/releases/download/v1.0/KJCArena-Setup.exe" download style={{ padding:"10px 20px", background:"linear-gradient(135deg,#e8a020,#c07010)", border:"none", borderRadius:8, color:"#000", fontSize:12, fontWeight:800, cursor:"pointer", textDecoration:"none", letterSpacing:1, flexShrink:0 }}>DOWNLOAD APP</a>
         </div>
       )}
 
