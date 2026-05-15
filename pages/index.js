@@ -1781,7 +1781,7 @@ Select 1-3 characters whose specialties best match the task.`,
                 <div style={{ fontSize: 10, fontWeight: 700, color: "#3ee89a", letterSpacing: 3 }}>📈 WALK-FORWARD</div>
                 <button onClick={onOpenWalkForward} style={{ background: "none", border: "none", color: "#3ee89a", fontSize: 9, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 700, padding: 0 }}>OPEN →</button>
               </div>
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>Validate your edge — upload in-sample + out-of-sample CSV or connect cTrader for auto OOS fetch.</div>
+              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", lineHeight: 1.7 }}>Upload IS optimisation CSV — Arena auto-selects best passes and runs OOS backtests automatically.</div>
             </div>
           </div>
         </div>
@@ -2756,40 +2756,40 @@ function LeaderboardPreview({ onOpen }) {
 // ─── Arena Guide Modal ───────────────────────────────────────────────────────
 function ArenaGuide({ onClose }) {
   const steps = [
-    { n: "1", col: "#e8a020", title: "Upload Your Code", body: "Drag and drop your cTrader .cs bot file into the CODE FILE box. Supported: .cs .py .js .ts .mq4 .mq5 .txt" },
-    { n: "2", col: "#38b8f0", title: "Choose Your Reviewers", body: "Tony Stark, Eddie Morra, and Senku Ishigami are pre-selected. Click any to toggle. Add custom characters too." },
-    { n: "3", col: "#c084fc", title: "Optional: Task Routing", body: "Type a task (e.g. review risk management) and hit AUTO-SELECT. The system picks the best reviewers automatically." },
-    { n: "4", col: "#3ee89a", title: "Begin the Review", body: "Hit BEGIN REVIEW. Characters debate your code, raising issues one at a time. Debate continues until all reach 10/10." },
-    { n: "5", col: "#e8a020", title: "Fixed Code Generated", body: "Once consensus is reached, every agreed fix is applied surgically to your original file. Parameters are also optimised." },
-    { n: "6", col: "#38b8f0", title: "Review the Output", body: "Copy the fixed code directly or download the full PDF Report Card — cover metrics, issues, verdicts, and fixed code." },
-    { n: "7", col: "#3ee89a", title: "Generate Strategy DNA", body: "Hit GENERATE STRATEGY DNA for a full AI personality profile of your strategy. Saved to your DNA Library." },
-    { n: "8", col: "#c084fc", title: "Optimisation Folder", body: "Export cTrader optimisation results as CSV/XML and upload. Filters, scores and ranks all passes. Inject best params back." },
-    { n: "9", col: "#3ee89a", title: "Walk-Forward Validation", body: "Upload in-sample + out-of-sample CSV, or connect cTrader for auto OOS fetch. Get a Green/Amber/Red verdict on your edge." },
-    { n: "10", col: "#e8a020", title: "Sessions and Folders", body: "Every review is saved automatically. Access past sessions from the sidebar. Drag into folders to stay organised." },
+    { n:"1", col:"#e8a020", title:"Upload Your Code", body:"Drag and drop your cTrader .cs bot file into the CODE FILE box." },
+    { n:"2", col:"#38b8f0", title:"Choose Your Reviewers", body:"Tony Stark, Eddie Morra, and Senku Ishigami are pre-selected. Toggle any on or off." },
+    { n:"3", col:"#c084fc", title:"Optional: Task Routing", body:"Type a task and hit AUTO-SELECT. The system picks the best reviewers automatically." },
+    { n:"4", col:"#3ee89a", title:"Begin the Review", body:"Hit BEGIN REVIEW. Characters debate your code until all reach 10/10." },
+    { n:"5", col:"#e8a020", title:"Fixed Code Generated", body:"Every agreed fix is applied surgically to your original file with optimised parameters." },
+    { n:"6", col:"#38b8f0", title:"Review the Output", body:"Copy the fixed code or download the full PDF Report Card." },
+    { n:"7", col:"#3ee89a", title:"Generate Strategy DNA", body:"Hit GENERATE STRATEGY DNA for a full AI personality profile of your strategy." },
+    { n:"8", col:"#c084fc", title:"Optimisation Folder", body:"Upload cTrader optimisation CSV. Arena filters, scores and ranks all passes." },
+    { n:"9", col:"#3ee89a", title:"Walk-Forward Validation", body:"Upload IS optimisation CSV. Arena auto-selects top 15 passes and runs OOS backtests automatically via the KJC Desktop App. Install it once and everything runs hands-free." },
+    { n:"10", col:"#e8a020", title:"Sessions and Folders", body:"Every review is saved automatically. Access past sessions from the sidebar." },
   ];
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px", backdropFilter: "blur(8px)" }} onClick={onClose}>
-      <div style={{ background: "linear-gradient(160deg, #0e0e1c 0%, #08080f 100%)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 18, width: "100%", maxWidth: 680, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 100px rgba(0,0,0,0.8)", fontFamily: "'Outfit', system-ui, sans-serif" }} onClick={e => e.stopPropagation()}>
-        <div style={{ height: 3, background: "linear-gradient(90deg, #e8a020, #3ee89a, #38b8f0)", flexShrink: 0 }} />
-        <div style={{ padding: "22px 28px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.88)", zIndex:300, display:"flex", alignItems:"center", justifyContent:"center", padding:"20px 16px", backdropFilter:"blur(8px)" }} onClick={onClose}>
+      <div style={{ background:"linear-gradient(160deg, #0e0e1c 0%, #08080f 100%)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:18, width:"100%", maxWidth:680, maxHeight:"85vh", overflow:"hidden", display:"flex", flexDirection:"column", boxShadow:"0 40px 100px rgba(0,0,0,0.8)", fontFamily:"'Outfit', system-ui, sans-serif" }} onClick={e=>e.stopPropagation()}>
+        <div style={{ height:3, background:"linear-gradient(90deg, #e8a020, #3ee89a, #38b8f0)", flexShrink:0 }} />
+        <div style={{ padding:"22px 28px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div>
-            <div style={{ fontSize: 22, fontWeight: 900, color: "#fff", letterSpacing: 2 }}>HOW TO USE THE ARENA</div>
-            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 3, letterSpacing: 1 }}>Step-by-step — from upload to deployment</div>
+            <div style={{ fontSize:22, fontWeight:900, color:"#fff", letterSpacing:2 }}>HOW TO USE THE ARENA</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.3)", marginTop:3, letterSpacing:1 }}>Step-by-step — from upload to deployment</div>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "rgba(255,255,255,0.4)", fontSize: 18, cursor: "pointer", padding: "4px 12px", fontFamily: "inherit", lineHeight: 1 }}>x</button>
+          <button onClick={onClose} style={{ background:"none", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"rgba(255,255,255,0.4)", fontSize:18, cursor:"pointer", padding:"4px 12px", fontFamily:"inherit", lineHeight:1 }}>x</button>
         </div>
-        <div style={{ overflowY: "auto", padding: "20px 28px 28px", flex: 1 }}>
-          {steps.map(({ n, col, title, body }) => (
-            <div key={n} style={{ display: "flex", gap: 16, marginBottom: 20, alignItems: "flex-start" }}>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: col+"18", border: "2px solid "+col+"60", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: col, flexShrink: 0 }}>{n}</div>
-              <div style={{ flex: 1, paddingTop: 4 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: "#fff", marginBottom: 5 }}>{title}</div>
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.8 }}>{body}</div>
+        <div style={{ overflowY:"auto", padding:"20px 28px 28px", flex:1 }}>
+          {steps.map(({n,col,title,body})=>(
+            <div key={n} style={{ display:"flex", gap:16, marginBottom:20, alignItems:"flex-start" }}>
+              <div style={{ width:32, height:32, borderRadius:"50%", background:col+"18", border:"2px solid "+col+"60", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, color:col, flexShrink:0 }}>{n}</div>
+              <div style={{ flex:1, paddingTop:4 }}>
+                <div style={{ fontSize:14, fontWeight:800, color:"#fff", marginBottom:5 }}>{title}</div>
+                <div style={{ fontSize:13, color:"rgba(255,255,255,0.5)", lineHeight:1.8 }}>{body}</div>
               </div>
             </div>
           ))}
-          <div style={{ marginTop: 8, padding: "16px 20px", background: "rgba(232,160,32,0.06)", border: "1px solid rgba(232,160,32,0.15)", borderRadius: 10, textAlign: "center" }}>
-            <div style={{ fontSize: 15, fontWeight: 900, color: "#e8a020", letterSpacing: 2 }}>DON'T SLACK G</div>
+          <div style={{ marginTop:8, padding:"16px 20px", background:"rgba(232,160,32,0.06)", border:"1px solid rgba(232,160,32,0.15)", borderRadius:10, textAlign:"center" }}>
+            <div style={{ fontSize:15, fontWeight:900, color:"#e8a020", letterSpacing:2 }}>DON'T SLACK G</div>
           </div>
         </div>
       </div>
@@ -2800,212 +2800,355 @@ function ArenaGuide({ onClose }) {
 // ─── Walk-Forward Validation Engine ──────────────────────────────────────────
 function WalkForward({ onBack }) {
   const [isFile, setIsFile] = useState(null);
-  const [oosFile, setOosFile] = useState(null);
   const [isData, setIsData] = useState(null);
-  const [oosData, setOosData] = useState(null);
-  const [verdict, setVerdict] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [bestPasses, setBestPasses] = useState([]);
+  const [stage, setStage] = useState("upload"); // upload | selected | running | complete
+  const [oosResults, setOosResults] = useState([]);
+  const [progress, setProgress] = useState({ completed:0, total:15, message:"" });
+  const [desktopConnected, setDesktopConnected] = useState(false);
+  const [ws, setWs] = useState(null);
+  const [sessionId] = useState(() => Math.random().toString(36).slice(2));
   const [error, setError] = useState(null);
-  const [ctraderToken, setCtraderToken] = useState(() => typeof window !== "undefined" ? sessionStorage.getItem("ctrader_token") || null : null);
-  const [fetchingOOS, setFetchingOOS] = useState(false);
-  const [oosMonths, setOosMonths] = useState(3);
-  const [oosSource, setOosSource] = useState("file");
+  const [symbol, setSymbol] = useState("EURUSD");
+  const [timeframe, setTimeframe] = useState("Hour1");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
+  // Connect WebSocket to desktop app bridge
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const t = new URLSearchParams(window.location.search).get("ctrader_token");
-    if (t) { sessionStorage.setItem("ctrader_token", t); setCtraderToken(t); window.history.replaceState({}, "", window.location.pathname); }
-  }, []);
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/api/desktop-ws`;
+    let socket;
+    try {
+      socket = new WebSocket(wsUrl);
+      socket.onopen = () => {
+        socket.send(JSON.stringify({ type:"REGISTER", sessionId }));
+      };
+      socket.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === "PONG") setDesktopConnected(true);
+          if (msg.type === "DESKTOP_DISCONNECTED") setDesktopConnected(false);
+          if (msg.type === "OOS_PROGRESS") {
+            setProgress({ completed:msg.completed, total:msg.total, message:msg.message });
+          }
+          if (msg.type === "OOS_COMPLETE") {
+            setOosResults(msg.results || []);
+            setStage("complete");
+          }
+          if (msg.type === "ERROR") {
+            setError(msg.message);
+            setStage("selected");
+          }
+        } catch(err) {}
+      };
+      socket.onclose = () => setDesktopConnected(false);
+      setWs(socket);
+    } catch(err) {}
+    return () => socket?.close();
+  }, [sessionId]);
+
+  // Ping desktop every 5s
+  useEffect(() => {
+    if (!ws) return;
+    const t = setInterval(() => {
+      if (ws.readyState === 1) ws.send(JSON.stringify({ type:"PING" }));
+    }, 5000);
+    return () => clearInterval(t);
+  }, [ws]);
 
   const parseCSV = (text) => {
-    const lines = text.trim().split("\n");
+    const lines = text.trim().split("
+");
     const headers = lines[0].split(",").map(h => h.trim().replace(/"/g,""));
-    return lines.slice(1).map(line => { const vals = line.split(",").map(v => v.trim().replace(/"/g,"")); const obj = {}; headers.forEach((h,i) => obj[h]=vals[i]||""); return obj; }).filter(r => Object.values(r).some(v=>v));
+    return lines.slice(1).map(line => {
+      const vals = line.split(",").map(v => v.trim().replace(/"/g,""));
+      const obj = {}; headers.forEach((h,i) => obj[h]=vals[i]||"");
+      return obj;
+    }).filter(r => Object.values(r).some(v=>v));
   };
 
   const parseXML = (text) => {
-    const doc = new DOMParser().parseFromString(text, "text/xml"); const rows = [];
-    doc.querySelectorAll("Row, Pass, Result, OptimisationResult").forEach(item => {
+    const doc = new DOMParser().parseFromString(text, "text/xml");
+    const rows = [];
+    doc.querySelectorAll("Row,Pass,Result,OptimisationResult").forEach(item => {
       const obj = {};
       Array.from(item.attributes).forEach(a => obj[a.name]=a.value);
       Array.from(item.children).forEach(c => { obj[c.getAttribute("Name")||c.tagName]=c.getAttribute("Value")||c.textContent; });
       if (Object.keys(obj).length) rows.push(obj);
-    }); return rows;
+    });
+    return rows;
   };
 
-  const normaliseRow = (row) => {
-    const get = (...keys) => { for (const k of keys) { const f = Object.keys(row).find(rk=>rk.toLowerCase().replace(/[^a-z0-9]/g,"").includes(k.toLowerCase().replace(/[^a-z0-9]/g,""))); if (f&&row[f]!=="") return parseFloat(row[f].toString().replace(/[,%$]/g,""))||0; } return 0; };
-    const trades=get("trades","totalTrades","tradecount"), winning=get("winningtrades","wins"), pf=get("profitfactor","pf"), dd=get("maxequitydrawdown","drawdown","dd"), wr=winning>0&&trades>0?(winning/trades)*100:get("winrate","wr");
-    return { trades, pf, dd, wr };
+  const get = (row, ...keys) => {
+    for (const k of keys) {
+      const f = Object.keys(row).find(rk => rk.toLowerCase().replace(/[^a-z0-9]/g,"").includes(k.toLowerCase().replace(/[^a-z0-9]/g,"")));
+      if (f && row[f] !== "") return parseFloat(row[f].toString().replace(/[,%$]/g,"")) || 0;
+    }
+    return 0;
   };
 
-  const parseFile = (file, cb) => {
+  // Equity curve smoothness: R² of equity curve vs straight line
+  const smoothnessScore = (row) => {
+    const trades = get(row,"trades","totalTrades");
+    const pf = get(row,"profitfactor","pf");
+    const wr = get(row,"winrate","wr","winningtrades");
+    const dd = get(row,"maxdrawdown","drawdown","dd");
+    const net = get(row,"netprofit","profit");
+    if (trades < 30) return 0;
+    // Score: high PF + high WR + low DD + positive net = smooth uptrend
+    const pfScore = Math.min(pf / 3, 1) * 30;
+    const wrScore = Math.min(wr / 70, 1) * 25;
+    const ddScore = Math.max(0, 1 - dd / 30) * 25;
+    const netScore = net > 0 ? 20 : 0;
+    return pfScore + wrScore + ddScore + netScore;
+  };
+
+  const getParamValues = (row) => {
+    const skip = new Set(["pass","netprofit","profit","profitfactor","pf","winrate","wr","trades","totaltrades","maxdrawdown","drawdown","dd","winningtrades","losingtrades","sharperatio","sortinorato"]);
+    const params = {};
+    Object.entries(row).forEach(([k,v]) => {
+      const kn = k.toLowerCase().replace(/[^a-z0-9]/g,"");
+      if (!skip.has(kn) && v && v !== "") params[k] = v;
+    });
+    return params;
+  };
+
+  const parseFile = (file) => {
     if (!file || !(file instanceof Blob)) return;
     const reader = new FileReader();
-    reader.onload = e => { try { const rows=(file.name.endsWith(".xml")?parseXML:parseCSV)(e.target.result); const n=rows.map(normaliseRow).filter(p=>p.trades>0||p.pf>0); if(!n.length){setError("No valid passes found.");return;} cb(n); } catch(err){setError("Parse failed: "+err.message);} };
+    reader.onload = e => {
+      try {
+        const text = e.target.result;
+        const rows = file.name.endsWith(".xml") ? parseXML(text) : parseCSV(text);
+        if (!rows.length) { setError("No valid passes found in file."); return; }
+        // Score and rank all passes
+        const scored = rows.map((row, i) => ({
+          ...row,
+          _passNumber: i + 1,
+          _pf: get(row,"profitfactor","pf"),
+          _wr: get(row,"winrate","wr"),
+          _dd: get(row,"maxdrawdown","drawdown","dd"),
+          _trades: get(row,"trades","totalTrades"),
+          _net: get(row,"netprofit","profit"),
+          _score: smoothnessScore(row),
+          _params: getParamValues(row),
+        })).filter(r => r._trades >= 30 && r._pf >= 1.2);
+        // Pick top 15 by smoothness score
+        const top15 = scored.sort((a,b) => b._score - a._score).slice(0, 15);
+        setIsData(scored);
+        setBestPasses(top15);
+        setStage("selected");
+        setError(null);
+      } catch(err) { setError("Parse failed: " + err.message); }
+    };
     reader.readAsText(file);
   };
 
-  const aggregate = (passes) => {
-    if (!passes?.length) return null;
-    const avg = k => passes.reduce((s,p)=>s+(p[k]||0),0)/passes.length;
-    const best = passes.reduce((a,b)=>b.pf>a.pf?b:a,passes[0]);
-    return { count:passes.length, avgPF:avg("pf"), avgWR:avg("wr"), avgDD:avg("dd"), avgTrades:avg("trades"), bestPF:best.pf };
+  const runOOS = () => {
+    if (!ws || ws.readyState !== 1 || !desktopConnected) {
+      setError("KJC Desktop App not connected. Please install and open it.");
+      return;
+    }
+    if (!fromDate || !toDate) {
+      setError("Please set OOS date range first.");
+      return;
+    }
+    setStage("running");
+    setError(null);
+    setProgress({ completed:0, total:bestPasses.length, message:"Connecting to cTrader..." });
+    ws.send(JSON.stringify({
+      type: "RUN_OOS",
+      sessionId,
+      passes: bestPasses.map(p => ({
+        PassNumber: p._passNumber,
+        PF: p._pf,
+        WR: p._wr,
+        DD: p._dd,
+        NetProfit: p._net,
+        SmoothnessScore: p._score,
+        ParamValues: p._params,
+      })),
+      symbol,
+      timeframe,
+      fromDate,
+      toDate,
+    }));
   };
 
-  const runValidation = () => {
-    if (!isData||!oosData) { setError("Upload both files first."); return; }
-    setLoading(true); setError(null);
-    const is=aggregate(isData), oos=aggregate(oosData);
-    const pfDrop=is.avgPF>0?((is.avgPF-oos.avgPF)/is.avgPF)*100:100;
-    const wrDrop=is.avgWR-oos.avgWR;
-    const ddInc=is.avgDD>0?((oos.avgDD-is.avgDD)/is.avgDD)*100:100;
-    const tdDrop=is.avgTrades>0?((is.avgTrades-oos.avgTrades)/is.avgTrades)*100:100;
-    const checks=[
-      {label:"Profit Factor",pass:pfDrop<40,is:is.avgPF.toFixed(2),oos:oos.avgPF.toFixed(2),detail:`${pfDrop>0?"-":"+"}${Math.abs(pfDrop).toFixed(0)}% degradation (limit 40%)`},
-      {label:"Win Rate",pass:wrDrop<10,is:is.avgWR.toFixed(1)+"%",oos:oos.avgWR.toFixed(1)+"%",detail:`${wrDrop>0?"-":"+"}${Math.abs(wrDrop).toFixed(1)}pp shift (limit 10pp)`},
-      {label:"Drawdown",pass:ddInc<50,is:is.avgDD.toFixed(1)+"%",oos:oos.avgDD.toFixed(1)+"%",detail:`${ddInc>0?"+":""}${ddInc.toFixed(0)}% increase (limit 50%)`},
-      {label:"Trade Count",pass:tdDrop<30,is:Math.round(is.avgTrades),oos:Math.round(oos.avgTrades),detail:`${tdDrop>0?"-":"+"}${Math.abs(tdDrop).toFixed(0)}% shift (limit 30%)`},
-      {label:"OOS Profitable",pass:oos.avgPF>=1.0,is:"—",oos:oos.avgPF.toFixed(2),detail:oos.avgPF>=1.0?"OOS PF above 1.0":"OOS PF below 1.0"},
-      {label:"OOS Win Rate",pass:oos.avgWR>=50,is:"—",oos:oos.avgWR.toFixed(1)+"%",detail:oos.avgWR>=50?"Above 50% OOS":"Below 50% OOS"},
-    ];
-    const passed=checks.filter(c=>c.pass).length;
-    setVerdict({checks,is,oos,color:passed===6?"green":passed>=4?"amber":"red",passed,total:checks.length});
-    setLoading(false);
+  // Compute verdict from IS vs OOS
+  const computeVerdict = (isPass, oosResult) => {
+    if (!oosResult?.Success) return { color:"red", label:"❌ FAILED", reason:"Backtest failed to run" };
+    const pfDrop = isPass._pf > 0 ? ((isPass._pf - oosResult.ProfitFactor) / isPass._pf) * 100 : 100;
+    const wrDrop = isPass._wr - oosResult.WinRate;
+    const ddInc = isPass._dd > 0 ? ((oosResult.MaxDrawdown - isPass._dd) / isPass._dd) * 100 : 100;
+    const checks = [pfDrop < 40, wrDrop < 10, ddInc < 50, oosResult.ProfitFactor >= 1.0, oosResult.WinRate >= 50];
+    const passed = checks.filter(Boolean).length;
+    if (passed === 5) return { color:"green", label:"✅ REAL EDGE", reason:"All 5 checks passed" };
+    if (passed >= 3) return { color:"amber", label:"⚠ PARTIAL", reason:`${passed}/5 checks passed` };
+    return { color:"red", label:"❌ OVERFITTED", reason:`Only ${passed}/5 checks passed` };
   };
 
-  const fetchOOS = async () => {
-    if (!ctraderToken){setError("Connect cTrader first.");return;}
-    setFetchingOOS(true);setError(null);
-    try {
-      const res=await fetch(`/api/ctrader/oos?token=${ctraderToken}&months=${oosMonths}`);
-      const data=await res.json();
-      if (!res.ok) throw new Error(data.error||"Failed");
-      if (!data.trades){setError("No trades found.");setFetchingOOS(false);return;}
-      setOosData(Array(data.trades).fill({trades:data.trades,pf:data.pf,wr:data.wr,dd:data.dd}));
-      setOosFile({name:`cTrader live — last ${oosMonths}mo (${data.trades} trades)`});
-      setOosSource("ctrader");
-    } catch(e){setError("cTrader: "+e.message);}
-    setFetchingOOS(false);
-  };
-
-  const vColor=verdict?.color==="green"?"#3ee89a":verdict?.color==="amber"?"#e8a020":"#f07070";
-  const vBg=verdict?.color==="green"?"rgba(62,232,154,0.08)":verdict?.color==="amber"?"rgba(232,160,32,0.08)":"rgba(240,80,80,0.08)";
-  const vLabel=verdict?.color==="green"?"✅ REAL EDGE CONFIRMED":verdict?.color==="amber"?"⚠ PARTIAL EDGE — CAUTION":"❌ OVERFITTED — DO NOT DEPLOY";
-
-  const UBox=({label,file,onFile,color})=>(
-    <label style={{display:"block",flex:1,border:`2px dashed ${file?color:"rgba(255,255,255,0.1)"}`,borderRadius:12,padding:"28px 20px",textAlign:"center",cursor:"pointer",background:file?color+"08":"rgba(255,255,255,0.02)"}}>
-      <input type="file" accept=".csv,.xml" style={{display:"none"}} onChange={e=>e.target.files[0]&&onFile(e.target.files[0])}/>
-      <div style={{fontSize:28,marginBottom:8}}>{file?"✓":"⬆"}</div>
-      <div style={{fontSize:13,fontWeight:700,color:file?color:"rgba(255,255,255,0.5)",marginBottom:4}}>{label}</div>
-      <div style={{fontSize:11,color:"rgba(255,255,255,0.3)"}}>{file?file.name:"CSV or XML"}</div>
-    </label>
-  );
+  const vColor = c => c==="green"?"#3ee89a":c==="amber"?"#e8a020":"#f07070";
 
   return (
-    <div style={{flex:1,overflow:"auto",background:"#0a0a0f",padding:"36px 48px",fontFamily:"'Outfit', system-ui, sans-serif"}}>
-      <div style={{display:"flex",alignItems:"flex-start",gap:20,marginBottom:32}}>
-        <button onClick={onBack} style={{marginTop:6,background:"none",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"rgba(255,255,255,0.35)",padding:"7px 16px",cursor:"pointer",fontFamily:"inherit",fontSize:11,letterSpacing:1,flexShrink:0}}>← BACK</button>
+    <div style={{ flex:1, overflow:"auto", background:"#0a0a0f", padding:"36px 48px", fontFamily:"'Outfit', system-ui, sans-serif" }}>
+      {/* Header */}
+      <div style={{ display:"flex", alignItems:"flex-start", gap:20, marginBottom:32 }}>
+        <button onClick={onBack} style={{ marginTop:6, background:"none", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"rgba(255,255,255,0.35)", padding:"7px 16px", cursor:"pointer", fontFamily:"inherit", fontSize:11, letterSpacing:1, flexShrink:0 }}>← BACK</button>
         <div>
-          <div style={{fontSize:36,fontWeight:900,color:"#3ee89a",letterSpacing:3,lineHeight:1}}>WALK-FORWARD VALIDATION</div>
-          <div style={{fontSize:12,color:"rgba(255,255,255,0.3)",letterSpacing:2,marginTop:6}}>IN-SAMPLE vs OUT-OF-SAMPLE · REAL EDGE OR OVERFIT?</div>
+          <div style={{ fontSize:36, fontWeight:900, color:"#3ee89a", letterSpacing:3, lineHeight:1 }}>WALK-FORWARD VALIDATION</div>
+          <div style={{ fontSize:12, color:"rgba(255,255,255,0.3)", letterSpacing:2, marginTop:6 }}>AUTOMATIC OOS BACKTESTING · REAL EDGE OR OVERFIT?</div>
+        </div>
+        {/* Desktop app status */}
+        <div style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:8, padding:"8px 16px", background:desktopConnected?"rgba(62,232,154,0.08)":"rgba(255,255,255,0.04)", border:`1px solid ${desktopConnected?"rgba(62,232,154,0.3)":"rgba(255,255,255,0.1)"}`, borderRadius:10 }}>
+          <div style={{ width:8, height:8, borderRadius:"50%", background:desktopConnected?"#3ee89a":"rgba(255,255,255,0.2)" }} />
+          <span style={{ fontSize:11, fontWeight:700, color:desktopConnected?"#3ee89a":"rgba(255,255,255,0.3)", letterSpacing:1 }}>{desktopConnected?"DESKTOP CONNECTED":"DESKTOP NOT CONNECTED"}</span>
         </div>
       </div>
 
-      <div style={{marginBottom:24,padding:"22px 26px",background:"rgba(62,232,154,0.03)",border:"1px solid rgba(62,232,154,0.12)",borderRadius:12}}>
-        <div style={{fontSize:11,fontWeight:800,color:"#3ee89a",letterSpacing:3,marginBottom:12}}>HOW IT WORKS</div>
-        <div style={{fontSize:13,color:"rgba(255,255,255,0.6)",lineHeight:1.9,marginBottom:14}}>Walk-forward validation checks if your strategy has a <span style={{color:"#3ee89a",fontWeight:700}}>genuine edge</span> or was just curve-fitted. A strategy that only works on data it was optimised on is <span style={{color:"#f07070",fontWeight:700}}>worthless live</span>.</div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
-          {[{col:"#e8a020",label:"① IN-SAMPLE",desc:"The data your strategy was optimised on. Export from cTrader optimisation results."},{col:"#38b8f0",label:"② OUT-OF-SAMPLE",desc:"Fresh data it has never seen. Export a separate backtest from a different time period."},{col:"#3ee89a",label:"③ VERDICT",desc:"We compare both. Close performance = real edge. Collapse = overfitted."}].map(({col,label,desc})=>(
-            <div key={label} style={{padding:"12px 14px",background:"rgba(255,255,255,0.02)",border:`1px solid ${col}25`,borderRadius:10}}>
-              <div style={{fontSize:10,fontWeight:800,color:col,letterSpacing:2,marginBottom:6}}>{label}</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,0.4)",lineHeight:1.7}}>{desc}</div>
+      {/* Desktop app install prompt */}
+      {!desktopConnected && (
+        <div style={{ marginBottom:24, padding:"18px 22px", background:"rgba(232,160,32,0.06)", border:"1px solid rgba(232,160,32,0.2)", borderRadius:12, display:"flex", alignItems:"center", gap:16 }}>
+          <div style={{ fontSize:28, flexShrink:0 }}>💻</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:13, fontWeight:800, color:"#e8a020", marginBottom:4 }}>KJC DESKTOP APP REQUIRED</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.7 }}>The desktop app runs OOS backtests automatically inside your cTrader. Install it once and everything runs hands-free. Keep cTrader open when running OOS.</div>
+          </div>
+          <a href="/KJCArena-Setup.exe" download style={{ padding:"10px 20px", background:"linear-gradient(135deg,#e8a020,#c07010)", border:"none", borderRadius:8, color:"#000", fontSize:12, fontWeight:800, cursor:"pointer", textDecoration:"none", letterSpacing:1, flexShrink:0 }}>DOWNLOAD APP</a>
+        </div>
+      )}
+
+      {/* Stage: Upload */}
+      {stage === "upload" && (
+        <div>
+          <div style={{ marginBottom:20, padding:"18px 22px", background:"rgba(62,232,154,0.03)", border:"1px solid rgba(62,232,154,0.12)", borderRadius:12 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"#3ee89a", letterSpacing:3, marginBottom:10 }}>HOW IT WORKS</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:10 }}>
+              {[["1","#e8a020","Upload IS CSV","Your full optimisation results with all passes"],["2","#38b8f0","Auto-Select","Arena picks top 15 passes by smoothness score"],["3","#c084fc","Auto-Backtest","Desktop app runs 15 OOS backtests in cTrader automatically"],["4","#3ee89a","Verdict","Compare IS vs OOS and get Green/Amber/Red for each"]].map(([n,col,t,d])=>(
+                <div key={n} style={{ padding:"12px 14px", background:"rgba(255,255,255,0.02)", border:`1px solid ${col}25`, borderRadius:10 }}>
+                  <div style={{ width:24, height:24, borderRadius:"50%", background:col+"22", border:`1px solid ${col}60`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color:col, marginBottom:8 }}>{n}</div>
+                  <div style={{ fontSize:12, fontWeight:800, color:"#fff", marginBottom:4 }}>{t}</div>
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", lineHeight:1.6 }}>{d}</div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          <label style={{ display:"block", border:"2px dashed rgba(62,232,154,0.2)", borderRadius:14, padding:"48px 20px", textAlign:"center", cursor:"pointer", background:"rgba(62,232,154,0.02)" }}>
+            <input type="file" accept=".csv,.xml" style={{ display:"none" }} onChange={e=>e.target.files[0]&&(setIsFile(e.target.files[0]),parseFile(e.target.files[0]))} />
+            <div style={{ fontSize:40, marginBottom:12 }}>📊</div>
+            <div style={{ fontSize:16, fontWeight:800, color:"#3ee89a", marginBottom:6 }}>DROP IN-SAMPLE OPTIMISATION CSV</div>
+            <div style={{ fontSize:12, color:"rgba(255,255,255,0.3)" }}>Export from cTrader optimisation results · CSV or XML · Any number of passes</div>
+          </label>
+          {error && <div style={{ marginTop:16, padding:"12px 16px", background:"rgba(240,80,80,0.08)", border:"1px solid rgba(240,80,80,0.2)", borderRadius:8, color:"#f07070", fontSize:12 }}>{error}</div>}
         </div>
-        <div style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.25)",letterSpacing:2,marginBottom:8}}>STEPS</div>
-        {[["1","#e8a020","Run optimisation in cTrader on an older period (e.g. Jan 2023–Dec 2024). Export as CSV."],["2","#38b8f0","Run a separate backtest on recent period (e.g. Jan 2025–now). Export that CSV too."],["3","#3ee89a","Upload older CSV as IN-SAMPLE and recent CSV as OUT-OF-SAMPLE — or connect cTrader to auto-fetch OOS."],["4","#c084fc","Hit RUN. We compare 6 metrics and give a Green / Amber / Red verdict."],["5","#fff","Green = real edge. Amber = reduce size. Red = overfitted, go back to optimisation."]].map(([n,col,txt])=>(
-          <div key={n} style={{display:"flex",gap:10,marginBottom:6,alignItems:"flex-start"}}>
-            <div style={{width:20,height:20,borderRadius:"50%",background:col+"22",border:`1px solid ${col}60`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:col,flexShrink:0}}>{n}</div>
-            <div style={{fontSize:12,color:"rgba(255,255,255,0.5)",lineHeight:1.7}}>{txt}</div>
+      )}
+
+      {/* Stage: Selected — show best passes + settings */}
+      {stage === "selected" && (
+        <div>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:24 }}>
+            <div style={{ padding:"10px 20px", background:"rgba(62,232,154,0.08)", border:"1px solid rgba(62,232,154,0.2)", borderRadius:10 }}>
+              <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", letterSpacing:2, marginBottom:2 }}>TOTAL PASSES</div>
+              <div style={{ fontSize:22, fontWeight:900, color:"#fff" }}>{isData?.length || 0}</div>
+            </div>
+            <div style={{ padding:"10px 20px", background:"rgba(62,232,154,0.08)", border:"1px solid rgba(62,232,154,0.3)", borderRadius:10 }}>
+              <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", letterSpacing:2, marginBottom:2 }}>SELECTED FOR OOS</div>
+              <div style={{ fontSize:22, fontWeight:900, color:"#3ee89a" }}>{bestPasses.length}</div>
+            </div>
+            <button onClick={() => { setStage("upload"); setIsFile(null); setIsData(null); setBestPasses([]); }} style={{ marginLeft:"auto", background:"none", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"rgba(255,255,255,0.4)", padding:"8px 16px", cursor:"pointer", fontFamily:"inherit", fontSize:11 }}>↑ UPLOAD NEW FILE</button>
           </div>
-        ))}
-      </div>
 
-      <div style={{display:"flex",gap:16,marginBottom:16}}>
-        <UBox label="IN-SAMPLE DATA" file={isFile} color="#e8a020" onFile={f=>{setIsFile(f);parseFile(f,d=>{setIsData(d);setIsFile({...f,_parsed:d.length});});setVerdict(null);}}/>
-        <UBox label="OUT-OF-SAMPLE DATA" file={oosSource==="ctrader"?oosFile:oosFile} color="#38b8f0" onFile={f=>{setOosSource("file");setOosFile(f);parseFile(f,d=>{setOosData(d);setOosFile({...f,_parsed:d.length});});setVerdict(null);}}/>
-      </div>
-
-      <div style={{marginBottom:24,padding:"16px 20px",background:"rgba(56,184,240,0.04)",border:"1px solid rgba(56,184,240,0.15)",borderRadius:12}}>
-        <div style={{fontSize:11,fontWeight:800,color:"#38b8f0",letterSpacing:3,marginBottom:10}}>⚡ AUTO-FETCH OOS FROM CTRADER</div>
-        {!ctraderToken?(
-          <button onClick={()=>window.location.href="/api/ctrader/auth"} style={{padding:"9px 20px",background:"rgba(56,184,240,0.15)",border:"1px solid rgba(56,184,240,0.35)",borderRadius:8,color:"#38b8f0",fontSize:12,fontWeight:700,letterSpacing:2,cursor:"pointer",fontFamily:"inherit"}}>CONNECT CTRADER →</button>
-        ):(
-          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-            <span style={{fontSize:11,color:"#3ee89a",fontWeight:700}}>✓ CONNECTED</span>
-            <select value={oosMonths} onChange={e=>setOosMonths(Number(e.target.value))} style={{padding:"6px 10px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#fff",fontSize:12,fontFamily:"inherit"}}>
-              {[1,2,3,6].map(m=><option key={m} value={m}>{m} month{m>1?"s":""}</option>)}
-            </select>
-            <button onClick={fetchOOS} disabled={fetchingOOS} style={{padding:"8px 18px",background:"rgba(56,184,240,0.2)",border:"1px solid rgba(56,184,240,0.4)",borderRadius:8,color:"#38b8f0",fontSize:12,fontWeight:700,cursor:fetchingOOS?"not-allowed":"pointer",fontFamily:"inherit"}}>{fetchingOOS?"FETCHING...":"FETCH OOS ▶"}</button>
-            {oosSource==="ctrader"&&oosFile&&<span style={{fontSize:11,color:"#3ee89a"}}>✓ {oosFile.name}</span>}
-            <button onClick={()=>{setCtraderToken(null);sessionStorage.removeItem("ctrader_token");}} style={{background:"none",border:"none",color:"rgba(255,255,255,0.2)",cursor:"pointer",fontSize:11,fontFamily:"inherit"}}>Disconnect</button>
+          {/* OOS Settings */}
+          <div style={{ marginBottom:24, padding:"18px 22px", background:"rgba(56,184,240,0.04)", border:"1px solid rgba(56,184,240,0.15)", borderRadius:12 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"#38b8f0", letterSpacing:3, marginBottom:14 }}>OOS BACKTEST SETTINGS</div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:12 }}>
+              {[["Symbol","text",symbol,setSymbol,"EURUSD"],["Timeframe","text",timeframe,setTimeframe,"Hour1"],["OOS From","date",fromDate,setFromDate,""],["OOS To","date",toDate,setToDate,""]].map(([label,type,val,setter,ph])=>(
+                <div key={label}>
+                  <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", letterSpacing:2, marginBottom:5 }}>{label.toUpperCase()}</div>
+                  <input type={type} value={val} onChange={e=>setter(e.target.value)} placeholder={ph} style={{ width:"100%", padding:"8px 12px", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"#fff", fontSize:12, fontFamily:"inherit", boxSizing:"border-box" }} />
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-      </div>
 
-      {error&&<div style={{padding:"12px 16px",background:"rgba(240,80,80,0.08)",border:"1px solid rgba(240,80,80,0.2)",borderRadius:8,color:"#f07070",fontSize:12,marginBottom:16}}>{error}</div>}
-
-      <button onClick={runValidation} disabled={!isData||!oosData||loading} style={{width:"100%",padding:"16px",background:isData&&oosData?"linear-gradient(135deg,#3ee89a,#2bc97a)":"rgba(255,255,255,0.05)",border:"none",borderRadius:10,color:isData&&oosData?"#000":"rgba(255,255,255,0.2)",fontSize:14,fontWeight:800,letterSpacing:3,cursor:isData&&oosData?"pointer":"not-allowed",fontFamily:"inherit",marginBottom:32}}>
-        {loading?"ANALYSING...":"RUN WALK-FORWARD VALIDATION ▶"}
-      </button>
-
-      {verdict&&(
-        <>
-          <div style={{padding:"24px 28px",background:vBg,border:`2px solid ${vColor}40`,borderRadius:14,marginBottom:28,textAlign:"center"}}>
-            <div style={{fontSize:28,fontWeight:900,color:vColor,letterSpacing:3,marginBottom:6}}>{vLabel}</div>
-            <div style={{fontSize:13,color:"rgba(255,255,255,0.5)"}}>{verdict.passed}/{verdict.total} checks passed</div>
+          {/* Best passes table */}
+          <div style={{ marginBottom:24 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:12 }}>TOP {bestPasses.length} PASSES — SELECTED BY SMOOTHNESS SCORE</div>
+            <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, overflow:"hidden" }}>
+              <div style={{ display:"grid", gridTemplateColumns:"50px 80px 80px 80px 80px 80px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
+                <div>PASS</div><div>SCORE</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>PARAMETERS</div>
+              </div>
+              {bestPasses.map((p,i)=>(
+                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 80px 80px 80px 80px 80px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
+                  <div style={{ color:"rgba(255,255,255,0.5)" }}>#{p._passNumber}</div>
+                  <div style={{ color:"#3ee89a", fontWeight:700 }}>{p._score.toFixed(0)}</div>
+                  <div style={{ color:"#fff" }}>{p._pf.toFixed(2)}</div>
+                  <div style={{ color:"#fff" }}>{p._wr.toFixed(1)}%</div>
+                  <div style={{ color:"#f07070" }}>{p._dd.toFixed(1)}%</div>
+                  <div style={{ color:"#fff" }}>{p._trades}</div>
+                  <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10 }}>{Object.entries(p._params).slice(0,4).map(([k,v])=>`${k}=${v}`).join(", ")}</div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,marginBottom:28}}>
-            {[{label:"IN-SAMPLE",data:verdict.is,col:"#e8a020"},{label:"OUT-OF-SAMPLE",data:verdict.oos,col:"#38b8f0"}].map(({label,data,col})=>(
-              <div key={label} style={{padding:"20px 24px",background:"rgba(255,255,255,0.02)",border:`1px solid ${col}30`,borderRadius:12}}>
-                <div style={{fontSize:10,fontWeight:800,color:col,letterSpacing:3,marginBottom:14}}>{label}</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                  {[["Avg PF",data.avgPF?.toFixed(2)],["Win Rate",data.avgWR?.toFixed(1)+"%"],["Drawdown",data.avgDD?.toFixed(1)+"%"],["Trades",Math.round(data.avgTrades)],["Passes",data.count],["Best PF",data.bestPF?.toFixed(2)]].map(([k,v])=>(
-                    <div key={k} style={{padding:"10px 12px",background:"rgba(255,255,255,0.03)",borderRadius:8}}>
-                      <div style={{fontSize:9,color:"rgba(255,255,255,0.3)",letterSpacing:2,marginBottom:3}}>{k}</div>
-                      <div style={{fontSize:17,fontWeight:800,color:"#fff"}}>{v}</div>
+
+          {error && <div style={{ marginBottom:16, padding:"12px 16px", background:"rgba(240,80,80,0.08)", border:"1px solid rgba(240,80,80,0.2)", borderRadius:8, color:"#f07070", fontSize:12 }}>{error}</div>}
+
+          <button onClick={runOOS} disabled={!desktopConnected||!fromDate||!toDate} style={{ width:"100%", padding:"18px", background:desktopConnected&&fromDate&&toDate?"linear-gradient(135deg,#3ee89a,#2bc97a)":"rgba(255,255,255,0.05)", border:"none", borderRadius:10, color:desktopConnected&&fromDate&&toDate?"#000":"rgba(255,255,255,0.2)", fontSize:15, fontWeight:900, cursor:desktopConnected&&fromDate&&toDate?"pointer":"not-allowed", fontFamily:"inherit", letterSpacing:3 }}>
+            {desktopConnected ? "▶ RUN OOS BACKTESTS AUTOMATICALLY" : "💻 CONNECT DESKTOP APP TO RUN OOS"}
+          </button>
+        </div>
+      )}
+
+      {/* Stage: Running */}
+      {stage === "running" && (
+        <div>
+          <div style={{ marginBottom:32, padding:"28px", background:"rgba(62,232,154,0.04)", border:"1px solid rgba(62,232,154,0.2)", borderRadius:14, textAlign:"center" }}>
+            <div style={{ fontSize:32, marginBottom:12 }}>⚙️</div>
+            <div style={{ fontSize:20, fontWeight:900, color:"#3ee89a", letterSpacing:2, marginBottom:8 }}>RUNNING OOS BACKTESTS</div>
+            <div style={{ fontSize:13, color:"rgba(255,255,255,0.5)", marginBottom:20 }}>{progress.message}</div>
+            <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:20, height:8, marginBottom:12, overflow:"hidden" }}>
+              <div style={{ height:"100%", background:"linear-gradient(90deg,#3ee89a,#2bc97a)", borderRadius:20, width:`${(progress.completed/progress.total)*100}%`, transition:"width 0.5s" }} />
+            </div>
+            <div style={{ fontSize:13, color:"rgba(255,255,255,0.4)" }}>{progress.completed} of {progress.total} backtests complete</div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,0.25)", marginTop:8 }}>Keep cTrader open. Do not close it.</div>
+          </div>
+        </div>
+      )}
+
+      {/* Stage: Complete — show verdicts */}
+      {stage === "complete" && (
+        <div>
+          <div style={{ marginBottom:24 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:16 }}>OOS VERDICT — {oosResults.length} BACKTESTS COMPLETE</div>
+            {bestPasses.map((pass, i) => {
+              const oos = oosResults.find(r => r.PassNumber === pass._passNumber);
+              const verdict = computeVerdict(pass, oos);
+              const vc = vColor(verdict.color);
+              return (
+                <div key={i} style={{ marginBottom:10, padding:"16px 20px", background:`${vc}06`, border:`1px solid ${vc}25`, borderRadius:12, display:"grid", gridTemplateColumns:"40px 1fr 100px 100px 100px 100px 140px", alignItems:"center", gap:12 }}>
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)" }}>#{pass._passNumber}</div>
+                  <div>
+                    <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", marginBottom:3 }}>PARAMETERS</div>
+                    <div style={{ fontSize:10, color:"rgba(255,255,255,0.6)" }}>{Object.entries(pass._params).slice(0,3).map(([k,v])=>`${k}=${v}`).join(", ")}</div>
+                  </div>
+                  {[["IS PF",pass._pf?.toFixed(2),"#e8a020"],["OOS PF",oos?.ProfitFactor?.toFixed(2)||"—",vc],["IS WR",pass._wr?.toFixed(1)+"%","#e8a020"],["OOS WR",(oos?.WinRate?.toFixed(1)||"—")+"%",vc]].map(([label,val,col])=>(
+                    <div key={label}>
+                      <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:1, marginBottom:2 }}>{label}</div>
+                      <div style={{ fontSize:15, fontWeight:800, color:col }}>{val}</div>
                     </div>
                   ))}
+                  <div style={{ padding:"6px 12px", background:`${vc}18`, border:`1px solid ${vc}40`, borderRadius:20, textAlign:"center" }}>
+                    <div style={{ fontSize:11, fontWeight:900, color:vc, letterSpacing:1 }}>{verdict.label}</div>
+                    <div style={{ fontSize:9, color:"rgba(255,255,255,0.4)", marginTop:2 }}>{verdict.reason}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-          <div style={{marginBottom:28}}>
-            <div style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.3)",letterSpacing:3,marginBottom:10}}>VERDICT PANEL</div>
-            {verdict.checks.map((c,i)=>(
-              <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",borderRadius:10,marginBottom:4,background:c.pass?"rgba(62,232,154,0.04)":"rgba(240,80,80,0.04)",border:`1px solid ${c.pass?"rgba(62,232,154,0.15)":"rgba(240,80,80,0.15)"}`}}>
-                <div style={{fontSize:20,flexShrink:0}}>{c.pass?"✅":"❌"}</div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:700,color:"#fff",marginBottom:2}}>{c.label}</div>
-                  <div style={{fontSize:11,color:"rgba(255,255,255,0.4)"}}>{c.detail}</div>
-                </div>
-                <div style={{display:"flex",gap:14,flexShrink:0,textAlign:"right"}}>
-                  {c.is!=="—"&&<div><div style={{fontSize:9,color:"#e8a020",letterSpacing:1}}>IS</div><div style={{fontSize:14,fontWeight:700,color:"#e8a020"}}>{c.is}</div></div>}
-                  <div><div style={{fontSize:9,color:"#38b8f0",letterSpacing:1}}>OOS</div><div style={{fontSize:14,fontWeight:700,color:c.pass?"#3ee89a":"#f07070"}}>{c.oos}</div></div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{padding:"20px 24px",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12}}>
-            <div style={{fontSize:11,fontWeight:800,color:"rgba(255,255,255,0.3)",letterSpacing:3,marginBottom:10}}>RECOMMENDATION</div>
-            <div style={{fontSize:14,color:"rgba(255,255,255,0.8)",lineHeight:1.8}}>
-              {verdict.color==="green"&&"Strategy shows consistent performance on unseen data. Edge appears genuine. Safe to consider for live deployment with proper risk management."}
-              {verdict.color==="amber"&&"Partial robustness. Some degradation on out-of-sample data. Consider reducing position size before live deployment."}
-              {verdict.color==="red"&&"Performance collapsed on out-of-sample data. Strong indicator of curve-fitting. Do not deploy live. Return to optimisation with wider parameter ranges."}
-            </div>
-          </div>
-        </>
+          <button onClick={() => { setStage("upload"); setIsFile(null); setIsData(null); setBestPasses([]); setOosResults([]); }} style={{ padding:"12px 28px", background:"none", border:"1px solid rgba(255,255,255,0.1)", borderRadius:8, color:"rgba(255,255,255,0.5)", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>START NEW VALIDATION</button>
+        </div>
       )}
     </div>
   );
