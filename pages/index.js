@@ -2875,6 +2875,7 @@ function WalkForward({ onBack }) {
       // Store metadata on first call
       if (detectedSymbol) window._optresSymbol = detectedSymbol;
       window._optresTF = defaultTF;
+      window._optresSettings = data?.backtestingSettings || null;
       return passes.filter(p => p.status === "Completed").map(p => ({
         passId: String(p.passId),
         netProfit: p.netProfit || 0,
@@ -3002,7 +3003,7 @@ function WalkForward({ onBack }) {
         const resp = await fetch("http://127.0.0.1:7823/run-oos", {
           method: "POST", mode: "cors",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ Passes: passes, Symbol: symbol, Timeframe: timeframe, FromDate: fromDate, ToDate: toDate, SessionId: sessionId }),
+          body: JSON.stringify({ Passes: passes, Symbol: symbol, Timeframe: timeframe, FromDate: fromDate, ToDate: toDate, SessionId: sessionId, backtestingSettings: window._optresSettings || null }),
         });
         if (!resp.ok) { setError("Plugin error: " + await resp.text()); setStage("selected"); return; }
         // Poll for results
@@ -3034,7 +3035,7 @@ function WalkForward({ onBack }) {
       return;
     }
     setProgress({ completed:0, total:passes.length, message:"Sending to Desktop App..." });
-    ws.send(JSON.stringify({ type:"RUN_OOS", sessionId, passes, symbol, timeframe, fromDate, toDate }));
+    ws.send(JSON.stringify({ type:"RUN_OOS", sessionId, passes, symbol, timeframe, fromDate, toDate, backtestingSettings: window._optresSettings || null }));
   };
 
   // Compute verdict from IS vs OOS
