@@ -3039,7 +3039,7 @@ function WalkForward({ onBack }) {
 
   // Compute verdict from IS vs OOS
   const computeVerdict = (isPass, oosResult) => {
-    if (!oosResult?.Success) return { color:"red", label:"❌ FAILED", reason:"Backtest failed to run" };
+    if (!oosResult?.Success) return { color:"red", label:"❌ FAILED", reason: oosResult?.Error || "Backtest failed to run" };
     const pfDrop = isPass._pf > 0 ? ((isPass._pf - oosResult.ProfitFactor) / isPass._pf) * 100 : 100;
     const wrDrop = isPass._wr - oosResult.WinRate;
     const ddInc = isPass._dd > 0 ? ((oosResult.MaxDrawdown - isPass._dd) / isPass._dd) * 100 : 100;
