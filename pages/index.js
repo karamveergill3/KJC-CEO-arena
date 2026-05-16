@@ -2225,6 +2225,7 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap');
   @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
   @keyframes pulse  { 0%,100%{opacity:0.2;transform:scale(0.8)} 50%{opacity:1;transform:scale(1)} }
+  @keyframes spin   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
   *, *::before, *::after { box-sizing: border-box; }
 
@@ -2834,6 +2835,11 @@ function WalkForward({ onBack }) {
           if (msg.type === "DESKTOP_DISCONNECTED") setDesktopConnected(false);
           if (msg.type === "OOS_PROGRESS") {
             setProgress({ completed:msg.completed, total:msg.total, message:msg.message });
+            if (msg.latestResult) setOosResults(prev => {
+              const existing = prev.find(r => r.PassNumber === msg.latestResult.PassNumber);
+              if (existing) return prev;
+              return [...prev, msg.latestResult];
+            });
           }
           if (msg.type === "OOS_COMPLETE") {
             setOosResults(msg.results || []);
@@ -2977,8 +2983,8 @@ function WalkForward({ onBack }) {
         const estimatedMonths = knownMonths || Math.max(1, Math.round(medianTrades / 20));
         const minTrades = 20 * estimatedMonths;
 
-        // Score and rank all passes
-        const scored = rows.map((row, i) => ({
+        // Score ALL passes (no filter) for display
+        const allScored = rows.map((row, i) => ({
           ...row,
           _passNumber: i + 1,
           _pf: get(row,"profitfactor","pf"),
@@ -2988,10 +2994,13 @@ function WalkForward({ onBack }) {
           _net: get(row,"netprofit","profit"),
           _score: smoothnessScore(row),
           _params: getParamValues(row),
-        })).filter(r => r._trades >= minTrades && r._pf >= 2.0 && r._wr >= 65 && r._dd < 30);
+        }));
+
+        // Filter to only quality passes for OOS selection
+        const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 2.0 && r._wr >= 65 && r._dd < 30);
         // Pick top 15 by smoothness score
         const top15 = scored.sort((a,b) => b._score - a._score).slice(0, 15);
-        setIsData(scored);
+        setIsData(allScored); // ALL passes for accurate total count
         setBestPasses(top15);
         setStage("selected");
         setError(null);
@@ -3061,15 +3070,21 @@ function WalkForward({ onBack }) {
 
   // Compute verdict from IS vs OOS
   const computeVerdict = (isPass, oosResult) => {
-    if (!oosResult?.Success) return { color:"red", label:"❌ FAILED", reason: oosResult?.Error || "Backtest failed to run" };
+    if (!oosResult?.Success) return { color:"red", label:"❌ FAILED", reason: oosResult?.Error || "Backtest failed to run", checks: [] };
     const pfDrop = isPass._pf > 0 ? ((isPass._pf - oosResult.ProfitFactor) / isPass._pf) * 100 : 100;
     const wrDrop = isPass._wr - oosResult.WinRate;
     const ddInc = isPass._dd > 0 ? ((oosResult.MaxDrawdown - isPass._dd) / isPass._dd) * 100 : 100;
-    const checks = [pfDrop < 40, wrDrop < 10, ddInc < 50, oosResult.ProfitFactor >= 1.0, oosResult.WinRate >= 50];
-    const passed = checks.filter(Boolean).length;
-    if (passed === 5) return { color:"green", label:"✅ REAL EDGE", reason:"All 5 checks passed" };
-    if (passed >= 3) return { color:"amber", label:"⚠ PARTIAL", reason:`${passed}/5 checks passed` };
-    return { color:"red", label:"❌ OVERFITTED", reason:`Only ${passed}/5 checks passed` };
+    const checkResults = [
+      { label: "PF drop < 40%",     passed: pfDrop < 40,                  detail: `Drop: ${pfDrop.toFixed(0)}%` },
+      { label: "WR drop < 10pp",    passed: wrDrop < 10,                  detail: `Drop: ${wrDrop.toFixed(1)}pp` },
+      { label: "DD increase < 50%", passed: ddInc < 50,                   detail: `Inc: ${ddInc.toFixed(0)}%` },
+      { label: "OOS PF ≥ 1.0",      passed: oosResult.ProfitFactor >= 1.0, detail: `PF: ${oosResult.ProfitFactor?.toFixed(2)}` },
+      { label: "OOS WR ≥ 50%",      passed: oosResult.WinRate >= 50,       detail: `WR: ${oosResult.WinRate?.toFixed(1)}%` },
+    ];
+    const passed = checkResults.filter(c => c.passed).length;
+    if (passed === 5) return { color:"green", label:"✅ REAL EDGE",   reason:"All 5 checks passed", checks: checkResults };
+    if (passed >= 3) return { color:"amber",  label:"⚠ PARTIAL",      reason:`${passed}/5 checks passed`, checks: checkResults };
+    return            { color:"red",   label:"❌ OVERFITTED", reason:`Only ${passed}/5 checks passed`, checks: checkResults };
   };
 
   const vColor = c => c==="green"?"#3ee89a":c==="amber"?"#e8a020":"#f07070";
@@ -3208,14 +3223,30 @@ function WalkForward({ onBack }) {
       {/* Stage: Running */}
       {stage === "running" && (
         <div>
-          <div style={{ marginBottom:32, padding:"28px", background:"rgba(62,232,154,0.04)", border:"1px solid rgba(62,232,154,0.2)", borderRadius:14, textAlign:"center" }}>
-            <div style={{ fontSize:32, marginBottom:12 }}>⚙️</div>
+          <div style={{ marginBottom:24, padding:"28px", background:"rgba(62,232,154,0.04)", border:"1px solid rgba(62,232,154,0.2)", borderRadius:14, textAlign:"center" }}>
+            <div style={{ fontSize:36, marginBottom:12, animation:"spin 1.5s linear infinite", display:"inline-block" }}>⚙️</div>
             <div style={{ fontSize:20, fontWeight:900, color:"#3ee89a", letterSpacing:2, marginBottom:8 }}>RUNNING OOS BACKTESTS</div>
-            <div style={{ fontSize:13, color:"rgba(255,255,255,0.5)", marginBottom:20 }}>{progress.message}</div>
+            <div style={{ fontSize:13, color:"rgba(255,255,255,0.6)", marginBottom:6, fontWeight:600 }}>{progress.message}</div>
             <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:20, height:8, marginBottom:12, overflow:"hidden" }}>
               <div style={{ height:"100%", background:"linear-gradient(90deg,#3ee89a,#2bc97a)", borderRadius:20, width:`${(progress.completed/progress.total)*100}%`, transition:"width 0.5s" }} />
             </div>
-            <div style={{ fontSize:13, color:"rgba(255,255,255,0.4)" }}>{progress.completed} of {progress.total} backtests complete</div>
+            <div style={{ fontSize:13, color:"rgba(255,255,255,0.4)", marginBottom:16 }}>{progress.completed} of {progress.total} backtests complete</div>
+            {/* Per-pass live results */}
+            {oosResults.length > 0 && (
+              <div style={{ textAlign:"left", marginTop:12 }}>
+                {oosResults.slice(-3).map((r, i) => (
+                  <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"8px 12px", borderRadius:8, background:"rgba(255,255,255,0.03)", marginBottom:4, fontSize:11 }}>
+                    <span style={{ color:"#3ee89a", fontWeight:700 }}>✓ Pass #{r.PassNumber}</span>
+                    <span style={{ color:"rgba(255,255,255,0.5)" }}>PF: {r.ProfitFactor?.toFixed(2) || "—"}</span>
+                    <span style={{ color:"rgba(255,255,255,0.5)" }}>WR: {r.WinRate?.toFixed(1) || "—"}%</span>
+                    <span style={{ color:"rgba(255,255,255,0.5)" }}>Trades: {r.TotalTrades || "—"}</span>
+                    <span style={{ color:r.NetProfit >= 0 ? "#3ee89a" : "#f07070", fontWeight:700 }}>
+                      {r.NetProfit >= 0 ? "+" : ""}{r.NetProfit?.toFixed(0) || "—"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div style={{ fontSize:11, color:"rgba(255,255,255,0.25)", marginTop:8 }}>Keep cTrader open. Do not close it.</div>
           </div>
         </div>
@@ -3231,22 +3262,52 @@ function WalkForward({ onBack }) {
               const verdict = computeVerdict(pass, oos);
               const vc = vColor(verdict.color);
               return (
-                <div key={i} style={{ marginBottom:10, padding:"16px 20px", background:`${vc}06`, border:`1px solid ${vc}25`, borderRadius:12, display:"grid", gridTemplateColumns:"40px 1fr 100px 100px 100px 100px 140px", alignItems:"center", gap:12 }}>
-                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)" }}>#{pass._passNumber}</div>
-                  <div>
-                    <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)", marginBottom:3 }}>PARAMETERS</div>
-                    <div style={{ fontSize:10, color:"rgba(255,255,255,0.6)" }}>{Object.entries(pass._params).slice(0,3).map(([k,v])=>`${k}=${v}`).join(", ")}</div>
-                  </div>
-                  {[["IS PF",pass._pf?.toFixed(2),"#e8a020"],["OOS PF",oos?.ProfitFactor?.toFixed(2)||"—",vc],["IS WR",pass._wr?.toFixed(1)+"%","#e8a020"],["OOS WR",(oos?.WinRate?.toFixed(1)||"—")+"%",vc]].map(([label,val,col])=>(
-                    <div key={label}>
-                      <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:1, marginBottom:2 }}>{label}</div>
-                      <div style={{ fontSize:15, fontWeight:800, color:col }}>{val}</div>
+                <div key={i} style={{ marginBottom:16, background:`${vc}06`, border:`1px solid ${vc}25`, borderRadius:12, overflow:"hidden" }}>
+                  {/* Top row */}
+                  <div style={{ padding:"16px 20px", display:"grid", gridTemplateColumns:"40px 1fr 90px 90px 90px 90px 90px 140px", alignItems:"center", gap:10 }}>
+                    <div style={{ fontSize:11, color:"rgba(255,255,255,0.4)" }}>#{pass._passNumber}</div>
+                    <div>
+                      <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginBottom:3 }}>PARAMETERS</div>
+                      <div style={{ fontSize:10, color:"rgba(255,255,255,0.6)" }}>{Object.entries(pass._params).slice(0,3).map(([k,v])=>`${k}=${v}`).join(", ")}</div>
                     </div>
-                  ))}
-                  <div style={{ padding:"6px 12px", background:`${vc}18`, border:`1px solid ${vc}40`, borderRadius:20, textAlign:"center" }}>
-                    <div style={{ fontSize:11, fontWeight:900, color:vc, letterSpacing:1 }}>{verdict.label}</div>
-                    <div style={{ fontSize:9, color:"rgba(255,255,255,0.4)", marginTop:2 }}>{verdict.reason}</div>
+                    {[["IS PF",pass._pf?.toFixed(2),"#e8a020"],["OOS PF",oos?.ProfitFactor?.toFixed(2)||"—",vc],["IS WR",pass._wr?.toFixed(1)+"%","#e8a020"],["OOS WR",(oos?.WinRate?.toFixed(1)||"—")+"%",vc]].map(([label,val,col])=>(
+                      <div key={label}>
+                        <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:1, marginBottom:2 }}>{label}</div>
+                        <div style={{ fontSize:14, fontWeight:800, color:col }}>{val}</div>
+                      </div>
+                    ))}
+                    {/* Net profit */}
+                    <div>
+                      <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:1, marginBottom:2 }}>OOS P&L</div>
+                      <div style={{ fontSize:14, fontWeight:800, color: oos?.NetProfit >= 0 ? "#3ee89a" : "#f07070" }}>
+                        {oos?.NetProfit !== undefined ? `${oos.NetProfit >= 0 ? "+" : ""}$${oos.NetProfit?.toFixed(0)}` : "—"}
+                      </div>
+                    </div>
+                    <div style={{ padding:"6px 10px", background:`${vc}18`, border:`1px solid ${vc}40`, borderRadius:10, textAlign:"center" }}>
+                      <div style={{ fontSize:11, fontWeight:900, color:vc, letterSpacing:1 }}>{verdict.label}</div>
+                    </div>
                   </div>
+                  {/* Checks + equity chart */}
+                  {oos?.Success && (
+                    <div style={{ borderTop:`1px solid ${vc}15`, display:"flex", gap:0 }}>
+                      {/* 5 checks */}
+                      <div style={{ flex:1, padding:"12px 20px", display:"flex", flexWrap:"wrap", gap:6 }}>
+                        {verdict.checks.map((c, ci) => (
+                          <div key={ci} style={{ display:"flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:20, background: c.passed ? "rgba(62,232,154,0.1)" : "rgba(240,80,80,0.1)", border:`1px solid ${c.passed ? "rgba(62,232,154,0.3)" : "rgba(240,80,80,0.3)"}` }}>
+                            <span style={{ fontSize:9, color: c.passed ? "#3ee89a" : "#f07070" }}>{c.passed ? "✓" : "✗"}</span>
+                            <span style={{ fontSize:9, color:"rgba(255,255,255,0.7)" }}>{c.label}</span>
+                            <span style={{ fontSize:9, color:"rgba(255,255,255,0.4)" }}>({c.detail})</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Equity chart */}
+                      {oos?.EquityChart && (
+                        <div style={{ width:200, flexShrink:0, borderLeft:`1px solid ${vc}15` }}>
+                          <img src={`data:image/png;base64,${oos.EquityChart}`} alt="Equity" style={{ width:"100%", height:"100%", objectFit:"cover", display:"block" }} />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
