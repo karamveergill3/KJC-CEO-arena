@@ -2876,6 +2876,16 @@ function WalkForward({ onBack }) {
       if (detectedSymbol) window._optresSymbol = detectedSymbol;
       window._optresTF = defaultTF;
       window._optresSettings = data?.backtestingSettings || null;
+
+      // Extract IS period length in months from backtestingSettings
+      const startUtc = data?.backtestingSettings?.startTimeUtc || data?.startTimeUtc || null;
+      const endUtc   = data?.backtestingSettings?.endTimeUtc   || data?.endTimeUtc   || null;
+      if (startUtc && endUtc) {
+        const diffMs = new Date(endUtc) - new Date(startUtc);
+        window._optresMonths = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24 * 30)));
+      } else {
+        window._optresMonths = null; // unknown — will estimate from trades
+      }
       return passes.filter(p => p.status === "Completed").map(p => ({
         passId: String(p.passId),
         netProfit: p.netProfit || 0,
@@ -2929,12 +2939,12 @@ function WalkForward({ onBack }) {
     const wr = row.winRate !== undefined ? row.winRate : get(row,"winrate","wr","winningtrades","winningTrades");
     const dd = get(row,"maxequitydrawdownpercent","maxdrawdown","drawdown","dd","maxEquityDrawdownPercent");
     const net = get(row,"netprofit","profit","netProfit");
-    if (trades < 30) return 0;
-    // Score: high PF + high WR + low DD + positive net = smooth uptrend
-    const pfScore = Math.min(pf / 3, 1) * 30;
-    const wrScore = Math.min(wr / 70, 1) * 25;
-    const ddScore = Math.max(0, 1 - dd / 30) * 25;
-    const netScore = net > 0 ? 20 : 0;
+    if (trades < 20) return 0;
+    // Weight: PF>2 (40%), WR>65 (30%), low DD (20%), positive net (10%)
+    const pfScore = Math.min(pf / 4, 1) * 40;
+    const wrScore = Math.min(wr / 80, 1) * 30;
+    const ddScore = Math.max(0, 1 - dd / 30) * 20;
+    const netScore = net > 0 ? 10 : 0;
     return pfScore + wrScore + ddScore + netScore;
   };
 
@@ -2956,6 +2966,17 @@ function WalkForward({ onBack }) {
         const text = e.target.result;
         const rows = file.name.endsWith(".xml") ? parseXML(text) : file.name.endsWith(".optres") ? parseOptres(text, file.name) : parseCSV(text);
         if (!rows.length) { setError("No valid passes found in file."); return; }
+
+        // Determine IS period months — from optres dates or estimate from median trades
+        const knownMonths = window._optresMonths;
+        const allTradesCounts = rows.map(r => get(r,"trades","totalTrades")).filter(t => t > 0);
+        const medianTrades = allTradesCounts.length > 0
+          ? allTradesCounts.sort((a,b)=>a-b)[Math.floor(allTradesCounts.length/2)]
+          : 60;
+        // If no date range, estimate: assume 20 trades/month as baseline
+        const estimatedMonths = knownMonths || Math.max(1, Math.round(medianTrades / 20));
+        const minTrades = 20 * estimatedMonths;
+
         // Score and rank all passes
         const scored = rows.map((row, i) => ({
           ...row,
@@ -2967,7 +2988,7 @@ function WalkForward({ onBack }) {
           _net: get(row,"netprofit","profit"),
           _score: smoothnessScore(row),
           _params: getParamValues(row),
-        })).filter(r => r._trades >= 30 && r._pf >= 1.2);
+        })).filter(r => r._trades >= minTrades && r._pf >= 2.0 && r._wr >= 65 && r._dd < 30);
         // Pick top 15 by smoothness score
         const top15 = scored.sort((a,b) => b._score - a._score).slice(0, 15);
         setIsData(scored);
