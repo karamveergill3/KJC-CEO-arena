@@ -1468,8 +1468,8 @@ Select 1-3 characters whose specialties best match the task.`,
         const m = (msg.text || '').match(/ISSUE:\s*(.+)/i);
         if (m) {
           const txt = m[1].trim();
-          if (txt && txt.toLowerCase() !== 'none' && !seen.has(txt.slice(0, 50))) {
-            seen.add(txt.slice(0, 50)); issues.push({ who: msg.who, text: txt });
+          if (txt && txt.toLowerCase() !== 'none' && !seen.has(txt.slice(0, 5))) {
+            seen.add(txt.slice(0, 5)); issues.push({ who: msg.who, text: txt });
           }
         }
       });
@@ -2892,19 +2892,35 @@ function WalkForward({ onBack }) {
       } else {
         window._optresMonths = null; // unknown — will estimate from trades
       }
-      return passes.filter(p => p.status === "Completed").map(p => ({
-        passId: String(p.passId),
-        netProfit: p.netProfit || 0,
-        profitFactor: p.profitFactor || 0,
-        trades: p.trades || 0,
-        winningTrades: p.winningTrades || 0,
-        losingTrades: p.losingTrades || 0,
-        winRate: p.trades > 0 ? (p.winningTrades / p.trades) * 100 : 0,
-        maxEquityDrawdownPercent: p.maxEquityDrawdownPercent || 0,
-        maxBalanceDrawdownPercent: p.maxBalanceDrawdownPercent || 0,
-        fitness: p.fitness || 0,
-        _timeframe: defaultTF,
-      }));
+      return passes.filter(p => p.status === "Completed").map(p => {
+        // Extract actual bot parameter values for this pass
+        // cTrader stores them as p.parameterValues[] matched by index to data.parameters[]
+        const paramObj = {};
+        if (Array.isArray(p.parameterValues) && p.parameterValues.length > 0) {
+          params.forEach((paramDef, idx) => {
+            const name = paramDef.name || paramDef.propertyName;
+            const val  = p.parameterValues[idx];
+            if (name && val !== undefined && val !== null) paramObj[name] = val;
+          });
+        } else if (p.parameters && typeof p.parameters === "object") {
+          // Alternative structure: parameters directly on pass object
+          Object.assign(paramObj, p.parameters);
+        }
+        return {
+          passId: String(p.passId),
+          netProfit: p.netProfit || 0,
+          profitFactor: p.profitFactor || 0,
+          trades: p.trades || 0,
+          winningTrades: p.winningTrades || 0,
+          losingTrades: p.losingTrades || 0,
+          winRate: p.trades > 0 ? (p.winningTrades / p.trades) * 100 : 0,
+          maxEquityDrawdownPercent: p.maxEquityDrawdownPercent || 0,
+          maxBalanceDrawdownPercent: p.maxBalanceDrawdownPercent || 0,
+          fitness: p.fitness || 0,
+          _timeframe: defaultTF,
+          ...paramObj, // actual bot params (DailyLossHaltPct, EmergencyClosePct, etc.)
+        };
+      });
     } catch(e) { return []; }
   };
 
@@ -2955,11 +2971,11 @@ function WalkForward({ onBack }) {
   };
 
   const getParamValues = (row) => {
-    const skip = new Set(["pass","netprofit","profit","profitfactor","pf","winrate","wr","trades","totaltrades","maxdrawdown","drawdown","dd","winningtrades","losingtrades","sharperatio","sortinorato"]);
+    const skip = new Set(["passid","netprofit","profit","profitfactor","pf","winrate","wr","trades","totaltrades","maxdrawdown","drawdown","dd","winningtrades","losingtrades","sharperatio","sortinoratio","maxequitydrawdownpercent","maxbalancedrawdownpercent","fitness","_timeframe","_passnumber","_pf","_wr","_dd","_trades","_net","_score","_params","passid"]);
     const params = {};
     Object.entries(row).forEach(([k,v]) => {
       const kn = k.toLowerCase().replace(/[^a-z0-9]/g,"");
-      if (!skip.has(kn) && v && v !== "") params[k] = v;
+      if (!skip.has(kn) && !k.startsWith("_") && v !== "" && v !== null && v !== undefined) params[k] = v;
     });
     return params;
   };
@@ -2999,7 +3015,7 @@ function WalkForward({ onBack }) {
         // Filter to only quality passes for OOS selection
         const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 1.5 && r._wr >= 60 && r._dd < 35);
         // Pick top 50 by smoothness score
-        const top50 = scored.sort((a,b) => b._score - a._score).slice(0, 50);
+        const top50 = scored.sort((a,b) => b._score - a._score).slice(0, 5);
         setIsData(allScored); // ALL passes for accurate total count
         setBestPasses(top50);
         setStage("selected");
