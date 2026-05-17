@@ -2981,7 +2981,7 @@ function WalkForward({ onBack }) {
           : 60;
         // If no date range, estimate: assume 20 trades/month as baseline
         const estimatedMonths = knownMonths || Math.max(1, Math.round(medianTrades / 20));
-        const minTrades = 20 * estimatedMonths;
+        const minTrades = 15 * estimatedMonths;
 
         // Score ALL passes (no filter) for display
         const allScored = rows.map((row, i) => ({
@@ -2997,7 +2997,7 @@ function WalkForward({ onBack }) {
         }));
 
         // Filter to only quality passes for OOS selection
-        const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 2.0 && r._wr >= 65 && r._dd < 30);
+        const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 1.5 && r._wr >= 60 && r._dd < 35);
         // Pick top 15 by smoothness score
         const top15 = scored.sort((a,b) => b._score - a._score).slice(0, 15);
         setIsData(allScored); // ALL passes for accurate total count
@@ -3069,17 +3069,18 @@ function WalkForward({ onBack }) {
   };
 
   // Compute verdict from IS vs OOS
-  const computeVerdict = (isPass, oosResult) => {
+  const computeVerdict = (isPass, oosResult, oosMonths = 1.5) => {
     if (!oosResult?.Success) return { color:"red", label:"❌ FAILED", reason: oosResult?.Error || "Backtest failed to run", checks: [] };
     const pfDrop = isPass._pf > 0 ? ((isPass._pf - oosResult.ProfitFactor) / isPass._pf) * 100 : 100;
     const wrDrop = isPass._wr - oosResult.WinRate;
     const ddInc = isPass._dd > 0 ? ((oosResult.MaxDrawdown - isPass._dd) / isPass._dd) * 100 : 100;
+    const monthlyProfit = (oosResult.NetProfit || 0) / oosMonths;
     const checkResults = [
-      { label: "PF drop < 40%",     passed: pfDrop < 40,                  detail: `Drop: ${pfDrop.toFixed(0)}%` },
-      { label: "WR drop < 10pp",    passed: wrDrop < 10,                  detail: `Drop: ${wrDrop.toFixed(1)}pp` },
-      { label: "DD increase < 50%", passed: ddInc < 50,                   detail: `Inc: ${ddInc.toFixed(0)}%` },
-      { label: "OOS PF ≥ 1.0",      passed: oosResult.ProfitFactor >= 1.0, detail: `PF: ${oosResult.ProfitFactor?.toFixed(2)}` },
-      { label: "OOS WR ≥ 50%",      passed: oosResult.WinRate >= 50,       detail: `WR: ${oosResult.WinRate?.toFixed(1)}%` },
+      { label: "PF drop < 40%",        passed: pfDrop < 40,                  detail: `Drop: ${pfDrop.toFixed(0)}%` },
+      { label: "WR drop < 10pp",        passed: wrDrop < 10,                  detail: `Drop: ${wrDrop.toFixed(1)}pp` },
+      { label: "DD increase < 50%",     passed: ddInc < 50,                   detail: `Inc: ${ddInc.toFixed(0)}%` },
+      { label: "OOS PF ≥ 1.0",          passed: oosResult.ProfitFactor >= 1.0, detail: `PF: ${oosResult.ProfitFactor?.toFixed(2)}` },
+      { label: "≥ $2,000/month profit", passed: monthlyProfit >= 2000,         detail: `$${monthlyProfit.toFixed(0)}/mo` },
     ];
     const passed = checkResults.filter(c => c.passed).length;
     if (passed === 5) return { color:"green", label:"✅ REAL EDGE",   reason:"All 5 checks passed", checks: checkResults };
@@ -3259,7 +3260,7 @@ function WalkForward({ onBack }) {
             <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:16 }}>OOS VERDICT — {oosResults.length} BACKTESTS COMPLETE</div>
             {bestPasses.map((pass, i) => {
               const oos = oosResults.find(r => r.PassNumber === pass._passNumber);
-              const verdict = computeVerdict(pass, oos);
+              const verdict = computeVerdict(pass, oos, 1.5);
               const vc = vColor(verdict.color);
               return (
                 <div key={i} style={{ marginBottom:16, background:`${vc}06`, border:`1px solid ${vc}25`, borderRadius:12, overflow:"hidden" }}>
