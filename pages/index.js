@@ -1077,7 +1077,7 @@ Base the heading and specialties on the character's actual skills, knowledge dom
       );
       const parsed = JSON.parse(res.replace(/```json|```/g, "").trim());
       if (parsed.heading) heading = parsed.heading;
-      if (parsed.specialties?.length) specialties = parsed.specialties.slice(0, 5);
+      if (parsed.specialties?.length) specialties = parsed.specialties.slice(0, 30);
     } catch(e) { /* use defaults */ }
     setAddingChar(false);
     const entry = { name: newChar.name, tag: key, color: newChar.color, glow, border, textColor: newChar.color, description: newChar.description, hasPhoto: !!newChar.photo, heading, specialties };
@@ -1468,8 +1468,8 @@ Select 1-3 characters whose specialties best match the task.`,
         const m = (msg.text || '').match(/ISSUE:\s*(.+)/i);
         if (m) {
           const txt = m[1].trim();
-          if (txt && txt.toLowerCase() !== 'none' && !seen.has(txt.slice(0, 5))) {
-            seen.add(txt.slice(0, 5)); issues.push({ who: msg.who, text: txt });
+          if (txt && txt.toLowerCase() !== 'none' && !seen.has(txt.slice(0, 30))) {
+            seen.add(txt.slice(0, 30)); issues.push({ who: msg.who, text: txt });
           }
         }
       });
@@ -3021,7 +3021,7 @@ function WalkForward({ onBack }) {
           _passNumber: i + 1,
           _pf: get(row,"profitfactor","pf"),
           _wr: get(row,"winrate","wr"),
-          _dd: get(row,"maxdrawdown","drawdown","dd"),
+          _dd: get(row,"maxequitydrawdownpercent","maxdrawdown","drawdown","dd") * 100,
           _trades: get(row,"trades","totalTrades"),
           _net: get(row,"netprofit","profit"),
           _score: smoothnessScore(row),
@@ -3031,7 +3031,7 @@ function WalkForward({ onBack }) {
         // Filter to only quality passes for OOS selection
         const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 1.0 && r._wr >= 50 && r._dd < 35);
         // Pick top 50 by smoothness score
-        const top50 = scored.sort((a,b) => b._score - a._score).slice(0, 5);
+        const top50 = scored.sort((a,b) => b._score - a._score).slice(0, 30);
         setIsData(allScored); // ALL passes for accurate total count
         setBestPasses(top50);
         setStage("selected");
@@ -3244,23 +3244,28 @@ function WalkForward({ onBack }) {
               {window._optresStart && <span style={{ color:"rgba(255,255,255,0.2)", fontWeight:400, fontSize:10, marginLeft:12, letterSpacing:1 }}>IS PERIOD: {window._optresStart} → {window._optresEnd}</span>}
             </div>
             <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, overflow:"hidden" }}>
-              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
-                <div>PASS</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>AVG TRADE</div><div>WINS</div><div>LOSSES</div><div>PARAMETERS</div>
+              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
+                <div>PASS</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>FINAL BAL</div><div>AVG TRADE</div><div>WINS</div><div>LOSSES</div><div>PARAMETERS</div>
               </div>
-              {bestPasses.map((p,i)=>(
-                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
+              {bestPasses.map((p,i)=>{
+                const startBal = window._optresSettings?.startingCapital || 0;
+                const finalBal = startBal + (p._net || 0);
+                return (
+                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
                   <div style={{ color:"rgba(255,255,255,0.5)" }}>#{p._passNumber}</div>
                   <div style={{ color:"#fff" }}>{p._pf.toFixed(2)}</div>
                   <div style={{ color:"#fff" }}>{p._wr.toFixed(1)}%</div>
                   <div style={{ color:"#f07070" }}>{p._dd.toFixed(1)}%</div>
                   <div style={{ color:"#fff" }}>{p._trades}</div>
                   <div style={{ color: p._net >= 0 ? "#3ee89a" : "#f07070", fontWeight:700 }}>{p._net >= 0 ? "+" : ""}${p._net?.toFixed(0)}</div>
+                  <div style={{ color:"#38b8f0", fontWeight:700 }}>${finalBal.toFixed(0)}</div>
                   <div style={{ color: p._trades > 0 && p._net/p._trades >= 0 ? "#3ee89a" : "#f07070" }}>${p._trades > 0 ? (p._net/p._trades).toFixed(0) : "—"}</div>
                   <div style={{ color:"#3ee89a" }}>{get(p,"winningtrades","winningTrades") || Math.round(p._trades * p._wr / 100)}</div>
                   <div style={{ color:"#f07070" }}>{get(p,"losingtrades","losingTrades") || (p._trades - Math.round(p._trades * p._wr / 100))}</div>
                   <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10 }}>{Object.entries(p._params).slice(0,4).map(([k,v])=>`${k}=${v}`).join(", ")}</div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
