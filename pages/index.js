@@ -2852,7 +2852,6 @@ function WalkForward({ onBack }) {
               }]);
               return [...prev, msg.latestResult];
             });
-            });
           }
           if (msg.type === "OOS_COMPLETE") {
             setOosResults(msg.results || []);
