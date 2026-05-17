@@ -2975,13 +2975,15 @@ function WalkForward({ onBack }) {
     const wr = row.winRate !== undefined ? row.winRate : get(row,"winrate","wr","winningtrades","winningTrades");
     const dd = get(row,"maxequitydrawdownpercent","maxdrawdown","drawdown","dd","maxEquityDrawdownPercent");
     const net = get(row,"netprofit","profit","netProfit");
-    if (trades < 20) return 0;
-    // Weight: PF>2 (40%), WR>65 (30%), low DD (20%), positive net (10%)
-    const pfScore = Math.min(pf / 4, 1) * 40;
-    const wrScore = Math.min(wr / 80, 1) * 30;
-    const ddScore = Math.max(0, 1 - dd / 30) * 20;
-    const netScore = net > 0 ? 10 : 0;
-    return pfScore + wrScore + ddScore + netScore;
+    if (trades < 1) return 0;
+    const avgTrade = trades > 0 ? net / trades : 0;
+    // Weighted combined score: PF (35%), avg trade (25%), DD (20%), WR (15%), net (5%)
+    const pfScore  = Math.min(pf / 3, 1) * 35;
+    const avgScore = Math.min(Math.max(avgTrade, 0) / 500, 1) * 25;
+    const ddScore  = Math.max(0, 1 - dd / 30) * 20;
+    const wrScore  = Math.min(wr / 75, 1) * 15;
+    const netScore = net > 0 ? 5 : 0;
+    return pfScore + avgScore + ddScore + wrScore + netScore;
   };
 
   const getParamValues = (row) => {
@@ -3238,17 +3240,16 @@ function WalkForward({ onBack }) {
           {/* Best passes table */}
           <div style={{ marginBottom:24 }}>
             <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:12 }}>
-              TOP {bestPasses.length} PASSES — SELECTED BY SMOOTHNESS SCORE
+              TOP {bestPasses.length} PASSES — SELECTED BY COMBINED SCORE
               {window._optresStart && <span style={{ color:"rgba(255,255,255,0.2)", fontWeight:400, fontSize:10, marginLeft:12, letterSpacing:1 }}>IS PERIOD: {window._optresStart} → {window._optresEnd}</span>}
             </div>
             <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, overflow:"hidden" }}>
-              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 70px 70px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
-                <div>PASS</div><div>SCORE</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>AVG TRADE</div><div>WINS</div><div>LOSSES</div><div>PARAMETERS</div>
+              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
+                <div>PASS</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>AVG TRADE</div><div>WINS</div><div>LOSSES</div><div>PARAMETERS</div>
               </div>
               {bestPasses.map((p,i)=>(
-                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 70px 70px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
+                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
                   <div style={{ color:"rgba(255,255,255,0.5)" }}>#{p._passNumber}</div>
-                  <div style={{ color:"#3ee89a", fontWeight:700 }}>{p._score.toFixed(0)}</div>
                   <div style={{ color:"#fff" }}>{p._pf.toFixed(2)}</div>
                   <div style={{ color:"#fff" }}>{p._wr.toFixed(1)}%</div>
                   <div style={{ color:"#f07070" }}>{p._dd.toFixed(1)}%</div>
