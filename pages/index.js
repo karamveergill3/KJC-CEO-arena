@@ -2765,7 +2765,7 @@ function ArenaGuide({ onClose }) {
     { n:"6", col:"#38b8f0", title:"Review the Output", body:"Copy the fixed code or download the full PDF Report Card." },
     { n:"7", col:"#3ee89a", title:"Generate Strategy DNA", body:"Hit GENERATE STRATEGY DNA for a full AI personality profile of your strategy." },
     { n:"8", col:"#c084fc", title:"Optimisation Folder", body:"Upload cTrader optimisation CSV. Arena filters, scores and ranks all passes." },
-    { n:"9", col:"#3ee89a", title:"Walk-Forward Validation", body:"Upload IS optimisation CSV. Arena auto-selects top 15 passes and runs OOS backtests automatically via the KJC Desktop App. Install it once and everything runs hands-free." },
+    { n:"9", col:"#3ee89a", title:"Walk-Forward Validation", body:"Upload IS optimisation CSV. Arena auto-selects top 50 passes and runs OOS backtests automatically via the KJC Desktop App. Install it once and everything runs hands-free." },
     { n:"10", col:"#e8a020", title:"Sessions and Folders", body:"Every review is saved automatically. Access past sessions from the sidebar." },
   ];
   return (
@@ -2805,7 +2805,7 @@ function WalkForward({ onBack }) {
   const [bestPasses, setBestPasses] = useState([]);
   const [stage, setStage] = useState("upload"); // upload | selected | running | complete
   const [oosResults, setOosResults] = useState([]);
-  const [progress, setProgress] = useState({ completed:0, total:15, message:"" });
+  const [progress, setProgress] = useState({ completed:0, total:50, message:"" });
   const [desktopConnected, setDesktopConnected] = useState(false);
   const [ws, setWs] = useState(null);
   const [sessionId] = useState(() => Math.random().toString(36).slice(2));
@@ -2998,10 +2998,10 @@ function WalkForward({ onBack }) {
 
         // Filter to only quality passes for OOS selection
         const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 1.5 && r._wr >= 60 && r._dd < 35);
-        // Pick top 15 by smoothness score
-        const top15 = scored.sort((a,b) => b._score - a._score).slice(0, 15);
+        // Pick top 50 by smoothness score
+        const top50 = scored.sort((a,b) => b._score - a._score).slice(0, 50);
         setIsData(allScored); // ALL passes for accurate total count
-        setBestPasses(top15);
+        setBestPasses(top50);
         setStage("selected");
         setError(null);
         // Auto-detect symbol and timeframe from optres
@@ -3132,7 +3132,7 @@ function WalkForward({ onBack }) {
           <div style={{ marginBottom:20, padding:"18px 22px", background:"rgba(62,232,154,0.03)", border:"1px solid rgba(62,232,154,0.12)", borderRadius:12 }}>
             <div style={{ fontSize:11, fontWeight:800, color:"#3ee89a", letterSpacing:3, marginBottom:10 }}>HOW IT WORKS</div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:10 }}>
-              {[["1","#e8a020","Upload IS CSV","Your full optimisation results with all passes"],["2","#38b8f0","Auto-Select","Arena picks top 15 passes by smoothness score"],["3","#c084fc","Auto-Backtest","Desktop app runs 15 OOS backtests in cTrader automatically"],["4","#3ee89a","Verdict","Compare IS vs OOS and get Green/Amber/Red for each"]].map(([n,col,t,d])=>(
+              {[["1","#e8a020","Upload IS CSV","Your full optimisation results with all passes"],["2","#38b8f0","Auto-Select","Arena picks top 50 passes by smoothness score"],["3","#c084fc","Auto-Backtest","Desktop app runs 50 OOS backtests in cTrader automatically"],["4","#3ee89a","Verdict","Compare IS vs OOS and get Green/Amber/Red for each"]].map(([n,col,t,d])=>(
                 <div key={n} style={{ padding:"12px 14px", background:"rgba(255,255,255,0.02)", border:`1px solid ${col}25`, borderRadius:10 }}>
                   <div style={{ width:24, height:24, borderRadius:"50%", background:col+"22", border:`1px solid ${col}60`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:900, color:col, marginBottom:8 }}>{n}</div>
                   <div style={{ fontSize:12, fontWeight:800, color:"#fff", marginBottom:4 }}>{t}</div>
