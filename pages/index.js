@@ -2901,6 +2901,8 @@ function WalkForward({ onBack }) {
       if (startUtc && endUtc) {
         const diffMs = new Date(endUtc) - new Date(startUtc);
         window._optresMonths = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24 * 30)));
+        window._optresStart = new Date(startUtc).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
+        window._optresEnd   = new Date(endUtc).toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'});
       } else {
         window._optresMonths = null; // unknown — will estimate from trades
       }
@@ -3235,13 +3237,16 @@ function WalkForward({ onBack }) {
 
           {/* Best passes table */}
           <div style={{ marginBottom:24 }}>
-            <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:12 }}>TOP {bestPasses.length} PASSES — SELECTED BY SMOOTHNESS SCORE</div>
+            <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:12 }}>
+              TOP {bestPasses.length} PASSES — SELECTED BY SMOOTHNESS SCORE
+              {window._optresStart && <span style={{ color:"rgba(255,255,255,0.2)", fontWeight:400, fontSize:10, marginLeft:12, letterSpacing:1 }}>IS PERIOD: {window._optresStart} → {window._optresEnd}</span>}
+            </div>
             <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, overflow:"hidden" }}>
-              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 70px 70px 90px 80px 70px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
-                <div>PASS</div><div>SCORE</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>AVG TRADE</div><div>SMOOTH</div><div>PARAMETERS</div>
+              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 70px 70px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
+                <div>PASS</div><div>SCORE</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>AVG TRADE</div><div>WINS</div><div>LOSSES</div><div>PARAMETERS</div>
               </div>
               {bestPasses.map((p,i)=>(
-                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 70px 70px 90px 80px 70px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
+                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 70px 70px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
                   <div style={{ color:"rgba(255,255,255,0.5)" }}>#{p._passNumber}</div>
                   <div style={{ color:"#3ee89a", fontWeight:700 }}>{p._score.toFixed(0)}</div>
                   <div style={{ color:"#fff" }}>{p._pf.toFixed(2)}</div>
@@ -3250,7 +3255,8 @@ function WalkForward({ onBack }) {
                   <div style={{ color:"#fff" }}>{p._trades}</div>
                   <div style={{ color: p._net >= 0 ? "#3ee89a" : "#f07070", fontWeight:700 }}>{p._net >= 0 ? "+" : ""}${p._net?.toFixed(0)}</div>
                   <div style={{ color: p._trades > 0 && p._net/p._trades >= 0 ? "#3ee89a" : "#f07070" }}>${p._trades > 0 ? (p._net/p._trades).toFixed(0) : "—"}</div>
-                  <div style={{ color:"#38b8f0" }}>{p._score.toFixed(0)}</div>
+                  <div style={{ color:"#3ee89a" }}>{get(p,"winningtrades","winningTrades") || Math.round(p._trades * p._wr / 100)}</div>
+                  <div style={{ color:"#f07070" }}>{get(p,"losingtrades","losingTrades") || (p._trades - Math.round(p._trades * p._wr / 100))}</div>
                   <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10 }}>{Object.entries(p._params).slice(0,4).map(([k,v])=>`${k}=${v}`).join(", ")}</div>
                 </div>
               ))}
