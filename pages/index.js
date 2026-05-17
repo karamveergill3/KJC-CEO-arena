@@ -2806,6 +2806,7 @@ function WalkForward({ onBack }) {
   const [stage, setStage] = useState("upload"); // upload | selected | running | complete
   const [oosResults, setOosResults] = useState([]);
   const [progress, setProgress] = useState({ completed:0, total:50, message:"" });
+  const [activityLog, setActivityLog] = useState([]);
   const [desktopConnected, setDesktopConnected] = useState(false);
   const [ws, setWs] = useState(null);
   const [sessionId] = useState(() => Math.random().toString(36).slice(2));
@@ -2835,10 +2836,22 @@ function WalkForward({ onBack }) {
           if (msg.type === "DESKTOP_DISCONNECTED") setDesktopConnected(false);
           if (msg.type === "OOS_PROGRESS") {
             setProgress({ completed:msg.completed, total:msg.total, message:msg.message });
+            if (msg.message) setActivityLog(prev => {
+              const entry = { time: new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'}), text: msg.message };
+              return [...prev.slice(-49), entry]; // keep last 50
+            });
             if (msg.latestResult) setOosResults(prev => {
               const existing = prev.find(r => r.PassNumber === msg.latestResult.PassNumber);
               if (existing) return prev;
+              // Add completion entry to activity log
+              const r = msg.latestResult;
+              setActivityLog(prev2 => [...prev2.slice(-49), {
+                time: new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+                text: `✓ Pass #${r.PassNumber} complete — ${r.TotalTrades} trades | PF: ${r.ProfitFactor?.toFixed(2)} | WR: ${r.WinRate?.toFixed(1)}% | ${r.NetProfit >= 0 ? '+' : ''}$${r.NetProfit?.toFixed(0)}`,
+                success: r.TotalTrades > 0
+              }]);
               return [...prev, msg.latestResult];
+            });
             });
           }
           if (msg.type === "OOS_COMPLETE") {
@@ -3032,6 +3045,7 @@ function WalkForward({ onBack }) {
     if (!fromDate || !toDate) { setError("Please set OOS date range first."); return; }
     setStage("running");
     setError(null);
+    setActivityLog([{ time: new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'}), text: "Connecting to cTrader plugin..." }]);
     setProgress({ completed:0, total:bestPasses.length, message:"Connecting to cTrader plugin..." });
 
     const passes = bestPasses.map(p => ({
@@ -3061,6 +3075,18 @@ function WalkForward({ onBack }) {
             const completed = data.completed || 0;
             const running = data.running || false;
             setProgress({ completed, total: passes.length, message: `Completed ${completed} of ${passes.length} backtests` });
+            if (data.results?.length > 0) {
+              const latest = data.results[data.results.length - 1];
+              setActivityLog(prev => {
+                const already = prev.some(e => e.text.includes(`Pass #${latest.PassNumber} complete`));
+                if (already) return prev;
+                return [...prev.slice(-49), {
+                  time: new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+                  text: `✓ Pass #${latest.PassNumber} complete — ${latest.TotalTrades} trades | PF: ${latest.ProfitFactor?.toFixed(2)} | WR: ${latest.WinRate?.toFixed(1)}% | ${latest.NetProfit >= 0 ? '+' : ''}$${latest.NetProfit?.toFixed(0)}`,
+                  success: latest.TotalTrades > 0
+                }];
+              });
+            }
             if (!running) {
               clearInterval(poll);
               setOosResults(data.results || []);
@@ -3212,17 +3238,20 @@ function WalkForward({ onBack }) {
           <div style={{ marginBottom:24 }}>
             <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:12 }}>TOP {bestPasses.length} PASSES — SELECTED BY SMOOTHNESS SCORE</div>
             <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, overflow:"hidden" }}>
-              <div style={{ display:"grid", gridTemplateColumns:"50px 80px 80px 80px 80px 80px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
-                <div>PASS</div><div>SCORE</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>PARAMETERS</div>
+              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 70px 70px 90px 80px 70px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
+                <div>PASS</div><div>SCORE</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>AVG TRADE</div><div>SMOOTH</div><div>PARAMETERS</div>
               </div>
               {bestPasses.map((p,i)=>(
-                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 80px 80px 80px 80px 80px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
+                <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 70px 70px 90px 80px 70px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
                   <div style={{ color:"rgba(255,255,255,0.5)" }}>#{p._passNumber}</div>
                   <div style={{ color:"#3ee89a", fontWeight:700 }}>{p._score.toFixed(0)}</div>
                   <div style={{ color:"#fff" }}>{p._pf.toFixed(2)}</div>
                   <div style={{ color:"#fff" }}>{p._wr.toFixed(1)}%</div>
                   <div style={{ color:"#f07070" }}>{p._dd.toFixed(1)}%</div>
                   <div style={{ color:"#fff" }}>{p._trades}</div>
+                  <div style={{ color: p._net >= 0 ? "#3ee89a" : "#f07070", fontWeight:700 }}>{p._net >= 0 ? "+" : ""}${p._net?.toFixed(0)}</div>
+                  <div style={{ color: p._trades > 0 && p._net/p._trades >= 0 ? "#3ee89a" : "#f07070" }}>${p._trades > 0 ? (p._net/p._trades).toFixed(0) : "—"}</div>
+                  <div style={{ color:"#38b8f0" }}>{p._score.toFixed(0)}</div>
                   <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10 }}>{Object.entries(p._params).slice(0,4).map(([k,v])=>`${k}=${v}`).join(", ")}</div>
                 </div>
               ))}
@@ -3240,31 +3269,36 @@ function WalkForward({ onBack }) {
       {/* Stage: Running */}
       {stage === "running" && (
         <div>
-          <div style={{ marginBottom:24, padding:"28px", background:"rgba(62,232,154,0.04)", border:"1px solid rgba(62,232,154,0.2)", borderRadius:14, textAlign:"center" }}>
-            <div style={{ fontSize:36, marginBottom:12, animation:"spin 1.5s linear infinite", display:"inline-block" }}>⚙️</div>
-            <div style={{ fontSize:20, fontWeight:900, color:"#3ee89a", letterSpacing:2, marginBottom:8 }}>RUNNING OOS BACKTESTS</div>
-            <div style={{ fontSize:13, color:"rgba(255,255,255,0.6)", marginBottom:6, fontWeight:600 }}>{progress.message}</div>
-            <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:20, height:8, marginBottom:12, overflow:"hidden" }}>
-              <div style={{ height:"100%", background:"linear-gradient(90deg,#3ee89a,#2bc97a)", borderRadius:20, width:`${(progress.completed/progress.total)*100}%`, transition:"width 0.5s" }} />
+          <div style={{ marginBottom:24, padding:"28px", background:"rgba(62,232,154,0.04)", border:"1px solid rgba(62,232,154,0.2)", borderRadius:14 }}>
+            <div style={{ textAlign:"center", marginBottom:20 }}>
+              <div style={{ fontSize:36, marginBottom:12, animation:"spin 1.5s linear infinite", display:"inline-block" }}>⚙️</div>
+              <div style={{ fontSize:20, fontWeight:900, color:"#3ee89a", letterSpacing:2, marginBottom:8 }}>RUNNING OOS BACKTESTS</div>
+              <div style={{ fontSize:13, color:"rgba(255,255,255,0.6)", marginBottom:10, fontWeight:600 }}>{progress.message}</div>
+              <div style={{ background:"rgba(255,255,255,0.06)", borderRadius:20, height:8, marginBottom:8, overflow:"hidden" }}>
+                <div style={{ height:"100%", background:"linear-gradient(90deg,#3ee89a,#2bc97a)", borderRadius:20, width:`${(progress.completed/progress.total)*100}%`, transition:"width 0.5s" }} />
+              </div>
+              <div style={{ fontSize:13, color:"rgba(255,255,255,0.4)" }}>{progress.completed} of {progress.total} backtests complete</div>
             </div>
-            <div style={{ fontSize:13, color:"rgba(255,255,255,0.4)", marginBottom:16 }}>{progress.completed} of {progress.total} backtests complete</div>
-            {/* Per-pass live results */}
-            {oosResults.length > 0 && (
-              <div style={{ textAlign:"left", marginTop:12 }}>
-                {oosResults.slice(-3).map((r, i) => (
-                  <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"8px 12px", borderRadius:8, background:"rgba(255,255,255,0.03)", marginBottom:4, fontSize:11 }}>
-                    <span style={{ color:"#3ee89a", fontWeight:700 }}>✓ Pass #{r.PassNumber}</span>
-                    <span style={{ color:"rgba(255,255,255,0.5)" }}>PF: {r.ProfitFactor?.toFixed(2) || "—"}</span>
-                    <span style={{ color:"rgba(255,255,255,0.5)" }}>WR: {r.WinRate?.toFixed(1) || "—"}%</span>
-                    <span style={{ color:"rgba(255,255,255,0.5)" }}>Trades: {r.TotalTrades || "—"}</span>
-                    <span style={{ color:r.NetProfit >= 0 ? "#3ee89a" : "#f07070", fontWeight:700 }}>
-                      {r.NetProfit >= 0 ? "+" : ""}{r.NetProfit?.toFixed(0) || "—"}
-                    </span>
+
+            {/* Live activity feed */}
+            <div style={{ background:"rgba(0,0,0,0.3)", border:"1px solid rgba(62,232,154,0.1)", borderRadius:10, overflow:"hidden" }}>
+              <div style={{ padding:"10px 14px", borderBottom:"1px solid rgba(62,232,154,0.1)", display:"flex", alignItems:"center", gap:8 }}>
+                <div style={{ width:6, height:6, borderRadius:"50%", background:"#3ee89a", animation:"pulse 1.2s infinite" }} />
+                <span style={{ fontSize:10, fontWeight:800, color:"#3ee89a", letterSpacing:2 }}>LIVE CTRADER ACTIVITY</span>
+              </div>
+              <div style={{ padding:"10px 14px", maxHeight:180, overflowY:"auto", fontFamily:"'Fira Code', monospace", display:"flex", flexDirection:"column-reverse" }}>
+                {activityLog.length === 0 ? (
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.2)", fontStyle:"italic" }}>Waiting for activity...</div>
+                ) : [...activityLog].reverse().map((entry, i) => (
+                  <div key={i} style={{ display:"flex", gap:10, marginBottom:4, fontSize:11, opacity: i === 0 ? 1 : Math.max(0.3, 1 - i * 0.12) }}>
+                    <span style={{ color:"rgba(255,255,255,0.25)", flexShrink:0 }}>{entry.time}</span>
+                    <span style={{ color: entry.success === false ? "#f07070" : entry.success === true ? "#3ee89a" : "rgba(255,255,255,0.7)" }}>{entry.text}</span>
                   </div>
                 ))}
               </div>
-            )}
-            <div style={{ fontSize:11, color:"rgba(255,255,255,0.25)", marginTop:8 }}>Keep cTrader open. Do not close it.</div>
+            </div>
+
+            <div style={{ fontSize:11, color:"rgba(255,255,255,0.25)", marginTop:12, textAlign:"center" }}>Keep cTrader open. Do not close it.</div>
           </div>
         </div>
       )}
