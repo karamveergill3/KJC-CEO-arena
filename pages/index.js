@@ -2803,6 +2803,7 @@ function WalkForward({ onBack }) {
   const [isFile, setIsFile] = useState(null);
   const [isData, setIsData] = useState(null);
   const [bestPasses, setBestPasses] = useState([]);
+  const [filterConfig, setFilterConfig] = useState({ minPF:1.0, minWR:50, maxDD:35, minTradesPerMonth:8, periodUnit:"month", periodLabel:"month" });
   const [stage, setStage] = useState("upload"); // upload | selected | running | complete
   const [oosResults, setOosResults] = useState([]);
   const [progress, setProgress] = useState({ completed:0, total:50, message:"" });
@@ -2996,6 +2997,19 @@ function WalkForward({ onBack }) {
     return params;
   };
 
+  const applyFilter = (allScored, cfg) => {
+    const estimatedMonths = cfg.periodsInIS / (cfg.periodUnit === "month" ? 1 : cfg.periodUnit === "fortnight" ? 2 : cfg.periodUnit === "week" ? 4.33 : 30);
+    const minTrades = (cfg.minTradesPerMonth || 8) * estimatedMonths;
+    const filtered = allScored.filter(r =>
+      r._trades >= minTrades &&
+      r._pf >= (cfg.minPF || 1.0) &&
+      r._wr >= (cfg.minWR || 50) &&
+      r._dd < (cfg.maxDD || 35)
+    );
+    const top30 = filtered.sort((a,b) => b._perPeriod - a._perPeriod).slice(0, 30);
+    setBestPasses(top30);
+  };
+
   const parseFile = (file) => {
     if (!file || !(file instanceof Blob)) return;
     const reader = new FileReader();
@@ -3005,38 +3019,74 @@ function WalkForward({ onBack }) {
         const rows = file.name.endsWith(".xml") ? parseXML(text) : file.name.endsWith(".optres") ? parseOptres(text, file.name) : parseCSV(text);
         if (!rows.length) { setError("No valid passes found in file."); return; }
 
-        // Determine IS period months — from optres dates or estimate from median trades
+        // Block pre-2025 data
+        const startUtcMs = window._optresSettings?.testingPeriod?.startDate || null;
+        const jan2025 = new Date("2025-01-01").getTime();
+        if (startUtcMs && startUtcMs < jan2025) {
+          setError("❌ IS data cannot start before 1 January 2025. Please re-optimise with a valid date range.");
+          return;
+        }
+
+        // Determine IS period length
         const knownMonths = window._optresMonths;
         const allTradesCounts = rows.map(r => get(r,"trades","totalTrades")).filter(t => t > 0);
         const medianTrades = allTradesCounts.length > 0
           ? allTradesCounts.sort((a,b)=>a-b)[Math.floor(allTradesCounts.length/2)]
           : 60;
-        // If no date range, estimate: assume 20 trades/month as baseline
         const estimatedMonths = knownMonths || Math.max(1, Math.round(medianTrades / 20));
-        const minTrades = 8 * estimatedMonths;
 
-        // Score ALL passes (no filter) for display
-        const allScored = rows.map((row, i) => ({
-          ...row,
-          _passNumber: i + 1,
-          _pf: get(row,"profitfactor","pf"),
-          _wr: get(row,"winrate","wr"),
-          _dd: get(row,"maxequitydrawdownpercent","maxdrawdown","drawdown","dd") * 100,
-          _trades: get(row,"trades","totalTrades"),
-          _net: get(row,"netprofit","profit"),
-          _score: smoothnessScore(row),
-          _params: getParamValues(row),
-        }));
+        // Determine period unit based on IS length
+        let periodUnit, periodLabel, periodsInIS;
+        if (estimatedMonths > 6) {
+          periodUnit = "month"; periodLabel = "month";
+          periodsInIS = estimatedMonths;
+        } else if (estimatedMonths >= 3) {
+          periodUnit = "fortnight"; periodLabel = "fortnight";
+          periodsInIS = estimatedMonths * 2;
+        } else if (estimatedMonths >= 1) {
+          periodUnit = "week"; periodLabel = "week";
+          periodsInIS = estimatedMonths * 4.33;
+        } else {
+          periodUnit = "day"; periodLabel = "day";
+          periodsInIS = estimatedMonths * 30;
+        }
 
-        // Filter to only quality passes for OOS selection
-        const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 1.0 && r._wr >= 50 && r._dd < 35);
-        // Pick top 50 by smoothness score
-        const top50 = scored.sort((a,b) => b._score - a._score).slice(0, 30);
-        setIsData(allScored); // ALL passes for accurate total count
-        setBestPasses(top50);
+        // Score ALL passes
+        const allScored = rows.map((row, i) => {
+          const net = get(row,"netprofit","profit");
+          const trades = get(row,"trades","totalTrades");
+          const perPeriod = periodsInIS > 0 ? net / periodsInIS : 0;
+          return {
+            ...row,
+            _passNumber: i + 1,
+            _pf: get(row,"profitfactor","pf"),
+            _wr: get(row,"winrate","wr"),
+            _dd: get(row,"maxequitydrawdownpercent","maxdrawdown","drawdown","dd") * 100,
+            _trades: trades,
+            _net: net,
+            _perPeriod: perPeriod,
+            _periodUnit: periodLabel,
+            _periodsInIS: periodsInIS,
+            _score: perPeriod, // rank by profit per period
+            _params: getParamValues(row),
+          };
+        });
+
+        // Auto-fill filter config
+        const autoFilter = {
+          minPF: 1.0,
+          minWR: 50,
+          maxDD: 35,
+          minTradesPerMonth: 8,
+          periodUnit,
+          periodLabel,
+          periodsInIS,
+        };
+        setFilterConfig(autoFilter);
+        setIsData(allScored);
+        applyFilter(allScored, autoFilter);
         setStage("selected");
         setError(null);
-        // Auto-detect symbol and timeframe from optres
         if (window._optresSymbol) setSymbol(window._optresSymbol);
         if (window._optresTF) setTimeframe(window._optresTF);
       } catch(err) { setError("Parse failed: " + err.message); }
@@ -3237,19 +3287,46 @@ function WalkForward({ onBack }) {
             <div style={{ fontSize:11, color:"rgba(255,255,255,0.3)", marginTop:8 }}>OOS period is locked to 6 weeks ago → today. Symbol and timeframe are auto-detected from your .optres file.</div>
           </div>
 
+          {/* Editable filter panel */}
+          <div style={{ marginBottom:20, padding:"16px 20px", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:12 }}>
+            <div style={{ fontSize:10, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:14 }}>FILTER CRITERIA — EDIT & REAPPLY</div>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12, marginBottom:12 }}>
+              {[["Min PF","minPF",0.1],["Min WR %","minWR",1],["Max DD %","maxDD",1],["Min Trades/Month","minTradesPerMonth",1]].map(([label,key,step])=>(
+                <div key={key}>
+                  <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2, marginBottom:4 }}>{label}</div>
+                  <input type="number" step={step} value={filterConfig[key]}
+                    onChange={e => setFilterConfig(p => ({...p, [key]: parseFloat(e.target.value)}))}
+                    style={{ width:"100%", background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:6, padding:"6px 10px", color:"#fff", fontFamily:"inherit", fontSize:13 }} />
+                </div>
+              ))}
+              <div>
+                <div style={{ fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2, marginBottom:4 }}>PROFIT TARGET PERIOD</div>
+                <select value={filterConfig.periodUnit} onChange={e => setFilterConfig(p => ({...p, periodUnit:e.target.value, periodLabel:e.target.value}))}
+                  style={{ width:"100%", background:"rgba(20,20,20,1)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:6, padding:"6px 10px", color:"#fff", fontFamily:"inherit", fontSize:13 }}>
+                  <option value="day">Day</option>
+                  <option value="week">Week</option>
+                  <option value="fortnight">Fortnight</option>
+                  <option value="month">Month</option>
+                </select>
+              </div>
+            </div>
+            <button onClick={() => applyFilter(isData, filterConfig)} style={{ padding:"8px 20px", background:"linear-gradient(135deg,#3ee89a,#2bc97a)", border:"none", borderRadius:8, color:"#000", fontWeight:900, fontSize:11, cursor:"pointer", fontFamily:"inherit", letterSpacing:2 }}>▶ APPLY FILTERS</button>
+          </div>
+
           {/* Best passes table */}
           <div style={{ marginBottom:24 }}>
             <div style={{ fontSize:11, fontWeight:800, color:"rgba(255,255,255,0.3)", letterSpacing:3, marginBottom:12 }}>
-              TOP {bestPasses.length} PASSES — SELECTED BY COMBINED SCORE
+              TOP {bestPasses.length} PASSES — RANKED BY ${filterConfig.periodLabel?.toUpperCase()} PROFIT
               {window._optresStart && <span style={{ color:"rgba(255,255,255,0.2)", fontWeight:400, fontSize:10, marginLeft:12, letterSpacing:1 }}>IS PERIOD: {window._optresStart} → {window._optresEnd}</span>}
             </div>
             <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:12, overflow:"hidden" }}>
-              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
-                <div>PASS</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>FINAL BAL</div><div>AVG TRADE</div><div>WINS</div><div>LOSSES</div><div>PARAMETERS</div>
+              <div style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 90px 100px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.06)", fontSize:9, color:"rgba(255,255,255,0.3)", letterSpacing:2 }}>
+                <div>PASS</div><div>PF</div><div>WR</div><div>DD</div><div>TRADES</div><div>NET PROFIT</div><div>FINAL BAL</div><div>/{filterConfig.periodLabel?.toUpperCase()}</div><div>WINS</div><div>LOSSES</div><div>PARAMETERS</div>
               </div>
               {bestPasses.map((p,i)=>{
                 const startBal = window._optresSettings?.startingCapital || 0;
                 const finalBal = startBal + (p._net || 0);
+                const perPeriod = p._perPeriod || (p._net / (filterConfig.periodsInIS || 1));
                 return (
                 <div key={i} style={{ display:"grid", gridTemplateColumns:"50px 70px 70px 70px 80px 90px 90px 80px 60px 60px 1fr", padding:"10px 16px", borderBottom:"1px solid rgba(255,255,255,0.04)", fontSize:12 }}>
                   <div style={{ color:"rgba(255,255,255,0.5)" }}>#{p._passNumber}</div>
@@ -3259,7 +3336,7 @@ function WalkForward({ onBack }) {
                   <div style={{ color:"#fff" }}>{p._trades}</div>
                   <div style={{ color: p._net >= 0 ? "#3ee89a" : "#f07070", fontWeight:700 }}>{p._net >= 0 ? "+" : ""}${p._net?.toFixed(0)}</div>
                   <div style={{ color:"#38b8f0", fontWeight:700 }}>${finalBal.toFixed(0)}</div>
-                  <div style={{ color: p._trades > 0 && p._net/p._trades >= 0 ? "#3ee89a" : "#f07070" }}>${p._trades > 0 ? (p._net/p._trades).toFixed(0) : "—"}</div>
+                  <div style={{ color: perPeriod >= 0 ? "#3ee89a" : "#f07070", fontWeight:700 }}>{perPeriod >= 0 ? "+" : ""}${perPeriod.toFixed(0)}</div>
                   <div style={{ color:"#3ee89a" }}>{get(p,"winningtrades","winningTrades") || Math.round(p._trades * p._wr / 100)}</div>
                   <div style={{ color:"#f07070" }}>{get(p,"losingtrades","losingTrades") || (p._trades - Math.round(p._trades * p._wr / 100))}</div>
                   <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10 }}>{Object.entries(p._params).slice(0,4).map(([k,v])=>`${k}=${v}`).join(", ")}</div>
