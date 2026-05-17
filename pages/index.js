@@ -3011,7 +3011,7 @@ function WalkForward({ onBack }) {
           : 60;
         // If no date range, estimate: assume 20 trades/month as baseline
         const estimatedMonths = knownMonths || Math.max(1, Math.round(medianTrades / 20));
-        const minTrades = 15 * estimatedMonths;
+        const minTrades = 8 * estimatedMonths;
 
         // Score ALL passes (no filter) for display
         const allScored = rows.map((row, i) => ({
@@ -3027,7 +3027,7 @@ function WalkForward({ onBack }) {
         }));
 
         // Filter to only quality passes for OOS selection
-        const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 1.5 && r._wr >= 60 && r._dd < 35);
+        const scored = allScored.filter(r => r._trades >= minTrades && r._pf >= 1.0 && r._wr >= 50 && r._dd < 35);
         // Pick top 50 by smoothness score
         const top50 = scored.sort((a,b) => b._score - a._score).slice(0, 5);
         setIsData(allScored); // ALL passes for accurate total count
