@@ -1763,7 +1763,7 @@ Select 1-3 characters whose specialties best match the task.`,
         </div>{/* end left column */}
 
         {/* Right column — DNA Library + Live Tracker */}
-        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, position: "sticky", top: 0, marginTop: 28, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", maxHeight: 700, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
+        <div className="dna-col" style={{ flex: "0 0 580px", width: 580, position: "sticky", top: 0, marginTop: 28, display: "flex", flexDirection: "column", gap: 0, alignSelf: "flex-start", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden" }}>
           <div style={{ display: "flex", flex: "0 0 auto", minHeight: 220, maxHeight: 360, overflow: "hidden", overflow: "hidden" }}>
             <div style={{ flex: "0 0 55%", borderRight: "1px solid rgba(255,255,255,0.06)", overflow: "hidden", display: "flex", flexDirection: "column" }}><DnaLibrary sessions={sessions} onLoadSession={onLoadSession} /></div>
             <div style={{ flex: "0 0 45%", overflow: "hidden", display: "flex", flexDirection: "column" }}><EconomicCalendar compact={true} /></div>
@@ -3568,7 +3568,7 @@ function Leaderboard({ profile, onBack }) {
   );
 }
 
-function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange, collapsed, setCollapsed: setCollapsedExternal, onLeaderboard, onOptimisation, activeScreen }) {
+function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, currentSessionId, onCollapsedChange, collapsed, setCollapsed: setCollapsedExternal, onLeaderboard, onOptimisation, onWalkForward, activeScreen }) {
   const [internalCollapsed, setInternalCollapsed] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
   const isCollapsed = collapsed !== undefined ? collapsed : internalCollapsed;
   const toggleCollapsed = () => {
@@ -3678,6 +3678,10 @@ function Sidebar({ sessions, onLoad, onDelete, onNew, profile, onSignOut, curren
               <button onClick={onOptimisation}
                 style={{ padding: "8px 10px", background: activeScreen === "optimisation" ? "rgba(56,184,240,0.15)" : "rgba(255,255,255,0.04)", border: "1px solid rgba(56,184,240,0.2)", borderRadius: 7, color: activeScreen === "optimisation" ? "#38b8f0" : "rgba(255,255,255,0.5)", fontSize: 11, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 600 }}>
                 📊 OPTIMISATION
+              </button>
+              <button onClick={onWalkForward}
+                style={{ padding: "8px 10px", background: activeScreen === "walkforward" ? "rgba(62,232,154,0.15)" : "rgba(255,255,255,0.04)", border: "1px solid rgba(62,232,154,0.2)", borderRadius: 7, color: activeScreen === "walkforward" ? "#3ee89a" : "rgba(255,255,255,0.5)", fontSize: 11, cursor: "pointer", fontFamily: "inherit", letterSpacing: 1, fontWeight: 600 }}>
+                📈 WALK-FORWARD
               </button>
               <button onClick={() => setShowNewFolder(p => !p)} title="New Folder" style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, color: "rgba(255,255,255,0.5)", fontSize: 14, cursor: "pointer", fontFamily: "inherit", lineHeight: 1 }}>
                 📁
@@ -3875,6 +3879,7 @@ export default function Home() {
         <Sidebar
           onLeaderboard={() => setMainScreen(mainScreen === "leaderboard" ? "arena" : "leaderboard")}
           onOptimisation={() => setMainScreen(mainScreen === "optimisation" ? "arena" : "optimisation")}
+          onWalkForward={() => setMainScreen(mainScreen === "walkforward" ? "arena" : "walkforward")}
           activeScreen={mainScreen}
           sessions={sessions}
           onLoad={(s) => { handleLoadSession(s); setSidebarCollapsed(true); }}
