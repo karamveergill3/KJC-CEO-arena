@@ -2998,14 +2998,20 @@ function WalkForward({ onBack }) {
   };
 
   const applyFilter = (allScored, cfg) => {
-    const estimatedMonths = cfg.periodsInIS / (cfg.periodUnit === "month" ? 1 : cfg.periodUnit === "fortnight" ? 2 : cfg.periodUnit === "week" ? 4.33 : 30);
+    const estimatedMonths = cfg.periodsInIS
+      ? cfg.periodsInIS / (cfg.periodUnit === "month" ? 1 : cfg.periodUnit === "fortnight" ? 2 : cfg.periodUnit === "week" ? 4.33 : 30)
+      : 11;
+    const periodsCount = cfg.periodUnit === "month" ? estimatedMonths
+      : cfg.periodUnit === "fortnight" ? estimatedMonths * 2
+      : cfg.periodUnit === "week" ? estimatedMonths * 4.33
+      : estimatedMonths * 30;
     const minTrades = (cfg.minTradesPerMonth || 8) * estimatedMonths;
     const filtered = allScored.filter(r =>
       r._trades >= minTrades &&
       r._pf >= (cfg.minPF || 1.0) &&
       r._wr >= (cfg.minWR || 50) &&
       r._dd < (cfg.maxDD || 35)
-    );
+    ).map(r => ({ ...r, _perPeriod: periodsCount > 0 ? r._net / periodsCount : 0 }));
     const top30 = filtered.sort((a,b) => b._perPeriod - a._perPeriod).slice(0, 30);
     setBestPasses(top30);
   };
@@ -3310,7 +3316,7 @@ function WalkForward({ onBack }) {
                 </select>
               </div>
             </div>
-            <button onClick={() => applyFilter(isData, filterConfig)} style={{ padding:"8px 20px", background:"linear-gradient(135deg,#3ee89a,#2bc97a)", border:"none", borderRadius:8, color:"#000", fontWeight:900, fontSize:11, cursor:"pointer", fontFamily:"inherit", letterSpacing:2 }}>▶ APPLY FILTERS</button>
+            <button onClick={() => applyFilter(isData || [], filterConfig)} style={{ padding:"8px 20px", background:"linear-gradient(135deg,#3ee89a,#2bc97a)", border:"none", borderRadius:8, color:"#000", fontWeight:900, fontSize:11, cursor:"pointer", fontFamily:"inherit", letterSpacing:2 }}>▶ APPLY FILTERS</button>
           </div>
 
           {/* Best passes table */}
