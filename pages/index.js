@@ -306,6 +306,7 @@ const BASE_SYSTEMS = {
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
 CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
+NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text only.
 
 SPEED RULE: Raise up to 3 issues per turn to move faster. Each issue must be a different function. Never repeat a closed issue.
 
@@ -325,6 +326,7 @@ Never write code.`,
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
 CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
+NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text only.
 
 SPEED RULE: Raise up to 3 issues per turn to move faster. Each issue must be a different function. Never repeat a closed issue.
 
@@ -344,6 +346,7 @@ Never write code.`,
 TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
 CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
+NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text only.
 
 SPEED RULE: Raise up to 3 issues per turn to move faster. Each issue must be a different function. Never repeat a closed issue.
 
@@ -1941,6 +1944,9 @@ Select 1-3 characters whose specialties best match the task.`,
                   msg.text
                     .replace(/^AGREED:/im, "AGREED:")
                     .replace(/\nRATING:\s*[^\n]*/im, "")
+                    .replace(/#{1,3}\s+/g, "")
+                    .replace(/\*\*([^*]*)\*\*/g, "$1")
+                    .replace(/^---+$/gm, "")
                     .replace(/```[\s\S]*?```/g, "")
                     .replace(/\*\*[^*]*\*\*/g, "")
                     .trim()
