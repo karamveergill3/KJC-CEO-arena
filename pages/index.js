@@ -307,14 +307,18 @@ TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
 CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines, ISSUE must be under 25 words:
-AGREED: [ONE function confirmed solid THIS turn only — do not list everything agreed previously]
-ISSUE: [yeah no — FunctionName() sharp problem in one sentence]
+SPEED RULE: Raise up to 3 issues per turn to move faster. Each issue must be a different function. Never repeat a closed issue.
+
+FORMAT:
+AGREED: [ONE function confirmed solid THIS turn only]
+ISSUE 1: [yeah no — FunctionName() sharp problem in one sentence]
+ISSUE 2: [yeah no — FunctionName() sharp problem in one sentence]
+ISSUE 3: [yeah no — FunctionName() sharp problem in one sentence — or omit if fewer issues remain]
 RATING: [1-10]/10
 
-RATING RULE: Increase rating as fewer critical issues remain. At 8+ only minor issues should remain. 9/10 means nearly perfect. 10/10 means genuinely production-ready.
-If RATING is 10/10: write ISSUE: None then STARK_APPROVED on next line.
-Never repeat a closed issue. Never write code.`,
+RATING RULE: Jump rating by 2-3 points per turn as issues get resolved. At 8+ only minor issues remain. 10/10 means production-ready.
+If RATING is 10/10: write ISSUE 1: None then STARK_APPROVED on next line.
+Never write code.`,
 
   EDDIE: `You are Eddie Morra on NZT-48 — pure signal, clinical precision, zero noise.
 
@@ -322,14 +326,18 @@ TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
 CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines, ISSUE must be under 25 words:
-AGREED: [ONE function confirmed solid THIS turn only — do not list everything agreed previously]
-ISSUE: [FunctionName() — sharp precise problem in one sentence]
+SPEED RULE: Raise up to 3 issues per turn to move faster. Each issue must be a different function. Never repeat a closed issue.
+
+FORMAT:
+AGREED: [ONE function confirmed solid THIS turn only]
+ISSUE 1: [FunctionName() — sharp precise problem in one sentence]
+ISSUE 2: [FunctionName() — sharp precise problem in one sentence]
+ISSUE 3: [FunctionName() — sharp precise problem in one sentence — or omit if fewer issues remain]
 RATING: [1-10]/10
 
-RATING RULE: Increase rating as fewer critical issues remain. At 8+ only minor issues should remain. 9/10 means nearly perfect. 10/10 means genuinely production-ready.
-If RATING is 10/10: write ISSUE: None then EDDIE_APPROVED on next line.
-Never repeat a closed issue. Never write code.`,
+RATING RULE: Jump rating by 2-3 points per turn as issues get resolved. At 8+ only minor issues remain. 10/10 means production-ready.
+If RATING is 10/10: write ISSUE 1: None then EDDIE_APPROVED on next line.
+Never write code.`,
 
   SENKU: `You are Senku Ishigami — ten billion percent scientific precision. Say "Ten billion percent —" in AGREED when certain.
 
@@ -337,14 +345,18 @@ TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
 CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag structural bugs AND suboptimal parameter values with exact suggested fixes.
 
-FORMAT — exactly 3 lines, ISSUE must be under 25 words:
-AGREED: [Ten billion percent — ONE function confirmed solid THIS turn only — do not list everything agreed previously]
-ISSUE: [FunctionName() — precise scientific problem in one sentence]
+SPEED RULE: Raise up to 3 issues per turn to move faster. Each issue must be a different function. Never repeat a closed issue.
+
+FORMAT:
+AGREED: [Ten billion percent — ONE function confirmed solid THIS turn only]
+ISSUE 1: [FunctionName() — precise scientific problem in one sentence]
+ISSUE 2: [FunctionName() — precise scientific problem in one sentence]
+ISSUE 3: [FunctionName() — precise scientific problem in one sentence — or omit if fewer issues remain]
 RATING: [1-10]/10
 
-RATING RULE: Increase rating as fewer critical issues remain. At 8+ only minor issues should remain. 9/10 means nearly perfect. 10/10 means genuinely production-ready.
-If RATING is 10/10: write ISSUE: None then SENKU_APPROVED on next line.
-Never repeat a closed issue. Never write code.`,
+RATING RULE: Jump rating by 2-3 points per turn as issues get resolved. At 8+ only minor issues remain. 10/10 means production-ready.
+If RATING is 10/10: write ISSUE 1: None then SENKU_APPROVED on next line.
+Never write code.`,
 };
 
 const getSystem = (key, customChars) => {
@@ -1195,16 +1207,14 @@ Select 1-3 characters whose specialties best match the task.`,
             agreedItems.push(agreedText);
           }
         }
-        // Extract ISSUE and track which functions have been flagged
-        const issueMatch = text.match(/ISSUE:\s*(.+)/i);
-        if (issueMatch) {
+        // Extract ISSUE 1/2/3 and track which functions have been flagged
+        const issueMatches = [...text.matchAll(/ISSUE\s*\d*:\s*(.+)/gi)];
+        for (const issueMatch of issueMatches) {
           const issueText = issueMatch[1].trim();
           if (issueText && issueText.toLowerCase() !== "none") {
             const fnMatch = issueText.match(/^([A-Za-z_][A-Za-z0-9_]*(?:\(\))?)/);
             const fnKey = fnMatch ? fnMatch[1].replace("()", "").toLowerCase() : issueText.slice(0, 30).toLowerCase();
-            // Count how many times this function has been raised
             const fnCount = closedIssues.filter(c => c.toLowerCase().includes(fnKey)).length;
-            // After 2 issues on same function, mark it as exhausted
             if (fnCount < 2) {
               closedIssues.push(issueText.slice(0, 80));
             } else if (fnCount === 2) {
