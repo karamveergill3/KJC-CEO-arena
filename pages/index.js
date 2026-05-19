@@ -1215,9 +1215,9 @@ Select 1-3 characters whose specialties best match the task.`,
             const fnMatch = issueText.match(/^([A-Za-z_][A-Za-z0-9_]*(?:\(\))?)/);
             const fnKey = fnMatch ? fnMatch[1].replace("()", "").toLowerCase() : issueText.slice(0, 30).toLowerCase();
             const fnCount = closedIssues.filter(c => c.toLowerCase().includes(fnKey)).length;
-            if (fnCount < 2) {
+            if (fnCount < 1) {
               closedIssues.push(issueText.slice(0, 80));
-            } else if (fnCount === 2) {
+            } else {
               closedIssues.push(fnKey + "() — EXHAUSTED, do not raise again");
             }
           }
