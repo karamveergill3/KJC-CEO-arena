@@ -859,27 +859,22 @@ function Arena({ user, profile, onSessionSave, sessions, onLoadSession, onNewSes
   const generateDNA = async (fixedCodeText, msgs) => {
     setGeneratingDna(true);
     try {
-      const DNA_SYSTEM = `You are a trading strategy analyst. Analyse the given strategy code and debate and return ONLY a JSON object with exactly these keys:
+      const DNA_SYSTEM = `You are a trading strategy analyst. You are analysing the FIXED, production-ready version of a trading strategy — all bugs and issues identified in the review have already been resolved. Analyse the fixed code and return ONLY a JSON object with exactly these keys:
 {
   "edge": "one sentence describing the core trading edge",
   "best_conditions": "one sentence on ideal market conditions",
-  "worst_conditions": "one sentence on when this strategy struggles",
+  "worst_conditions": "one sentence on when this strategy naturally struggles due to its design (not bugs)",
   "risk_profile": "one of: Conservative / Moderate / Aggressive",
   "personality": "a punchy 2-3 word archetype e.g. Sniper, Momentum Hunter, Range Trader, Breakout Artist",
   "personality_desc": "one sentence describing the strategy personality",
-  "verdict": "one powerful sentence — the strategy's defining characteristic",
+  "verdict": "one powerful sentence — the strategy's defining characteristic after all fixes applied",
   "strengths": ["strength 1", "strength 2", "strength 3"],
-  "weaknesses": ["weakness 1", "weakness 2"]
+  "weaknesses": ["inherent design limitation 1 — NOT a bug", "inherent design limitation 2 — NOT a bug"]
 }
+The weaknesses must be inherent strategic limitations (e.g. struggles in ranging markets, low trade frequency) — NOT code bugs, since those have all been fixed.
 Return ONLY valid JSON. No markdown, no explanation.`;
 
-      const content = `Strategy code (summary):
-${fixedCodeText.slice(0, 2000)}
-
-Debate highlights:
-${msgs.map(m => m.text).join(" ").slice(0, 1500)}
-
-Generate the Strategy DNA JSON.`;
+      const content = `Fixed production-ready strategy code (all review issues have been applied):\n${fixedCodeText.slice(0, 3000)}\n\nGenerate the Strategy DNA JSON based on this fixed code only.`;
       const result = await callAPI(DNA_SYSTEM, content, 600);
       const clean = result.replace(/```json|```/g, "").trim();
       // Extract JSON object from response
