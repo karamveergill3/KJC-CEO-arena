@@ -1138,7 +1138,7 @@ Select 1-3 characters whose specialties best match the task.`,
       const myRating = highestRatings[who] || 0;
 
       const addLineNums = (code) => code.split('\n').map((l, i) => `${String(i+1).padStart(4,' ')} | ${l}`).join('\n');
-      const codeSnippet = isFirst ? addLineNums(snapshot.slice(0, 12000)) : snapshot.slice(0, 2000) + '\n// ... refer to turn 1 for full code ...';
+      const codeSnippet = isFirst ? addLineNums(snapshot.slice(0, 12000)) : snapshot.slice(0, 12000);
       const fnList = snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?(?:async\s+)?\w+\s+(\w+)\s*\(/g)
         ?.map(m => m.trim().split(/\s+/).pop().replace('(',''))
         .filter(f => f.length > 2)
@@ -1146,7 +1146,7 @@ Select 1-3 characters whose specialties best match the task.`,
         .join(', ') || 'see code above';
       const codeBlock = isFirst
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
-        : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
+        : `FULL CODE (reference as needed):\n```\n${codeSnippet}\n````;
 
       const closedList = closedIssues.slice(-30);
       const agreedBlock = closedList.length > 0
