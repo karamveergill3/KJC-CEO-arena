@@ -1188,7 +1188,12 @@ Select 1-3 characters whose specialties best match the task.`,
       const myRating = highestRatings[who] || 0;
 
       const addLineNums = (code) => code.split('\n').map((l, i) => `${String(i+1).padStart(4,' ')} | ${l}`).join('\n');
-      const codeSnippet = isFirst ? addLineNums(snapshot.slice(0, 7000)) : snapshot.slice(0, 1000) + '\n// ... refer to turn 1 for full code ...';
+      const codeSnippet = isFirst ? addLineNums(snapshot.slice(0, 12000)) : snapshot.slice(0, 2000) + '\n// ... refer to turn 1 for full code ...';
+      const fnList = snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?(?:async\s+)?\w+\s+(\w+)\s*\(/g)
+        ?.map(m => m.trim().split(/\s+/).pop().replace('(',''))
+        .filter(f => f.length > 2)
+        .filter((v,i,a) => a.indexOf(v) === i) // dedupe
+        .join(', ') || 'see code above';
       const codeBlock = isFirst
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
@@ -1207,8 +1212,8 @@ Select 1-3 characters whose specialties best match the task.`,
         : "";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS THAT EXIST IN THIS CODE: ${snapshot.match(/(?:protected override|private|public|void|bool|double|int|string)\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).pop().replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference functions from the list above. Find the 3 BIGGEST issues not yet raised.\n\nAGREED: Nothing yet.\nISSUE 1: [function + problem]\nISSUE 2: [function + problem]\nISSUE 3: [function + problem — or omit if fewer remain]\nRATING: 4/10\n\nReplace 4 with your honest score — minimum 4/10 on first turn.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS IN THIS CODE: ${snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?\w+\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).slice(-1)[0].replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference these functions. RECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n${convergenceNote}\n\nYour previous rating: ${myRating}/10. Raise up to 3 new issues this turn — each a different function not on the closed list. CRITICAL: RATING 10/10 requires ISSUE 1: None AND your _APPROVED token.\n\nAGREED: [up to 3 functions confirmed solid this turn, comma separated]\nISSUE 1: [function still at fault, or "None"]\nISSUE 2: [another function at fault — omit if none remain]\nISSUE 3: [another function at fault — omit if none remain]\nRATING: ${myRating}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). If rating is 10 add ${who}_APPROVED after.`;
+        ? `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS THAT EXIST IN THIS CODE: ${fnList}\n\nOnly reference functions from the list above. Find the 3 BIGGEST issues not yet raised.\n\nAGREED: Nothing yet.\nISSUE 1: [function + problem]\nISSUE 2: [function + problem]\nISSUE 3: [function + problem — or omit if fewer remain]\nRATING: 4/10\n\nReplace 4 with your honest score — minimum 4/10 on first turn.`
+        : `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS IN THIS CODE: ${fnList}\n\nOnly reference these functions. RECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n${convergenceNote}\n\nYour previous rating: ${myRating}/10. Raise up to 3 new issues this turn — each a different function not on the closed list. CRITICAL: RATING 10/10 requires ISSUE 1: None AND your _APPROVED token.\n\nAGREED: [up to 3 functions confirmed solid this turn, comma separated]\nISSUE 1: [function still at fault, or "None"]\nISSUE 2: [another function at fault — omit if none remain]\nISSUE 3: [another function at fault — omit if none remain]\nRATING: ${myRating}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
