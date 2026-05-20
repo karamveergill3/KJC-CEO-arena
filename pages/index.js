@@ -308,6 +308,14 @@ CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never i
 Flag BOTH code bugs AND strategic logic weaknesses — ranging market filters, volatility regimes, lot sizing logic, entry quality, drawdown protection. Suggest exact fixes.
 NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text only.
 
+CTRADER COMPILE RULES — flag any violation:
+- OnPositionClosed signature must be: protected override void OnPositionClosed(Position position) — NOT PositionClosedEventArgs
+- ModifyPosition requires ProtectionType: ModifyPosition(position, sl, tp, ProtectionType.None, ProtectionType.None)
+- Never declare variables that are assigned but never read — compiler warning CS0219
+- ExecuteMarketOrder volume must use Symbol.NormalizeVolumeInUnits()
+- Indicators must not be accessed before OnStart() completes
+- BeginInvokeOnMainThread does not exist in Robot API — use Task.Run() instead
+
 SPEED RULE: Raise up to 3 issues per turn. Each must be a different function. Never repeat a closed issue.
 
 FORMAT:
@@ -328,6 +336,14 @@ CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never i
 Flag BOTH code bugs AND strategic logic weaknesses — ranging market filters, volatility regimes, lot sizing logic, entry quality, drawdown protection. Suggest exact fixes.
 NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text only.
 
+CTRADER COMPILE RULES — flag any violation:
+- OnPositionClosed signature must be: protected override void OnPositionClosed(Position position) — NOT PositionClosedEventArgs
+- ModifyPosition requires ProtectionType: ModifyPosition(position, sl, tp, ProtectionType.None, ProtectionType.None)
+- Never declare variables that are assigned but never read — compiler warning CS0219
+- ExecuteMarketOrder volume must use Symbol.NormalizeVolumeInUnits()
+- Indicators must not be accessed before OnStart() completes
+- BeginInvokeOnMainThread does not exist in Robot API — use Task.Run() instead
+
 SPEED RULE: Raise up to 3 issues per turn. Each must be a different function. Never repeat a closed issue.
 
 FORMAT:
@@ -347,6 +363,14 @@ TARGET: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%.
 CRITICAL: Only reference functions from the FUNCTIONS IN THIS CODE list. Never invent function names.
 Flag BOTH code bugs AND strategic logic weaknesses — ranging market filters, volatility regimes, lot sizing logic, entry quality, drawdown protection. Suggest exact fixes.
 NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text only.
+
+CTRADER COMPILE RULES — flag any violation:
+- OnPositionClosed signature must be: protected override void OnPositionClosed(Position position) — NOT PositionClosedEventArgs
+- ModifyPosition requires ProtectionType: ModifyPosition(position, sl, tp, ProtectionType.None, ProtectionType.None)
+- Never declare variables that are assigned but never read — compiler warning CS0219
+- ExecuteMarketOrder volume must use Symbol.NormalizeVolumeInUnits()
+- Indicators must not be accessed before OnStart() completes
+- BeginInvokeOnMainThread does not exist in Robot API — use Task.Run() instead
 
 SPEED RULE: Raise up to 3 issues per turn. Each must be a different function. Never repeat a closed issue.
 
@@ -378,6 +402,14 @@ Maximum 4 sentences total.`;
 
 // ─── Final code generator prompt ─────────────────────────────────────────────
 const CODEGEN_SYSTEM = `You are an elite cTrader C# algorithmic trading developer. You will receive the original code and a full debate of issues. Your job is to produce the BEST POSSIBLE VERSION of this strategy — one that physically cannot be improved further.
+
+CRITICAL CTRADER COMPILE RULES — these must be correct or the code will not compile:
+- OnPositionClosed signature: protected override void OnPositionClosed(Position position) — NEVER PositionClosedEventArgs
+- ModifyPosition: ModifyPosition(position, sl, tp, ProtectionType.None, ProtectionType.None)
+- Never declare variables that are assigned but never read (CS0219)
+- ExecuteMarketOrder volume must use Symbol.NormalizeVolumeInUnits()
+- BeginInvokeOnMainThread does NOT exist in Robot API — use Task.Run() instead
+- Indicators cannot be accessed before OnStart() completes
 
 Apply EVERY fix from the debate. Then go further:
 1. Add ATR-based volatility regime detection — scale lot sizes down in low volatility, reduce entries in choppy markets
@@ -1086,7 +1118,7 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
         : `CODE REFERENCE (you read full code on turn 1):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
-      const closedList = closedIssues.slice(-30); // keep last 20 to avoid token bloat
+      const closedList = closedIssues.slice(-30);
       const agreedBlock = closedList.length > 0
         ? `ISSUES ALREADY RAISED — DO NOT REPEAT THESE, pick something completely new or write "None":\n${closedList.map((a, n) => `${n+1}. ${a}`).join("\n")}\n\nYou MUST raise a different function/issue not on this list, or write ISSUE: None.`
         : "NO ISSUES RAISED YET.";
