@@ -1202,12 +1202,12 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `Your current rating for THIS session is ${myRating}/10. It can only go UP as issues get fixed in this session, never down.`
         : "Give your honest assessment of the code quality as it stands.";
 
-      const convergenceNote = turn > chars.length * 3
-        ? `CRITICAL: You have had ${Math.floor(turn/chars.length)} full rounds. You MUST increase your rating this turn. Stop finding new issues — focus on what has been resolved and reflect that in your rating. If you are below 7/10 you are being too harsh.`
+      const convergenceNote = turn > chars.length * 2
+        ? `CRITICAL: You have had ${Math.floor(turn/chars.length)} full rounds. You MUST increase your rating by at least 1 point this turn. The issues raised are being fixed — reflect that. If below 6/10 you are being too harsh.`
         : "";
 
       const content = isFirst
-        ? `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS THAT EXIST IN THIS CODE: ${snapshot.match(/(?:protected override|private|public|void|bool|double|int|string)\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).pop().replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference functions from the list above. Find the 3 BIGGEST issues not yet raised.\n\nAGREED: Nothing yet.\nISSUE 1: [function + problem]\nISSUE 2: [function + problem]\nISSUE 3: [function + problem — or omit if fewer remain]\nRATING: 3/10\n\nReplace 3 with your honest score.`
+        ? `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS THAT EXIST IN THIS CODE: ${snapshot.match(/(?:protected override|private|public|void|bool|double|int|string)\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).pop().replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference functions from the list above. Find the 3 BIGGEST issues not yet raised.\n\nAGREED: Nothing yet.\nISSUE 1: [function + problem]\nISSUE 2: [function + problem]\nISSUE 3: [function + problem — or omit if fewer remain]\nRATING: 4/10\n\nReplace 4 with your honest score — minimum 4/10 on first turn.`
         : `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS IN THIS CODE: ${snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?\w+\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).slice(-1)[0].replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference these functions. RECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n${convergenceNote}\n\nYour previous rating: ${myRating}/10. Raise up to 3 new issues this turn — each a different function not on the closed list. CRITICAL: RATING 10/10 requires ISSUE 1: None AND your _APPROVED token.\n\nAGREED: [function confirmed solid this turn]\nISSUE 1: [function still at fault, or "None"]\nISSUE 2: [another function at fault — omit if none remain]\nISSUE 3: [another function at fault — omit if none remain]\nRATING: ${myRating}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). If rating is 10 add ${who}_APPROVED after.`;
 
       try {
