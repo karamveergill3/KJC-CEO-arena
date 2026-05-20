@@ -377,7 +377,21 @@ Maximum 4 sentences total.`;
 };
 
 // ─── Final code generator prompt ─────────────────────────────────────────────
-const CODEGEN_SYSTEM = `You are an elite cTrader C# developer applying surgical fixes to a trading bot. You will receive the original code and a list of precise fixes. Apply EVERY fix exactly as described. Additionally, review ALL [Parameter] default values and adjust any that are suboptimal — tighten or widen stops, fix RSI thresholds, adjust lot sizes, correct TP/SL ratios — to maximise the chances of hitting: 60+ trades per 3 months, PF >1.5, win rate >60%, drawdown <15%. CRITICAL: (1) Output the COMPLETE file — never truncate, never use "...". (2) Raw C# only — no markdown. (3) Start with "using", end with final closing brace.`;
+const CODEGEN_SYSTEM = `You are an elite cTrader C# algorithmic trading developer. You will receive the original code and a full debate of issues. Your job is to produce the BEST POSSIBLE VERSION of this strategy — one that physically cannot be improved further.
+
+Apply EVERY fix from the debate. Then go further:
+1. Add ATR-based volatility regime detection — scale lot sizes down in low volatility, reduce entries in choppy markets
+2. Add session time filtering — only trade during liquid hours (London/NY overlap)
+3. Add consecutive loss circuit breaker — reduce lot size after 3+ consecutive losses
+4. Add margin utilization check before every entry — never exceed 50% margin usage
+5. Add RSI warm-up guard — block entries until indicator has 100+ bars of data
+6. Fix all HTTP clients — use singleton with timeout, retry logic, and proper disposal
+7. Add bar-close confirmation — no tick-based entries, only on bar close
+8. Add drawdown halt — stop trading if daily drawdown exceeds MaxDailyLoss parameter
+9. Optimise ALL [Parameter] DefaultValues for: 60+ trades/3 months, PF >1.5, WR >60%, DD <15%
+10. Add timezone-normalized news filtering
+
+CRITICAL: (1) Output the COMPLETE file — never truncate. (2) Raw C# only — no markdown. (3) Start with "using", end with final closing brace. (4) This code must be genuinely production-ready and impossible to improve further.`;
 
 // ─── API call ─────────────────────────────────────────────────────────────────
 // ─── Anthropic API call ───────────────────────────────────────────────────────
@@ -1188,9 +1202,13 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `Your current rating for THIS session is ${myRating}/10. It can only go UP as issues get fixed in this session, never down.`
         : "Give your honest assessment of the code quality as it stands.";
 
+      const convergenceNote = turn > chars.length * 3
+        ? `CRITICAL: You have had ${Math.floor(turn/chars.length)} full rounds. You MUST increase your rating this turn. Stop finding new issues — focus on what has been resolved and reflect that in your rating. If you are below 7/10 you are being too harsh.`
+        : "";
+
       const content = isFirst
         ? `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS THAT EXIST IN THIS CODE: ${snapshot.match(/(?:protected override|private|public|void|bool|double|int|string)\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).pop().replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference functions from the list above. Find the 3 BIGGEST issues not yet raised.\n\nAGREED: Nothing yet.\nISSUE 1: [function + problem]\nISSUE 2: [function + problem]\nISSUE 3: [function + problem — or omit if fewer remain]\nRATING: 3/10\n\nReplace 3 with your honest score.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS IN THIS CODE: ${snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?\w+\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).slice(-1)[0].replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference these functions. RECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n\nYour previous rating: ${myRating}/10. Raise up to 3 new issues this turn — each a different function not on the closed list. Jump rating by 2-3 points when issues are resolved. CRITICAL: RATING 10/10 requires ISSUE 1: None AND your _APPROVED token.\n\nAGREED: [function confirmed solid this turn]\nISSUE 1: [function still at fault, or "None"]\nISSUE 2: [another function at fault — omit if none remain]\nISSUE 3: [another function at fault — omit if none remain]\nRATING: ${myRating}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). If rating is 10 add ${who}_APPROVED after.`;
+        : `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS IN THIS CODE: ${snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?\w+\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).slice(-1)[0].replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference these functions. RECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n${convergenceNote}\n\nYour previous rating: ${myRating}/10. Raise up to 3 new issues this turn — each a different function not on the closed list. CRITICAL: RATING 10/10 requires ISSUE 1: None AND your _APPROVED token.\n\nAGREED: [function confirmed solid this turn]\nISSUE 1: [function still at fault, or "None"]\nISSUE 2: [another function at fault — omit if none remain]\nISSUE 3: [another function at fault — omit if none remain]\nRATING: ${myRating}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
