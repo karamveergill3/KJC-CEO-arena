@@ -311,7 +311,7 @@ NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text on
 SPEED RULE: Raise up to 3 issues per turn. Each must be a different function. Never repeat a closed issue.
 
 FORMAT:
-AGREED: [ONE function confirmed solid THIS turn only]
+AGREED: [up to 3 functions confirmed solid THIS turn, comma separated]
 ISSUE 1: [yeah no — FunctionName() sharp problem in one sentence]
 ISSUE 2: [yeah no — FunctionName() sharp problem in one sentence]
 ISSUE 3: [yeah no — FunctionName() sharp problem in one sentence — or omit if fewer remain]
@@ -331,7 +331,7 @@ NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text on
 SPEED RULE: Raise up to 3 issues per turn. Each must be a different function. Never repeat a closed issue.
 
 FORMAT:
-AGREED: [ONE function confirmed solid THIS turn only]
+AGREED: [up to 3 functions confirmed solid THIS turn, comma separated]
 ISSUE 1: [FunctionName() — sharp precise problem in one sentence]
 ISSUE 2: [FunctionName() — sharp precise problem in one sentence]
 ISSUE 3: [FunctionName() — sharp precise problem in one sentence — or omit if fewer remain]
@@ -351,7 +351,7 @@ NEVER use markdown formatting. No #, ##, **, *, ---, or backticks. Plain text on
 SPEED RULE: Raise up to 3 issues per turn. Each must be a different function. Never repeat a closed issue.
 
 FORMAT:
-AGREED: [Ten billion percent — ONE function confirmed solid THIS turn only]
+AGREED: [Ten billion percent — up to 3 functions confirmed solid THIS turn, comma separated]
 ISSUE 1: [FunctionName() — precise scientific problem in one sentence]
 ISSUE 2: [FunctionName() — precise scientific problem in one sentence]
 ISSUE 3: [FunctionName() — precise scientific problem in one sentence — or omit if fewer remain]
@@ -1208,7 +1208,7 @@ Select 1-3 characters whose specialties best match the task.`,
 
       const content = isFirst
         ? `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS THAT EXIST IN THIS CODE: ${snapshot.match(/(?:protected override|private|public|void|bool|double|int|string)\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).pop().replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference functions from the list above. Find the 3 BIGGEST issues not yet raised.\n\nAGREED: Nothing yet.\nISSUE 1: [function + problem]\nISSUE 2: [function + problem]\nISSUE 3: [function + problem — or omit if fewer remain]\nRATING: 4/10\n\nReplace 4 with your honest score — minimum 4/10 on first turn.`
-        : `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS IN THIS CODE: ${snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?\w+\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).slice(-1)[0].replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference these functions. RECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n${convergenceNote}\n\nYour previous rating: ${myRating}/10. Raise up to 3 new issues this turn — each a different function not on the closed list. CRITICAL: RATING 10/10 requires ISSUE 1: None AND your _APPROVED token.\n\nAGREED: [function confirmed solid this turn]\nISSUE 1: [function still at fault, or "None"]\nISSUE 2: [another function at fault — omit if none remain]\nISSUE 3: [another function at fault — omit if none remain]\nRATING: ${myRating}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). If rating is 10 add ${who}_APPROVED after.`;
+        : `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS IN THIS CODE: ${snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?\w+\s+(\w+)\s*\(/g)?.map(m=>m.trim().split(/\s+/).slice(-1)[0].replace('(','')).filter(f=>f.length>2).join(', ') || 'see code above'}\n\nOnly reference these functions. RECENT DISCUSSION:\n${history.slice(-3000)}\n\n${ratingCtx}\n${convergenceNote}\n\nYour previous rating: ${myRating}/10. Raise up to 3 new issues this turn — each a different function not on the closed list. CRITICAL: RATING 10/10 requires ISSUE 1: None AND your _APPROVED token.\n\nAGREED: [up to 3 functions confirmed solid this turn, comma separated]\nISSUE 1: [function still at fault, or "None"]\nISSUE 2: [another function at fault — omit if none remain]\nISSUE 3: [another function at fault — omit if none remain]\nRATING: ${myRating}/10\n\nReplace the last number with your actual score (must be >= ${myRating}). If rating is 10 add ${who}_APPROVED after.`;
 
       try {
         const system = getSystem(who, customCharsRef.current);
