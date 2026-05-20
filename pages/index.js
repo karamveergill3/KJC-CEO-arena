@@ -965,7 +965,34 @@ Return ONLY valid JSON. No markdown, no explanation.`;
 
       if (!finalCode) throw new Error("Code generation returned empty response");
 
+      // ── Verification pass — fix known cTrader compile issues ─────────────
       setPhase("optimising");
+      try {
+        const verifyRes = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-5",
+            max_tokens: 16000,
+            system: `You are a cTrader C# compiler expert. You receive generated code and must fix ALL of these issues before returning it:
+1. OnPositionClosed must use signature: protected override void OnPositionClosed(Position position) — never PositionClosedEventArgs
+2. ModifyPosition must include ProtectionType: ModifyPosition(position, sl, tp, ProtectionType.None, ProtectionType.None)  
+3. Remove any variables declared but never read (CS0219) — e.g. bool hitCeiling = false that is never used
+4. BeginInvokeOnMainThread does not exist — replace with Task.Run()
+5. All ExecuteMarketOrder volume must use Symbol.NormalizeVolumeInUnits()
+6. No markdown, no truncation — output complete raw C# only.`,
+            messages: [{ role: "user", content: `Fix all cTrader compile issues in this code and return the complete corrected file:\n\`\`\`csharp\n${finalCode}\n\`\`\`` }],
+          }),
+        });
+        if (verifyRes.ok) {
+          const verifyData = await verifyRes.json();
+          const verified = verifyData.content?.find(b => b.type === "text")?.text || "";
+          if (verified && verified.trim().length > 100)
+            finalCode = verified.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+        }
+      } catch(e) {
+        console.error("Verification pass failed:", e.message);
+      }
 
       // ── Compile check ────────────────────────────────────────────────────
       const opens = (finalCode.match(/{/g)||[]).length;
