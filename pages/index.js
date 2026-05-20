@@ -905,161 +905,49 @@ Return ONLY valid JSON. No markdown, no explanation.`;
   const generateFixedCode = async (snapshot, msgs, chars) => {
     setPhase("generating");
     try {
-      const charNames = chars.map(k => allChars()[k]?.name || k).join(", ");
+      const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n");
 
-      // Step 1: Extract structured fix list using Sonnet
-      let structuredFixes = [];
-      try {
-        const debateText = msgs.map(m => `${allChars()[m.who]?.name||m.who}: ${m.text}`).join("\n\n");
-        const fixExtractSystem = `You extract a precise surgical fix list from a code review debate. Return ONLY valid JSON — an array of fix objects. No markdown, no explanation, no preamble. Only include fixes for issues confirmed as real problems in the ORIGINAL code.`;
-        const fixExtractContent = `Code review debate:\n${debateText.slice(0, 4000)}\n\nExtract every confirmed fix. Return JSON array:\n[{"function":"FunctionName","issue":"what is wrong","fix":"exactly what to change"}]`;
-        const fixRes = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-5",
-            max_tokens: 1000,
-            system: fixExtractSystem,
-            messages: [{ role: "user", content: fixExtractContent }],
-          }),
-        });
-        if (fixRes.ok) {
-          const fixData = await fixRes.json();
-          const raw = fixData.content?.find(b => b.type === "text")?.text || "";
-          const clean = raw.replace(/```json|```/g, "").trim();
-          const match = clean.match(/\[\s\S]*\]/);
-          if (match) structuredFixes = JSON.parse(match[0]);
-        }
-      } catch(e) {
-        structuredFixes = [];
+      // Single full rewrite — pass original code + full debate to Sonnet
+      const genContent = `ORIGINAL CODE:\n\`\`\`csharp\n${snapshot}\n\`\`\`\n\nCOMPLETE DEBATE AND ALL AGREED FIXES:\n${debateText.slice(0, 6000)}\n\nApply EVERY fix raised in the debate above. Additionally:\n1. Add ATR volatility regime detection — scale lots down in low vol, skip entries in extreme vol\n2. Add session time filter if not already present — London/NY overlap only\n3. Add consecutive loss circuit breaker — reduce lot size after ${3} consecutive losses\n4. Fix IsEntryBlocked() — return true (block) if news list is empty or fetch failed, not false\n5. Fix ManageNewsSlTightening() — only tighten SL if position.NetProfit > 0\n6. Fix FetchUsdRedNews() regex — use case-insensitive matching for impact field\n7. Add drawdown halt — stop trading if daily drawdown exceeds parameter\n8. Optimise ALL [Parameter] DefaultValues for: 60+ trades/3 months, PF >1.5, WR >60%, DD <15%\n\nOutput the COMPLETE fixed and optimised file. Raw C# only, no markdown, no truncation.`;
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-5",
+          max_tokens: 16000,
+          system: CODEGEN_SYSTEM,
+          messages: [{ role: "user", content: genContent }],
+        }),
+      });
+
+      let finalCode = "";
+      if (res.ok) {
+        const data = await res.json();
+        const raw = data.content?.find(b => b.type === "text")?.text || "";
+        finalCode = raw.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
       }
 
-      // Step 2: For each fix, generate ONLY the patched function using Sonnet
-      // Then splice it back into the original file — no truncation risk
-      let patchedCode = snapshot;
+      if (!finalCode) throw new Error("Code generation returned empty response");
 
-      if (structuredFixes.length > 0) {
-        const PATCH_SYSTEM = `You are an elite cTrader C# developer. You receive a full trading bot and ONE specific fix to apply. Output ONLY the complete rewritten function — nothing else. No markdown, no explanation, no surrounding code. Just the raw C# function from its access modifier to its closing brace.`;
-
-        for (const fix of structuredFixes) {
-          try {
-            const patchContent = `Full bot code:\n\`\`\`\n${patchedCode.slice(0, 12000)}\n\`\`\`\n\nFix to apply:\nFunction: ${fix.function}\nIssue: ${fix.issue}\nRequired change: ${fix.fix}\n\nOutput ONLY the complete rewritten ${fix.function} function. Raw C# only, no markdown.`;
-
-            const patchRes = await fetch("/api/chat", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                model: "claude-sonnet-4-5",
-                max_tokens: 2000,
-                system: PATCH_SYSTEM,
-                messages: [{ role: "user", content: patchContent }],
-              }),
-            });
-
-            if (patchRes.ok) {
-              const patchData = await patchRes.json();
-              const newFn = patchData.content?.find(b => b.type === "text")?.text || "";
-              if (newFn && newFn.trim()) {
-                // Find and replace the function in patchedCode using line-based search
-                const cleaned = newFn.replace(/```[\w]*/g, "").replace(/```/g, "").trim();
-                const fnBaseName = fix.function.replace("()", "").trim();
-                if (cleaned && fnBaseName) {
-                  const lines = patchedCode.split("\n");
-                  const fnLineIdx = lines.findIndex(l =>
-                    (l.includes(fnBaseName + "(") || l.includes(fnBaseName + " (")) &&
-                    !l.trim().startsWith("//") && !l.trim().startsWith("*")
-                  );
-                  if (fnLineIdx > -1) {
-                    let depth = 0, started = false, endIdx = fnLineIdx;
-                    for (let li = fnLineIdx; li < lines.length; li++) {
-                      for (const ch of lines[li]) {
-                        if (ch === "{") { depth++; started = true; }
-                        if (ch === "}") depth--;
-                      }
-                      if (started && depth === 0) { endIdx = li; break; }
-                    }
-                    lines.splice(fnLineIdx, endIdx - fnLineIdx + 1, ...cleaned.split("\n"));
-                    patchedCode = lines.join("\n");
-                  }
-                }             }
-            }
-          } catch(e) {
-            console.error("Patch failed for", fix.function, e.message);
-          }
-        }
-      } else {
-        // Fallback: full file rewrite if no structured fixes extracted
-        const genContent = `Original code:\n\`\`\`\n${snapshot.slice(0, 10000)}\n\`\`\`\n\nApply all improvements identified in the debate to make the strategy hit: 60+ trades/3 months, PF >1.5, win rate >60%, drawdown <15%. Output the COMPLETE fixed file. Raw C# only.`;
-        const fallbackRes = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-5",
-            max_tokens: 8000,
-            system: CODEGEN_SYSTEM,
-            messages: [{ role: "user", content: genContent }],
-          }),
-        });
-        if (fallbackRes.ok) {
-          const fallbackData = await fallbackRes.json();
-          const rawFallback = fallbackData.content?.find(b => b.type === "text")?.text || "";
-          patchedCode = rawFallback ? rawFallback.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim() : patchedCode;
-        }
-      }
-
-      const strippedCode = patchedCode.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
-
-      // ── Parameter Optimisation Pass ─────────────────────────────────────
-      // After fixes applied, Sonnet reviews parameters specifically against targets
-      let finalCode = strippedCode;
       setPhase("optimising");
-      try {
-        const optSystem = `You are an elite algorithmic trading parameter specialist. You receive a fixed trading bot and must ensure its [Parameter] default values are optimised to hit these EXACT targets:
-- 60+ trades per 3 months
-- Profit Factor > 1.5
-- Win Rate > 60%
-- Max Drawdown < 30%
-
-Scoring weights: PF 40%, Win Rate 25%, Trade Count 20%, Drawdown 15%
-
-Review EVERY [Parameter] DefaultValue. For each one, ask:
-1. Will RsiLongLevel/RsiShortLevel generate enough signals for 60+ trades?
-2. Is TpDistance/SlDistance ratio producing PF > 1.5? (TP must be >= 1.5x SL)
-3. Is MaxTrades high enough to hit 60+ trades but low enough to control drawdown?
-4. Is risk per trade / lot sizing set to keep drawdown < 30%?
-5. Are EMA lengths appropriate for the timeframe (not too slow, not too noisy)?
-
-Make ONLY parameter value changes — do not change logic or structure. Output the COMPLETE file with optimised parameters. Raw C# only, no markdown.`;
-
-        const optContent = `Trading bot to optimise:\n\`\`\`\n${strippedCode.slice(0, 12000)}\n\`\`\`\n\nReview all [Parameter] DefaultValue entries and adjust any that would prevent hitting: 60+ trades/3mo, PF >1.5, WR >60%, drawdown <30%. Output the complete optimised file.`;
-
-        const optRes = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "claude-sonnet-4-5",
-            max_tokens: 8000,
-            system: optSystem,
-            messages: [{ role: "user", content: optContent }],
-          }),
-        });
-        if (optRes.ok) {
-          const optData = await optRes.json();
-          const optCode = optData.content?.find(b => b.type === "text")?.text || "";
-          if (optCode && optCode.trim().length > 100) {
-            finalCode = optCode.replace(/^```[\w]*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
-          }
-        }
-      } catch(e) {
-        console.error("Optimisation pass failed:", e.message);
-        // Keep strippedCode as finalCode
-      }
 
       // ── Compile check ────────────────────────────────────────────────────
       const opens = (finalCode.match(/{/g)||[]).length;
       const closes = (finalCode.match(/}/g)||[]).length;
+      const diff = closes - opens;
+      if (diff === 1) {
+        // Strip the last extra closing brace
+        const lastBrace = finalCode.lastIndexOf('}');
+        finalCode = finalCode.slice(0, lastBrace) + finalCode.slice(lastBrace + 1);
+      } else if (diff === -1) {
+        // Add missing closing brace
+        finalCode = finalCode.trimEnd() + '\n}';
+      }
       const truncated = !finalCode.trimEnd().endsWith('}');
-      const compileWarning = truncated ? '⚠️ WARNING: Code may be truncated — check last function is complete.' : opens !== closes ? `⚠️ WARNING: Brace mismatch (${opens} open, ${closes} close) — may not compile.` : null;
+      const opensF = (finalCode.match(/{/g)||[]).length;
+      const closesF = (finalCode.match(/}/g)||[]).length;
+      const compileWarning = truncated ? '⚠️ WARNING: Code may be truncated — check last function is complete.' : opensF !== closesF ? `⚠️ WARNING: Brace mismatch (${opensF} open, ${closesF} close) — may not compile.` : null;
       if (compileWarning) setError(compileWarning);
       setFixedCode(finalCode);
     } catch(e) {
