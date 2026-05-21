@@ -1146,7 +1146,7 @@ Select 1-3 characters whose specialties best match the task.`,
         .join(', ') || 'see code above';
       const codeBlock = isFirst
         ? `FULL CODE UNDER REVIEW — read every function carefully:\n\`\`\`\n${codeSnippet}\n\`\`\``
-        : `FULL CODE (reference as needed):\n```\n${codeSnippet}\n````;
+        : `FULL CODE (reference as needed):\n\`\`\`\n${codeSnippet}\n\`\`\``;
 
       const closedList = closedIssues.slice(-30);
       const agreedBlock = closedList.length > 0
