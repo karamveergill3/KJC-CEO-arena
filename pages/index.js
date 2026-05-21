@@ -1138,7 +1138,7 @@ Select 1-3 characters whose specialties best match the task.`,
       const myRating = highestRatings[who] || 0;
 
       const addLineNums = (code) => code.split('\n').map((l, i) => `${String(i+1).padStart(4,' ')} | ${l}`).join('\n');
-      const codeSnippet = isFirst ? addLineNums(snapshot.slice(0, 12000)) : snapshot.slice(0, 12000);
+      const codeSnippet = isFirst ? addLineNums(snapshot.slice(0, 20000)) : snapshot.slice(0, 20000);
       const fnList = snapshot.match(/(?:protected override|private|public)\s+(?:override\s+)?(?:async\s+)?\w+\s+(\w+)\s*\(/g)
         ?.map(m => m.trim().split(/\s+/).pop().replace('(',''))
         .filter(f => f.length > 2)
