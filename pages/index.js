@@ -950,7 +950,7 @@ Return ONLY valid JSON. No markdown, no explanation.`;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-5",
-          max_tokens: 16000,
+          max_tokens: 64000,
           system: CODEGEN_SYSTEM,
           messages: [{ role: "user", content: genContent }],
         }),
@@ -973,7 +973,7 @@ Return ONLY valid JSON. No markdown, no explanation.`;
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             model: "claude-sonnet-4-5",
-            max_tokens: 16000,
+            max_tokens: 64000,
             system: `You are a cTrader C# compiler expert. You receive generated code and must fix ALL of these issues before returning it:
 1. OnPositionClosed must use signature: protected override void OnPositionClosed(Position position) — never PositionClosedEventArgs
 2. ModifyPosition must include ProtectionType: ModifyPosition(position, sl, tp, ProtectionType.None, ProtectionType.None)  
@@ -1157,9 +1157,7 @@ Select 1-3 characters whose specialties best match the task.`,
         ? `Your current rating for THIS session is ${myRating}/10. It can only go UP as issues get fixed in this session, never down.`
         : "Give your honest assessment of the code quality as it stands.";
 
-      const convergenceNote = turn > chars.length * 2
-        ? `CRITICAL: You have had ${Math.floor(turn/chars.length)} full rounds. You MUST increase your rating by at least 1 point this turn. The issues raised are being fixed — reflect that. If below 6/10 you are being too harsh.`
-        : "";
+      const convergenceNote = "";
 
       const content = isFirst
         ? `${codeBlock}\n\n${agreedBlock}\n\nFUNCTIONS THAT EXIST IN THIS CODE: ${fnList}\n\nOnly reference functions from the list above. Find the 3 BIGGEST issues not yet raised.\n\nAGREED: Nothing yet.\nISSUE 1: [function + problem]\nISSUE 2: [function + problem]\nISSUE 3: [function + problem — or omit if fewer remain]\nRATING: 4/10\n\nReplace 4 with your honest score — minimum 4/10 on first turn.`
