@@ -1,5 +1,5 @@
 // pages/api/desktop-ws.js
-// WebSocket endpoint for the KJC Arena desktop app
+// WebSocket endpoint for the Arena desktop app
 // Bridges the desktop app and the Arena frontend
 
 const clients = new Map(); // sessionId -> { desktop, browser }

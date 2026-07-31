@@ -1,4 +1,4 @@
-# KJC Capital — Code Review Arena
+# Code Review Arena
 
 AI-powered code review. Stark, Morra and Ishigami debate your code to 9/10.
 

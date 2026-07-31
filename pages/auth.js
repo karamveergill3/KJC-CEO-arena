@@ -221,7 +221,7 @@ export default function Auth() {
   return (
     <>
       <Head>
-        <title>KJC Capital — Code Review Arena</title>
+        <title>Code Review Arena</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -230,12 +230,7 @@ export default function Auth() {
         <div style={card}>
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: 4, background: 'linear-gradient(135deg, #e8a020, #f5c842, #c07010)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>KJC</span>
-              <span style={{ width: 1, height: 18, background: 'rgba(232,160,32,0.4)' }} />
-              <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: 5, color: '#c8900a' }}>CAPITAL</span>
-            </div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', letterSpacing: 2 }}>CODE REVIEW ARENA</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'rgba(255,255,255,0.85)', letterSpacing: 3 }}>CODE REVIEW ARENA</div>
           </div>
 
           {error && <div style={err}>{error}</div>}

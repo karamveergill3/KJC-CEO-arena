@@ -1330,9 +1330,9 @@ Select 1-3 characters whose specialties best match the task.`,
       // Top gold bar
       doc.setFillColor(232, 160, 32); doc.rect(0, 0, W, 1.5, 'F');
 
-      // KJC wordmark
+      // Wordmark
       doc.setTextColor(232, 160, 32); doc.setFontSize(9); doc.setFont('helvetica', 'bold');
-      doc.text('KJC CAPITAL', M, 14);
+      doc.text('CODE REVIEW ARENA', M, 14);
       doc.setTextColor(80, 80, 100); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
       doc.text('CODE REVIEW ARENA', M, 20);
 
@@ -1539,13 +1539,13 @@ Select 1-3 characters whose specialties best match the task.`,
         doc.setFillColor(8, 8, 12); doc.rect(0, H - 10, W, 10, 'F');
         doc.setDrawColor(30, 30, 45); doc.setLineWidth(0.2); doc.line(M, H - 10, W - M, H - 10);
         doc.setTextColor(50, 50, 70); doc.setFontSize(6.5); doc.setFont('helvetica', 'normal');
-        doc.text('KJC CAPITAL — CODE REVIEW ARENA', M, H - 4);
+        doc.text('CODE REVIEW ARENA', M, H - 4);
         doc.text('Page ' + i + ' of ' + np, W - M, H - 4, { align: 'right' });
         doc.setTextColor(232, 160, 32); doc.setFontSize(6.5);
         doc.text('CONFIDENTIAL', W / 2, H - 4, { align: 'center' });
       }
 
-      doc.save('KJC_Report_' + (fileName || 'review').replace(/\.[^.]+$/, '') + '_' + new Date().toISOString().slice(0, 10) + '.pdf');
+      doc.save('Arena_Report_' + (fileName || 'review').replace(/\.[^.]+$/, '') + '_' + new Date().toISOString().slice(0, 10) + '.pdf');
     };
     document.head.appendChild(script);
   };
@@ -1565,11 +1565,6 @@ Select 1-3 characters whose specialties best match the task.`,
           </button>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button onClick={() => setShowGuide(true)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, color: "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "5px 14px", fontFamily: "inherit", letterSpacing: 1 }}>? HOW TO USE</button>
-            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>KJC</span>
-              <span style={{ width: 1, height: 10, background: "rgba(232,160,32,0.4)" }} />
-              <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: 3, color: "#c8900a" }}>CAPITAL</span>
-            </div>
           </div>
         </div>
 
@@ -1817,12 +1812,6 @@ Select 1-3 characters whose specialties best match the task.`,
           })}
         </div>
 
-        {/* KJC Capital logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: "auto", marginRight: 6 }}>
-          <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, background: "linear-gradient(135deg, #e8a020, #f5c842, #c07010)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text", fontFamily: "inherit" }}>KJC</span>
-          <span style={{ width: 1, height: 8, background: "rgba(232,160,32,0.4)" }} />
-          <span style={{ fontSize: 7, fontWeight: 700, letterSpacing: 2, color: "#c8900a" }}>CAPITAL</span>
-        </div>
 
         <div style={s.controls}>
           {running ? (
@@ -2354,11 +2343,6 @@ function ProfileModal({ profile, onClose, onSignOut }) {
             )}
           </div>
 
-          {/* KJC badge */}
-          <div style={{ flexShrink: 0, textAlign: "right" }}>
-            <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, background: "linear-gradient(135deg, #e8a020, #f5c842)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontFamily: ffTitle }}>KJC</div>
-            <div style={{ fontSize: 8, letterSpacing: 3, color: "#c8900a", fontWeight: 700 }}>CAPITAL</div>
-          </div>
         </div>
 
         {/* Detail rows */}
@@ -2747,7 +2731,7 @@ function ArenaGuide({ onClose }) {
     { n:"6", col:"#38b8f0", title:"Review the Output", body:"Copy the fixed code or download the full PDF Report Card." },
     { n:"7", col:"#3ee89a", title:"Generate Strategy DNA", body:"Hit GENERATE STRATEGY DNA for a full AI personality profile of your strategy." },
     { n:"8", col:"#c084fc", title:"Optimisation Folder", body:"Upload cTrader optimisation CSV. Arena filters, scores and ranks all passes." },
-    { n:"9", col:"#3ee89a", title:"Walk-Forward Validation", body:"Upload IS optimisation CSV. Arena auto-selects top 50 passes and runs OOS backtests automatically via the KJC Desktop App. Install it once and everything runs hands-free." },
+    { n:"9", col:"#3ee89a", title:"Walk-Forward Validation", body:"Upload IS optimisation CSV. Arena auto-selects top 50 passes and runs OOS backtests automatically via the Desktop App. Install it once and everything runs hands-free." },
     { n:"10", col:"#e8a020", title:"Sessions and Folders", body:"Every review is saved automatically. Access past sessions from the sidebar." },
   ];
   return (
@@ -3143,7 +3127,7 @@ function WalkForward({ onBack }) {
 
     // Fallback: route via Railway WebSocket (desktop app)
     if (!ws || ws.readyState !== 1 || !desktopConnected) {
-      setError("cTrader plugin not reachable on port 7823, and Desktop App not connected. Make sure the KJC Arena plugin is running in cTrader.");
+      setError("cTrader plugin not reachable on port 7823, and Desktop App not connected. Make sure the Arena plugin is running in cTrader.");
       setStage("selected");
       return;
     }
@@ -3194,7 +3178,7 @@ function WalkForward({ onBack }) {
         <div style={{ marginBottom:24, padding:"18px 22px", background:"rgba(232,160,32,0.06)", border:"1px solid rgba(232,160,32,0.2)", borderRadius:12, display:"flex", alignItems:"center", gap:16 }}>
           <div style={{ fontSize:28, flexShrink:0 }}>💻</div>
           <div style={{ flex:1 }}>
-            <div style={{ fontSize:13, fontWeight:800, color:"#e8a020", marginBottom:4 }}>KJC DESKTOP APP REQUIRED</div>
+            <div style={{ fontSize:13, fontWeight:800, color:"#e8a020", marginBottom:4 }}>DESKTOP APP REQUIRED</div>
             <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)", lineHeight:1.7, marginBottom:10 }}>The desktop app runs OOS backtests automatically inside your cTrader. Install it once and everything runs hands-free.</div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:5 }}>
               {[["1","Download & run KJCArena-Setup.exe"],["2","Windows warning → More info → Run anyway"],["3","Tick 'Start on Windows startup'"],["4","Click Install then Finish"],["5","Open cTrader"],["6","KJC Arena icon appears in system tray"],["7","Return here — see DESKTOP CONNECTED"]].map(([n,t])=>(
@@ -3847,7 +3831,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>KJC Capital — Code Review Arena</title>
+        <title>Code Review Arena</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </Head>
